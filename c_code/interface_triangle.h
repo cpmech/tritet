@@ -188,8 +188,8 @@ void set_point(struct ExtTriangle *triangle, int index, double x, double y) {
 }
 
 void set_segment(struct ExtTriangle *triangle, int index, int left, int right) {
-    triangle->input.pointlist[index * 2] = left;
-    triangle->input.pointlist[index * 2 + 1] = right;
+    triangle->input.segmentlist[index * 2] = left;
+    triangle->input.segmentlist[index * 2 + 1] = right;
 }
 
 void set_region(struct ExtTriangle *triangle, int index, double x, double y, int attribute, double max_area) {
