@@ -1,0 +1,32 @@
+{
+  "cSpell.words": [
+    "edgelist",
+    "edgemarkerlist",
+    "holelist",
+    "neighborlist",
+    "normlist",
+    "numberofcorners",
+    "numberofedges",
+    "numberofholes",
+    "numberofpointattributes",
+    "numberofpoints",
+    "numberofregions",
+    "numberofsegments",
+    "numberoftriangleattributes",
+    "numberoftriangles",
+    "pointattributelist",
+    "pointlist",
+    "pointmarkerlist",
+    "regionlist",
+    "segmentlist",
+    "segmentmarkerlist",
+    "trianglearealist",
+    "triangleattributelist",
+    "trianglelist"
+  ],
+  "files.associations": {
+    "*.C": "cpp",
+    "iterator": "cpp",
+    "random": "cpp"
+  }
+}
