@@ -19,11 +19,17 @@
     "pointlist",
     "pointmarkerlist",
     "regionlist",
+    "reportedges",
+    "reportneighbors",
+    "reportnorms",
+    "reportsegments",
+    "reporttriangles",
     "segmentlist",
     "segmentmarkerlist",
     "trianglearealist",
     "triangleattributelist",
-    "trianglelist"
+    "trianglelist",
+    "TRICALL"
   ],
   "files.associations": {
     "*.C": "cpp",

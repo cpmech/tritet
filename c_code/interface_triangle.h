@@ -12,6 +12,8 @@
 #undef ANSI_DECLARATORS
 #undef VOID
 
+#include "tricall_report.h"
+
 const int TRUE = 1;
 const int FALSE = 0;
 
@@ -216,6 +218,10 @@ void generate(struct ExtTriangle *triangle, int quiet, int quadratic, double glo
     // After triangulate (with -p switch), output.regionlist gets the content of input.regionlist and
     // output.holelist gets the content of input.holelist. Thus, these output variables must be set
     // to NULL in order to tell free_data to ignore them and avoid a double-free memory issue.
+
+    if (quiet == FALSE) {
+        report(&triangle->output, 1, 1, 0, 1, 0, 0);
+    }
 }
 
 int get_npoint(struct ExtTriangle *triangle) {
