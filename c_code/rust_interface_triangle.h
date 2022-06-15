@@ -182,4 +182,26 @@ void drop_triangle(struct ExtTriangle *triangle) {
     free(triangle);
 }
 
+void set_point(struct ExtTriangle *triangle, int index, double x, double y) {
+    triangle->generator.pointlist[index * 2] = x;
+    triangle->generator.pointlist[index * 2 + 1] = y;
+}
+
+void set_segment(struct ExtTriangle *triangle, int index, int left, int right) {
+    triangle->generator.pointlist[index * 2] = left;
+    triangle->generator.pointlist[index * 2 + 1] = right;
+}
+
+void set_region(struct ExtTriangle *triangle, int index, double x, double y, int attribute, double max_area) {
+    triangle->generator.regionlist[index * 4] = x;
+    triangle->generator.regionlist[index * 4 + 1] = y;
+    triangle->generator.regionlist[index * 4 + 2] = attribute;
+    triangle->generator.regionlist[index * 4 + 3] = max_area;
+}
+
+void set_hole(struct ExtTriangle *triangle, int index, double x, double y) {
+    triangle->generator.holelist[index * 2] = x;
+    triangle->generator.holelist[index * 2 + 1] = y;
+}
+
 #endif  // RUST_INTERFACE_TRIANGLE_H
