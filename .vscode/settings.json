@@ -5,6 +5,7 @@
     "holelist",
     "neighborlist",
     "normlist",
+    "ntriangle",
     "numberofcorners",
     "numberofedges",
     "numberofholes",

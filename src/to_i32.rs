@@ -1,24 +1,6 @@
 use std::convert::TryFrom;
 
 /// Converts number to i32
-///
-/// # Example
-///
-/// ```
-/// use russell_openblas::to_i32;
-/// use std::convert::TryFrom;
-/// let m = 3_usize;
-/// let x = vec![0.0; m];
-/// let m_i32 = to_i32(x.len());
-/// ```
-///
-/// # Note
-///
-/// Remember to import:
-///
-/// ```text
-/// use std::convert::TryFrom;
-/// ```
 #[inline]
 pub(crate) fn to_i32(num: usize) -> i32 {
     i32::try_from(num).unwrap()

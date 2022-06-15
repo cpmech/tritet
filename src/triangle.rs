@@ -22,6 +22,19 @@ extern "C" {
         max_area: f64,
     );
     fn set_hole(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64);
+    fn generate(
+        triangle: *mut ExtTriangle,
+        quiet: i32,
+        quadratic: i32,
+        global_max_area: f64,
+        global_min_angle: f64,
+    );
+    fn get_npoint(triangle: *mut ExtTriangle) -> i32;
+    fn get_ntriangle(triangle: *mut ExtTriangle) -> i32;
+    fn get_ncorner(triangle: *mut ExtTriangle) -> i32;
+    fn get_point_x(triangle: *mut ExtTriangle, index: i32) -> f64;
+    fn get_point_y(triangle: *mut ExtTriangle, index: i32) -> f64;
+    fn get_triangle_corner(triangle: *mut ExtTriangle, index: i32, corner: i32) -> i32;
 }
 
 pub struct Triangle {
@@ -136,6 +149,48 @@ impl Triangle {
         }
         Ok(self)
     }
+
+    pub fn generate(
+        &mut self,
+        quiet: bool,
+        quadratic: bool,
+        _global_max_area: Option<f64>,
+        _global_min_angle: Option<f64>,
+    ) {
+        unsafe {
+            generate(
+                self.ext_triangle,
+                if quiet { 1 } else { 0 },
+                if quadratic { 1 } else { 0 },
+                0.0, // global_max_area,
+                0.0, // global_min_angle,
+            )
+        }
+    }
+
+    pub fn get_npoint(&self) -> usize {
+        unsafe { get_npoint(self.ext_triangle) as usize }
+    }
+
+    pub fn get_ntriangle(&self) -> usize {
+        unsafe { get_ntriangle(self.ext_triangle) as usize }
+    }
+
+    pub fn get_ncorner(&self) -> usize {
+        unsafe { get_ncorner(self.ext_triangle) as usize }
+    }
+
+    pub fn get_point_x(&self, index: usize) -> f64 {
+        unsafe { get_point_x(self.ext_triangle, to_i32(index)) }
+    }
+
+    pub fn get_point_y(&self, index: usize) -> f64 {
+        unsafe { get_point_y(self.ext_triangle, to_i32(index)) }
+    }
+
+    pub fn get_triangle_corner(&self, index: usize, corner: usize) -> usize {
+        unsafe { get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize }
+    }
 }
 
 impl Drop for Triangle {
@@ -158,6 +213,24 @@ mod tests {
     fn new_works() -> Result<(), StrError> {
         let triangle = Triangle::new(3, 3, 0, 0)?;
         assert_eq!(triangle.ext_triangle.is_null(), false);
+        Ok(())
+    }
+
+    #[test]
+    fn generate_works() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(3, 3, 0, 0)?;
+        triangle
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 0.0, 1.0)?;
+        triangle
+            .set_segment(0, 0, 1)?
+            .set_segment(1, 1, 2)?
+            .set_segment(2, 2, 0)?;
+        triangle.generate(false, false, None, None);
+        println!("npoint = {}", triangle.get_npoint());
+        println!("ntriangle = {}", triangle.get_ntriangle());
+        println!("ncorner = {}", triangle.get_ncorner());
         Ok(())
     }
 }

@@ -1,5 +1,5 @@
-#ifndef RUST_INTERFACE_TRIANGLE_H
-#define RUST_INTERFACE_TRIANGLE_H
+#ifndef INTERFACE_TRIANGLE_H
+#define INTERFACE_TRIANGLE_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,163 +12,160 @@
 #undef ANSI_DECLARATORS
 #undef VOID
 
+const int TRUE = 1;
+const int FALSE = 0;
+
 struct ExtTriangle {
-    struct triangulateio generator;
+    struct triangulateio input;
+    struct triangulateio output;
 };
 
-void set_all_null(struct triangulateio *generator) {
+void set_all_null(struct triangulateio *data) {
     // points
-    generator->pointlist = NULL;
-    generator->pointattributelist = NULL;
-    generator->pointmarkerlist = NULL;
-    generator->numberofpoints = 0;
-    generator->numberofpointattributes = 0;
+    data->pointlist = NULL;
+    data->pointattributelist = NULL;
+    data->pointmarkerlist = NULL;
+    data->numberofpoints = 0;
+    data->numberofpointattributes = 0;
 
     // triangles
-    generator->trianglelist = NULL;
-    generator->triangleattributelist = NULL;
-    generator->trianglearealist = NULL;
-    generator->neighborlist = NULL;
-    generator->numberoftriangles = 0;
-    generator->numberofcorners = 0;
-    generator->numberoftriangleattributes = 0;
+    data->trianglelist = NULL;
+    data->triangleattributelist = NULL;
+    data->trianglearealist = NULL;
+    data->neighborlist = NULL;
+    data->numberoftriangles = 0;
+    data->numberofcorners = 0;
+    data->numberoftriangleattributes = 0;
 
     // segments
-    generator->segmentlist = NULL;
-    generator->segmentmarkerlist = NULL;
-    generator->numberofsegments = 0;
+    data->segmentlist = NULL;
+    data->segmentmarkerlist = NULL;
+    data->numberofsegments = 0;
 
     // holes
-    generator->holelist = NULL;
-    generator->numberofholes = 0;
+    data->holelist = NULL;
+    data->numberofholes = 0;
 
     // regions
-    generator->regionlist = NULL;
-    generator->numberofregions = 0;
+    data->regionlist = NULL;
+    data->numberofregions = 0;
 
     // edges
-    generator->edgelist = NULL;
-    generator->edgemarkerlist = NULL;
-    generator->normlist = NULL;
-    generator->numberofedges = 0;
+    data->edgelist = NULL;
+    data->edgemarkerlist = NULL;
+    data->normlist = NULL;
+    data->numberofedges = 0;
 }
 
-void free_generator(struct triangulateio *generator) {
+void free_data(struct triangulateio *data) {
     // Points
-    if (generator->pointlist != NULL) {
-        free(generator->pointlist);
+    if (data->pointlist != NULL) {
+        free(data->pointlist);
     }
-    if (generator->pointattributelist != NULL) {
-        free(generator->pointattributelist);
+    if (data->pointattributelist != NULL) {
+        free(data->pointattributelist);
     }
-    if (generator->pointmarkerlist != NULL) {
-        free(generator->pointmarkerlist);
+    if (data->pointmarkerlist != NULL) {
+        free(data->pointmarkerlist);
     }
 
     // Triangles
-    if (generator->trianglelist != NULL) {
-        free(generator->trianglelist);
+    if (data->trianglelist != NULL) {
+        free(data->trianglelist);
     }
-    if (generator->triangleattributelist != NULL) {
-        free(generator->triangleattributelist);
+    if (data->triangleattributelist != NULL) {
+        free(data->triangleattributelist);
     }
-    if (generator->trianglearealist != NULL) {
-        free(generator->trianglearealist);
+    if (data->trianglearealist != NULL) {
+        free(data->trianglearealist);
     }
-    if (generator->neighborlist != NULL) {
-        free(generator->neighborlist);
+    if (data->neighborlist != NULL) {
+        free(data->neighborlist);
     }
 
     // Segments
-    if (generator->segmentlist != NULL) {
-        free(generator->segmentlist);
+    if (data->segmentlist != NULL) {
+        free(data->segmentlist);
     }
-    if (generator->segmentmarkerlist != NULL) {
-        free(generator->segmentmarkerlist);
+    if (data->segmentmarkerlist != NULL) {
+        free(data->segmentmarkerlist);
     }
 
     // Holes
-    if (generator->holelist != NULL) {
-        free(generator->holelist);
+    if (data->holelist != NULL) {
+        free(data->holelist);
     }
 
     // Regions
-    if (generator->regionlist != NULL) {
-        free(generator->regionlist);
+    if (data->regionlist != NULL) {
+        free(data->regionlist);
     }
 
     // Edges
-    if (generator->edgelist != NULL) {
-        free(generator->edgelist);
+    if (data->edgelist != NULL) {
+        free(data->edgelist);
     }
-    if (generator->edgemarkerlist != NULL) {
-        free(generator->edgemarkerlist);
+    if (data->edgemarkerlist != NULL) {
+        free(data->edgemarkerlist);
     }
-    if (generator->normlist != NULL) {
-        free(generator->normlist);
+    if (data->normlist != NULL) {
+        free(data->normlist);
     }
 
-    set_all_null(generator);
+    set_all_null(data);
 }
 
 struct ExtTriangle *new_triangle(int npoint, int nsegment, int nregion, int nhole) {
-    if (npoint < 3) {
-        return NULL;
-    }
-
-    if (nsegment < 3) {
-        return NULL;
-    }
-
+    // triangle
     struct ExtTriangle *triangle = (struct ExtTriangle *)malloc(sizeof(struct ExtTriangle));
-
     if (triangle == NULL) {
         return NULL;
     }
-    set_all_null(&triangle->generator);
+    set_all_null(&triangle->input);
+    set_all_null(&triangle->output);
 
     // points
-    triangle->generator.pointlist = (double *)malloc(npoint * 2 * sizeof(double));
-    if (triangle->generator.pointlist == NULL) {
+    triangle->input.pointlist = (double *)malloc(npoint * 2 * sizeof(double));
+    if (triangle->input.pointlist == NULL) {
         free(triangle);
         return NULL;
     }
-    triangle->generator.numberofpoints = npoint;
+    triangle->input.numberofpoints = npoint;
 
     // segments
-    triangle->generator.segmentlist = (int *)malloc(nsegment * 2 * sizeof(int));
-    if (triangle->generator.segmentlist == NULL) {
-        free(triangle->generator.pointlist);
+    triangle->input.segmentlist = (int *)malloc(nsegment * 2 * sizeof(int));
+    if (triangle->input.segmentlist == NULL) {
+        free(triangle->input.pointlist);
         free(triangle);
         return NULL;
     }
-    triangle->generator.numberofsegments = nsegment;
+    triangle->input.numberofsegments = nsegment;
 
     // regions
     if (nregion > 0) {
-        triangle->generator.regionlist = (double *)malloc(nregion * 4 * sizeof(double));
-        if (triangle->generator.regionlist == NULL) {
-            free(triangle->generator.segmentlist);
-            free(triangle->generator.pointlist);
+        triangle->input.regionlist = (double *)malloc(nregion * 4 * sizeof(double));
+        if (triangle->input.regionlist == NULL) {
+            free(triangle->input.segmentlist);
+            free(triangle->input.pointlist);
             free(triangle);
             return NULL;
         }
-        triangle->generator.numberofregions = nregion;
+        triangle->input.numberofregions = nregion;
     }
 
     // holes
     if (nhole > 0) {
-        triangle->generator.holelist = (double *)malloc(nhole * 2 * sizeof(double));
-        if (triangle->generator.holelist == NULL) {
-            if (triangle->generator.regionlist != NULL) {
-                free(triangle->generator.regionlist);
+        triangle->input.holelist = (double *)malloc(nhole * 2 * sizeof(double));
+        if (triangle->input.holelist == NULL) {
+            if (triangle->input.regionlist != NULL) {
+                free(triangle->input.regionlist);
             }
-            free(triangle->generator.segmentlist);
-            free(triangle->generator.pointlist);
+            free(triangle->input.segmentlist);
+            free(triangle->input.pointlist);
             free(triangle);
             return NULL;
         }
-        triangle->generator.numberofholes = nhole;
+        triangle->input.numberofholes = nhole;
     }
 
     return triangle;
@@ -178,30 +175,71 @@ void drop_triangle(struct ExtTriangle *triangle) {
     if (triangle == NULL) {
         return;
     }
-    free_generator(&triangle->generator);
+    free_data(&triangle->input);
+    free_data(&triangle->output);
     free(triangle);
 }
 
 void set_point(struct ExtTriangle *triangle, int index, double x, double y) {
-    triangle->generator.pointlist[index * 2] = x;
-    triangle->generator.pointlist[index * 2 + 1] = y;
+    triangle->input.pointlist[index * 2] = x;
+    triangle->input.pointlist[index * 2 + 1] = y;
 }
 
 void set_segment(struct ExtTriangle *triangle, int index, int left, int right) {
-    triangle->generator.pointlist[index * 2] = left;
-    triangle->generator.pointlist[index * 2 + 1] = right;
+    triangle->input.pointlist[index * 2] = left;
+    triangle->input.pointlist[index * 2 + 1] = right;
 }
 
 void set_region(struct ExtTriangle *triangle, int index, double x, double y, int attribute, double max_area) {
-    triangle->generator.regionlist[index * 4] = x;
-    triangle->generator.regionlist[index * 4 + 1] = y;
-    triangle->generator.regionlist[index * 4 + 2] = attribute;
-    triangle->generator.regionlist[index * 4 + 3] = max_area;
+    triangle->input.regionlist[index * 4] = x;
+    triangle->input.regionlist[index * 4 + 1] = y;
+    triangle->input.regionlist[index * 4 + 2] = attribute;
+    triangle->input.regionlist[index * 4 + 3] = max_area;
 }
 
 void set_hole(struct ExtTriangle *triangle, int index, double x, double y) {
-    triangle->generator.holelist[index * 2] = x;
-    triangle->generator.holelist[index * 2 + 1] = y;
+    triangle->input.holelist[index * 2] = x;
+    triangle->input.holelist[index * 2 + 1] = y;
 }
 
-#endif  // RUST_INTERFACE_TRIANGLE_H
+void generate(struct ExtTriangle *triangle, int quiet, int quadratic, double global_max_area, double global_min_angle) {
+    // Triangulate the points
+    // Switches:
+    // * `p` -- write a PSLG (p)
+    // * `c` -- preserve the convex hull (c)
+    // * `z` -- number everything from zero (z)
+    // * `A` -- assign a regional attribute to each element (A)
+    if (quiet == TRUE) {
+        // todo
+    }
+    triangulate("pczA", &triangle->input, &triangle->output, NULL);
+    // After triangulate (with -p switch), output.regionlist gets the content of input.regionlist and
+    // output.holelist gets the content of input.holelist. Thus, these output variables must be set
+    // to NULL in order to tell free_data to ignore them and avoid a double-free memory issue.
+}
+
+int get_npoint(struct ExtTriangle *triangle) {
+    return triangle->output.numberofpoints;
+}
+
+int get_ntriangle(struct ExtTriangle *triangle) {
+    return triangle->output.numberoftriangles;
+}
+
+int get_ncorner(struct ExtTriangle *triangle) {
+    return triangle->output.numberofcorners;
+}
+
+double get_point_x(struct ExtTriangle *triangle, int index) {
+    return triangle->output.pointlist[index * 2];
+}
+
+double get_point_y(struct ExtTriangle *triangle, int index) {
+    return triangle->output.pointlist[index * 2 + 1];
+}
+
+int get_triangle_corner(struct ExtTriangle *triangle, int index, int corner) {
+    return triangle->output.trianglelist[index * triangle->output.numberofcorners + corner];
+}
+
+#endif  // INTERFACE_TRIANGLE_H

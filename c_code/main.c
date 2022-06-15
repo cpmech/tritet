@@ -1,1 +1,1 @@
-#include "rust_interface_triangle.h"
+#include "interface_triangle.h"
