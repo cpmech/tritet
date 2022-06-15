@@ -228,9 +228,18 @@ mod tests {
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
         triangle.generate(false, false, None, None);
-        println!("npoint = {}", triangle.get_npoint());
-        println!("ntriangle = {}", triangle.get_ntriangle());
-        println!("ncorner = {}", triangle.get_ncorner());
+        assert_eq!(triangle.get_npoint(), 3);
+        assert_eq!(triangle.get_ntriangle(), 1);
+        assert_eq!(triangle.get_ncorner(), 3);
+        assert_eq!(triangle.get_point_x(0), 0.0);
+        assert_eq!(triangle.get_point_y(0), 0.0);
+        assert_eq!(triangle.get_point_x(1), 1.0);
+        assert_eq!(triangle.get_point_y(1), 0.0);
+        assert_eq!(triangle.get_point_x(2), 0.0);
+        assert_eq!(triangle.get_point_y(2), 1.0);
+        assert_eq!(triangle.get_triangle_corner(0, 0), 0);
+        assert_eq!(triangle.get_triangle_corner(0, 1), 1);
+        assert_eq!(triangle.get_triangle_corner(0, 2), 2);
         Ok(())
     }
 }
