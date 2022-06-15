@@ -16,96 +16,96 @@ struct ExtTriangle {
     struct triangulateio generator;
 };
 
-inline void set_all_null(struct triangulateio &generator) {
+void set_all_null(struct triangulateio *generator) {
     // points
-    generator.pointlist = NULL;
-    generator.pointattributelist = NULL;
-    generator.pointmarkerlist = NULL;
-    generator.numberofpoints = 0;
-    generator.numberofpointattributes = 0;
+    generator->pointlist = NULL;
+    generator->pointattributelist = NULL;
+    generator->pointmarkerlist = NULL;
+    generator->numberofpoints = 0;
+    generator->numberofpointattributes = 0;
 
     // triangles
-    generator.trianglelist = NULL;
-    generator.triangleattributelist = NULL;
-    generator.trianglearealist = NULL;
-    generator.neighborlist = NULL;
-    generator.numberoftriangles = 0;
-    generator.numberofcorners = 0;
-    generator.numberoftriangleattributes = 0;
+    generator->trianglelist = NULL;
+    generator->triangleattributelist = NULL;
+    generator->trianglearealist = NULL;
+    generator->neighborlist = NULL;
+    generator->numberoftriangles = 0;
+    generator->numberofcorners = 0;
+    generator->numberoftriangleattributes = 0;
 
     // segments
-    generator.segmentlist = NULL;
-    generator.segmentmarkerlist = NULL;
-    generator.numberofsegments = 0;
+    generator->segmentlist = NULL;
+    generator->segmentmarkerlist = NULL;
+    generator->numberofsegments = 0;
 
     // holes
-    generator.holelist = NULL;
-    generator.numberofholes = 0;
+    generator->holelist = NULL;
+    generator->numberofholes = 0;
 
     // regions
-    generator.regionlist = NULL;
-    generator.numberofregions = 0;
+    generator->regionlist = NULL;
+    generator->numberofregions = 0;
 
     // edges
-    generator.edgelist = NULL;
-    generator.edgemarkerlist = NULL;
-    generator.normlist = NULL;
-    generator.numberofedges = 0;
+    generator->edgelist = NULL;
+    generator->edgemarkerlist = NULL;
+    generator->normlist = NULL;
+    generator->numberofedges = 0;
 }
 
-inline void free_generator(struct triangulateio &generator) {
+void free_generator(struct triangulateio *generator) {
     // Points
-    if (generator.pointlist != NULL) {
-        free(generator.pointlist);
+    if (generator->pointlist != NULL) {
+        free(generator->pointlist);
     }
-    if (generator.pointattributelist != NULL) {
-        free(generator.pointattributelist);
+    if (generator->pointattributelist != NULL) {
+        free(generator->pointattributelist);
     }
-    if (generator.pointmarkerlist != NULL) {
-        free(generator.pointmarkerlist);
+    if (generator->pointmarkerlist != NULL) {
+        free(generator->pointmarkerlist);
     }
 
     // Triangles
-    if (generator.trianglelist != NULL) {
-        free(generator.trianglelist);
+    if (generator->trianglelist != NULL) {
+        free(generator->trianglelist);
     }
-    if (generator.triangleattributelist != NULL) {
-        free(generator.triangleattributelist);
+    if (generator->triangleattributelist != NULL) {
+        free(generator->triangleattributelist);
     }
-    if (generator.trianglearealist != NULL) {
-        free(generator.trianglearealist);
+    if (generator->trianglearealist != NULL) {
+        free(generator->trianglearealist);
     }
-    if (generator.neighborlist != NULL) {
-        free(generator.neighborlist);
+    if (generator->neighborlist != NULL) {
+        free(generator->neighborlist);
     }
 
     // Segments
-    if (generator.segmentlist != NULL) {
-        free(generator.segmentlist);
+    if (generator->segmentlist != NULL) {
+        free(generator->segmentlist);
     }
-    if (generator.segmentmarkerlist != NULL) {
-        free(generator.segmentmarkerlist);
+    if (generator->segmentmarkerlist != NULL) {
+        free(generator->segmentmarkerlist);
     }
 
     // Holes
-    if (generator.holelist != NULL) {
-        free(generator.holelist);
+    if (generator->holelist != NULL) {
+        free(generator->holelist);
     }
 
     // Regions
-    if (generator.regionlist != NULL) {
-        free(generator.regionlist);
+    if (generator->regionlist != NULL) {
+        free(generator->regionlist);
     }
 
     // Edges
-    if (generator.edgelist != NULL) {
-        free(generator.edgelist);
+    if (generator->edgelist != NULL) {
+        free(generator->edgelist);
     }
-    if (generator.edgemarkerlist != NULL) {
-        free(generator.edgemarkerlist);
+    if (generator->edgemarkerlist != NULL) {
+        free(generator->edgemarkerlist);
     }
-    if (generator.normlist != NULL) {
-        free(generator.normlist);
+    if (generator->normlist != NULL) {
+        free(generator->normlist);
     }
 
     set_all_null(generator);
@@ -125,7 +125,7 @@ struct ExtTriangle *new_triangle(int npoint, int nsegment, int nregion, int nhol
     if (triangle == NULL) {
         return NULL;
     }
-    set_all_null(triangle->generator);
+    set_all_null(&triangle->generator);
 
     // points
     triangle->generator.pointlist = (double *)malloc(npoint * 2 * sizeof(double));
@@ -178,7 +178,7 @@ void drop_triangle(struct ExtTriangle *triangle) {
     if (triangle == NULL) {
         return;
     }
-    free_generator(triangle->generator);
+    free_generator(&triangle->generator);
     free(triangle);
 }
 
