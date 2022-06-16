@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define REAL double
 #define ANSI_DECLARATORS
@@ -204,17 +205,40 @@ void set_hole(struct ExtTriangle *triangle, int index, double x, double y) {
     triangle->input.holelist[index * 2 + 1] = y;
 }
 
-void generate(struct ExtTriangle *triangle, int quiet, int quadratic, double global_max_area, double global_min_angle) {
+void generate(struct ExtTriangle *triangle, int verbose, int quadratic, double global_max_area, double global_min_angle) {
     // Triangulate the points
     // Switches:
     // * `p` -- write a PSLG (p)
     // * `c` -- preserve the convex hull (c)
     // * `z` -- number everything from zero (z)
     // * `A` -- assign a regional attribute to each element (A)
-    if (quiet == TRUE) {
-        // todo
+    char command[128];
+    strcpy(command, "pzA");
+    if (verbose == FALSE) {
+        strcat(command, "Q");
     }
-    triangulate("pczA", &triangle->input, &triangle->output, NULL);
+    if (quadratic == TRUE) {
+        strcat(command, "o2");
+    }
+    if (global_max_area > 0.0) {
+        char buf[32];
+        int n = snprintf(buf, 32, "a%.15f", global_max_area);
+        if (n >= 32) {
+            return;
+        }
+        strcat(command, buf);
+    }
+    if (global_min_angle > 0.0) {
+        char buf[32];
+        int n = snprintf(buf, 32, "q%.15f", global_min_angle);
+        if (n >= 32) {
+            return;
+        }
+        strcat(command, buf);
+    } else {
+        strcat(command, "q");
+    }
+    triangulate(command, &triangle->input, &triangle->output, NULL);
 
     // After triangulate (with -p switch), output.regionlist gets the content of input.regionlist and
     // output.holelist gets the content of input.holelist. Thus, these output variables must be set
@@ -222,7 +246,7 @@ void generate(struct ExtTriangle *triangle, int quiet, int quadratic, double glo
     triangle->output.regionlist = NULL;
     triangle->output.holelist = NULL;
 
-    if (quiet == FALSE) {
+    if (verbose == TRUE) {
         report(&triangle->output, 1, 1, 0, 1, 0, 0);
     }
 }

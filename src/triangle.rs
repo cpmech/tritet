@@ -24,7 +24,7 @@ extern "C" {
     fn set_hole(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64);
     fn generate(
         triangle: *mut ExtTriangle,
-        quiet: i32,
+        verbose: i32,
         quadratic: i32,
         global_max_area: f64,
         global_min_angle: f64,
@@ -150,20 +150,29 @@ impl Triangle {
         Ok(self)
     }
 
+    // The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
     pub fn generate(
         &mut self,
-        quiet: bool,
+        verbose: bool,
         quadratic: bool,
-        _global_max_area: Option<f64>,
-        _global_min_angle: Option<f64>,
+        global_max_area: Option<f64>,
+        global_min_angle: Option<f64>,
     ) {
+        let max_area = match global_max_area {
+            Some(v) => v,
+            None => 0.0,
+        };
+        let min_angle = match global_min_angle {
+            Some(v) => v,
+            None => 0.0,
+        };
         unsafe {
             generate(
                 self.ext_triangle,
-                if quiet { 1 } else { 0 },
+                if verbose { 1 } else { 0 },
                 if quadratic { 1 } else { 0 },
-                0.0, // global_max_area,
-                0.0, // global_min_angle,
+                max_area,
+                min_angle,
             )
         }
     }
@@ -217,7 +226,7 @@ mod tests {
     }
 
     #[test]
-    fn generate_works() -> Result<(), StrError> {
+    fn generate_1_works() -> Result<(), StrError> {
         let mut triangle = Triangle::new(3, 3, 0, 0)?;
         triangle
             .set_point(0, 0.0, 0.0)?
@@ -240,6 +249,24 @@ mod tests {
         assert_eq!(triangle.get_triangle_corner(0, 0), 0);
         assert_eq!(triangle.get_triangle_corner(0, 1), 1);
         assert_eq!(triangle.get_triangle_corner(0, 2), 2);
+        Ok(())
+    }
+
+    #[test]
+    fn generate_2_works() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(3, 3, 0, 0)?;
+        triangle
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 0.0, 1.0)?;
+        triangle
+            .set_segment(0, 0, 1)?
+            .set_segment(1, 1, 2)?
+            .set_segment(2, 2, 0)?;
+        triangle.generate(false, true, Some(0.1), Some(20.0));
+        assert_eq!(triangle.get_npoint(), 22);
+        assert_eq!(triangle.get_ntriangle(), 7);
+        assert_eq!(triangle.get_ncorner(), 6);
         Ok(())
     }
 }
