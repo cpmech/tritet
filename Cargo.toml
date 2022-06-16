@@ -2,8 +2,14 @@
 name = "tritet"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+description = "Triangle and tetrahedron mesh generators"
+homepage = "https://github.com/cpmech/tritet"
+repository = "https://github.com/cpmech/tritet"
+documentation = "https://docs.rs/tritet"
+readme = "README.md"
+categories = ["mathematics", "science"]
+keywords = ["2D", "3D", "mesh", "geometry"]
 
 [dependencies]
 
