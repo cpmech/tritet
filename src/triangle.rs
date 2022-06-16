@@ -23,7 +23,8 @@ extern "C" {
         max_area: f64,
     ) -> i32;
     fn set_hole(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
-    fn mesh(
+    fn run_delaunay(triangle: *mut ExtTriangle, verbose: i32) -> i32;
+    fn run_triangulate(
         triangle: *mut ExtTriangle,
         verbose: i32,
         quadratic: i32,
@@ -174,6 +175,22 @@ impl Triangle {
         Ok(self)
     }
 
+    pub fn delaunay(&self, verbose: bool) -> Result<(), StrError> {
+        unsafe {
+            let status = run_delaunay(self.ext_triangle, if verbose { 1 } else { 0 });
+            if status != constants::TRITET_SUCCESS {
+                if status == constants::TRITET_ERROR_NULL_DATA {
+                    return Err("INTERNAL ERROR: Found NULL data");
+                }
+                if status == constants::TRITET_ERROR_NULL_POINT_LIST {
+                    return Err("INTERNAL ERROR: Found NULL point list");
+                }
+                return Err("INTERNAL ERROR: Some error occurred");
+            }
+        }
+        Ok(())
+    }
+
     // The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
     pub fn mesh(
         &mut self,
@@ -191,7 +208,7 @@ impl Triangle {
             None => 0.0,
         };
         unsafe {
-            let status = mesh(
+            let status = run_triangulate(
                 self.ext_triangle,
                 if verbose { 1 } else { 0 },
                 if quadratic { 1 } else { 0 },
@@ -205,14 +222,13 @@ impl Triangle {
                 if status == constants::TRITET_ERROR_NULL_POINT_LIST {
                     return Err("INTERNAL ERROR: Found NULL point list");
                 }
+                if status == constants::TRITET_ERROR_NULL_SEGMENT_LIST {
+                    return Err("List of segments must be defined first");
+                }
                 return Err("INTERNAL ERROR: Some error occurred");
             }
         }
         Ok(())
-    }
-
-    pub fn delaunay(&self) {
-        // todo
     }
 
     pub fn get_npoint(&self) -> usize {
@@ -264,7 +280,30 @@ mod tests {
     }
 
     #[test]
-    fn generate_1_works() -> Result<(), StrError> {
+    fn delaunay_1_works() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(15, None, None, None)?;
+        triangle
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, -0.416, 0.909)?
+            .set_point(2, -1.35, 0.436)?
+            .set_point(3, -1.64, -0.549)?
+            .set_point(4, -1.31, -1.51)?
+            .set_point(5, -0.532, -2.17)?
+            .set_point(6, 0.454, -2.41)?
+            .set_point(7, 1.45, -2.21)?
+            .set_point(8, 2.29, -1.66)?
+            .set_point(9, 2.88, -0.838)?
+            .set_point(10, 3.16, 0.131)?
+            .set_point(11, 3.12, 1.14)?
+            .set_point(12, 2.77, 2.08)?
+            .set_point(13, 2.16, 2.89)?
+            .set_point(14, 1.36, 3.49)?;
+        triangle.delaunay(true)?;
+        Ok(())
+    }
+
+    #[test]
+    fn mesh_1_works() -> Result<(), StrError> {
         let mut triangle = Triangle::new(3, Some(3), None, None)?;
         triangle
             .set_point(0, 0.0, 0.0)?
@@ -291,7 +330,7 @@ mod tests {
     }
 
     #[test]
-    fn generate_2_works() -> Result<(), StrError> {
+    fn mesh_2_works() -> Result<(), StrError> {
         let mut triangle = Triangle::new(3, Some(3), None, None)?;
         triangle
             .set_point(0, 0.0, 0.0)?

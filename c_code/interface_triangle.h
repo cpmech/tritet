@@ -252,7 +252,37 @@ int set_hole(struct ExtTriangle *triangle, int index, double x, double y) {
     return TRITET_SUCCESS;
 }
 
-int mesh(struct ExtTriangle *triangle, int verbose, int quadratic, double global_max_area, double global_min_angle) {
+int run_delaunay(struct ExtTriangle *triangle, int verbose) {
+    if (triangle == NULL) {
+        return TRITET_ERROR_NULL_DATA;
+    }
+    if (triangle->input.pointlist == NULL) {
+        return TRITET_ERROR_NULL_POINT_LIST;
+    }
+
+    // Triangulate the points
+    // Switches:
+    // * `z` -- number everything from zero (z)
+    char command[10];
+    strcpy(command, "z");
+    if (verbose == TRITET_FALSE) {
+        strcat(command, "Q");
+    }
+    triangulate(command, &triangle->input, &triangle->output, NULL);
+
+    // After triangulate (with -p switch), output.regionlist gets the content of input.regionlist and
+    // output.holelist gets the content of input.holelist. Thus, these output variables must be set
+    // to NULL in order to tell free_data to ignore them and avoid a double-free memory issue.
+    triangle->output.regionlist = NULL;
+    triangle->output.holelist = NULL;
+
+    if (verbose == TRITET_TRUE) {
+        report(&triangle->output, 1, 1, 0, 0, 0, 0);
+    }
+    return TRITET_SUCCESS;
+}
+
+int run_triangulate(struct ExtTriangle *triangle, int verbose, int quadratic, double global_max_area, double global_min_angle) {
     if (triangle == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -263,10 +293,9 @@ int mesh(struct ExtTriangle *triangle, int verbose, int quadratic, double global
         return TRITET_ERROR_NULL_SEGMENT_LIST;
     }
 
-    // Triangulate the points
+    // Generate mesh
     // Switches:
     // * `p` -- write a PSLG (p)
-    // * `c` -- preserve the convex hull (c)
     // * `z` -- number everything from zero (z)
     // * `A` -- assign a regional attribute to each element (A)
     char command[128];
@@ -304,7 +333,7 @@ int mesh(struct ExtTriangle *triangle, int verbose, int quadratic, double global
     triangle->output.holelist = NULL;
 
     if (verbose == TRITET_TRUE) {
-        report(&triangle->output, 1, 1, 0, 1, 0, 0);
+        report(&triangle->output, 1, 1, 0, 0, 0, 0);
     }
     return TRITET_SUCCESS;
 }
