@@ -215,9 +215,12 @@ void generate(struct ExtTriangle *triangle, int quiet, int quadratic, double glo
         // todo
     }
     triangulate("pczA", &triangle->input, &triangle->output, NULL);
+
     // After triangulate (with -p switch), output.regionlist gets the content of input.regionlist and
     // output.holelist gets the content of input.holelist. Thus, these output variables must be set
     // to NULL in order to tell free_data to ignore them and avoid a double-free memory issue.
+    triangle->output.regionlist = NULL;
+    triangle->output.holelist = NULL;
 
     if (quiet == FALSE) {
         report(&triangle->output, 1, 1, 0, 1, 0, 0);
