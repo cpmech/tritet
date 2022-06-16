@@ -208,7 +208,7 @@ int set_point(struct ExtTriangle *triangle, int index, double x, double y) {
     return TRITET_SUCCESS;
 }
 
-int set_segment(struct ExtTriangle *triangle, int index, int left, int right) {
+int set_segment(struct ExtTriangle *triangle, int index, int a, int b) {
     if (triangle == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -218,8 +218,8 @@ int set_segment(struct ExtTriangle *triangle, int index, int left, int right) {
     if (index >= triangle->input.numberofsegments) {
         return TRITET_ERROR_INVALID_SEGMENT_INDEX;
     }
-    triangle->input.segmentlist[index * 2] = left;
-    triangle->input.segmentlist[index * 2 + 1] = right;
+    triangle->input.segmentlist[index * 2] = a;
+    triangle->input.segmentlist[index * 2 + 1] = b;
     return TRITET_SUCCESS;
 }
 

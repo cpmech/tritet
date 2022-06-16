@@ -13,7 +13,7 @@ extern "C" {
     fn new_triangle(npoint: i32, nsegment: i32, nregion: i32, nhole: i32) -> *mut ExtTriangle;
     fn drop_triangle(triangle: *mut ExtTriangle);
     fn set_point(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
-    fn set_segment(triangle: *mut ExtTriangle, index: i32, left: i32, right: i32) -> i32;
+    fn set_segment(triangle: *mut ExtTriangle, index: i32, a: i32, b: i32) -> i32;
     fn set_region(
         triangle: *mut ExtTriangle,
         index: i32,
@@ -48,8 +48,25 @@ extern "C" {
     fn get_voronoi_edge_point_b_direction_y(triangle: *mut ExtTriangle, index: i32) -> f64;
 }
 
+#[derive(Clone, Debug)]
+pub enum VoronoiEdgePointB {
+    /// The index of point B
+    Index(usize),
+
+    /// The direction of the infinite ray
+    Direction(f64, f64),
+}
+
 pub struct Triangle {
     ext_triangle: *mut ExtTriangle, // data allocated by the c-code
+    npoint: usize,                  // number of points
+    nsegment: Option<usize>,        // number of segments
+    nregion: Option<usize>,         // number of regions
+    nhole: Option<usize>,           // number of holes
+    all_points_set: bool,           // indicates that all points have been set
+    all_segments_set: bool,         // indicates that all segments have been set
+    all_regions_set: bool,          // indicates that all regions have been set
+    all_holes_set: bool,            // indicates that all holes have been set
 }
 
 impl Triangle {
@@ -80,7 +97,17 @@ impl Triangle {
             if ext_triangle.is_null() {
                 return Err("INTERNAL ERROR: Cannot allocate ExtTriangle");
             }
-            Ok(Triangle { ext_triangle })
+            Ok(Triangle {
+                ext_triangle,
+                npoint,
+                nsegment,
+                nregion,
+                nhole,
+                all_points_set: false,
+                all_segments_set: false,
+                all_regions_set: false,
+                all_holes_set: false,
+            })
         }
     }
 
@@ -100,22 +127,21 @@ impl Triangle {
                 return Err("INTERNAL ERROR: Some error occurred");
             }
         }
+        if index == self.npoint - 1 {
+            self.all_points_set = true;
+        } else {
+            self.all_points_set = false;
+        }
         Ok(self)
     }
 
-    pub fn set_segment(
-        &mut self,
-        index: usize,
-        left: usize,
-        right: usize,
-    ) -> Result<&mut Self, StrError> {
+    pub fn set_segment(&mut self, index: usize, a: usize, b: usize) -> Result<&mut Self, StrError> {
+        let nsegment = match self.nsegment {
+            Some(n) => n,
+            None => return Err("The number of segments must not be None to set segment"),
+        };
         unsafe {
-            let status = set_segment(
-                self.ext_triangle,
-                to_i32(index),
-                to_i32(left),
-                to_i32(right),
-            );
+            let status = set_segment(self.ext_triangle, to_i32(index), to_i32(a), to_i32(b));
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: Found NULL data");
@@ -129,6 +155,11 @@ impl Triangle {
                 return Err("INTERNAL ERROR: Some error occurred");
             }
         }
+        if index == nsegment - 1 {
+            self.all_segments_set = true;
+        } else {
+            self.all_segments_set = false;
+        }
         Ok(self)
     }
 
@@ -140,6 +171,10 @@ impl Triangle {
         attribute: usize,
         max_area: f64,
     ) -> Result<&mut Self, StrError> {
+        let nregion = match self.nregion {
+            Some(n) => n,
+            None => return Err("The number of regions must not be None to set region"),
+        };
         unsafe {
             let status = set_region(
                 self.ext_triangle,
@@ -162,10 +197,19 @@ impl Triangle {
                 return Err("INTERNAL ERROR: Some error occurred");
             }
         }
+        if index == nregion - 1 {
+            self.all_regions_set = true;
+        } else {
+            self.all_regions_set = false;
+        }
         Ok(self)
     }
 
     pub fn set_hole(&mut self, index: usize, x: f64, y: f64) -> Result<&mut Self, StrError> {
+        let nhole = match self.nhole {
+            Some(n) => n,
+            None => return Err("The number of holes must not be None to set hole"),
+        };
         unsafe {
             let status = set_hole(self.ext_triangle, to_i32(index), x, y);
             if status != constants::TRITET_SUCCESS {
@@ -181,10 +225,18 @@ impl Triangle {
                 return Err("INTERNAL ERROR: Some error occurred");
             }
         }
+        if index == nhole - 1 {
+            self.all_holes_set = true;
+        } else {
+            self.all_holes_set = false;
+        }
         Ok(self)
     }
 
     pub fn generate_delaunay(&self, verbose: bool) -> Result<(), StrError> {
+        if !self.all_points_set {
+            return Err("All points must be set to generate Delaunay triangulation");
+        }
         unsafe {
             let status = run_delaunay(self.ext_triangle, if verbose { 1 } else { 0 });
             if status != constants::TRITET_SUCCESS {
@@ -201,6 +253,9 @@ impl Triangle {
     }
 
     pub fn generate_voronoi(&self, verbose: bool) -> Result<(), StrError> {
+        if !self.all_points_set {
+            return Err("All points must be set to generate Voronoi tessellation");
+        }
         unsafe {
             let status = run_voronoi(self.ext_triangle, if verbose { 1 } else { 0 });
             if status != constants::TRITET_SUCCESS {
@@ -224,6 +279,12 @@ impl Triangle {
         global_max_area: Option<f64>,
         global_min_angle: Option<f64>,
     ) -> Result<(), StrError> {
+        if !self.all_points_set {
+            return Err("All points must be set to generate mesh");
+        }
+        if !self.all_segments_set {
+            return Err("All segments must be set to generate mesh");
+        }
         let max_area = match global_max_area {
             Some(v) => v,
             None => 0.0,
@@ -301,17 +362,20 @@ impl Triangle {
         unsafe { get_voronoi_nedge(self.ext_triangle) as usize }
     }
 
-    pub fn get_voronoi_edge(&self, index: usize) -> (usize, Option<usize>, Option<(f64, f64)>) {
+    pub fn get_voronoi_edge_point_a(&self, index: usize) -> usize {
+        unsafe { get_voronoi_edge_point_a(self.ext_triangle, to_i32(index)) as usize }
+    }
+
+    pub fn get_voronoi_edge_point_b(&self, index: usize) -> VoronoiEdgePointB {
         unsafe {
             let index_i32 = to_i32(index);
-            let a = get_voronoi_edge_point_a(self.ext_triangle, index_i32);
             let b = get_voronoi_edge_point_b(self.ext_triangle, index_i32);
             if b == -1 {
                 let x = get_voronoi_edge_point_b_direction_x(self.ext_triangle, index_i32);
                 let y = get_voronoi_edge_point_b_direction_y(self.ext_triangle, index_i32);
-                (a as usize, None, Some((x, y)))
+                VoronoiEdgePointB::Direction(x, y)
             } else {
-                (a as usize, Some(b as usize), None)
+                VoronoiEdgePointB::Index(b as usize)
             }
         }
     }
@@ -337,57 +401,74 @@ mod tests {
     fn new_works() -> Result<(), StrError> {
         let triangle = Triangle::new(3, Some(3), None, None)?;
         assert_eq!(triangle.ext_triangle.is_null(), false);
+        assert_eq!(triangle.npoint, 3);
+        assert_eq!(triangle.nsegment, Some(3));
+        assert_eq!(triangle.nregion, None);
+        assert_eq!(triangle.nhole, None);
+        assert_eq!(triangle.all_points_set, false);
+        assert_eq!(triangle.all_segments_set, false);
+        assert_eq!(triangle.all_regions_set, false);
+        assert_eq!(triangle.all_holes_set, false);
         Ok(())
     }
 
     #[test]
     fn delaunay_1_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(15, None, None, None)?;
+        let mut triangle = Triangle::new(3, None, None, None)?;
         triangle
             .set_point(0, 0.0, 0.0)?
-            .set_point(1, -0.416, 0.909)?
-            .set_point(2, -1.35, 0.436)?
-            .set_point(3, -1.64, -0.549)?
-            .set_point(4, -1.31, -1.51)?
-            .set_point(5, -0.532, -2.17)?
-            .set_point(6, 0.454, -2.41)?
-            .set_point(7, 1.45, -2.21)?
-            .set_point(8, 2.29, -1.66)?
-            .set_point(9, 2.88, -0.838)?
-            .set_point(10, 3.16, 0.131)?
-            .set_point(11, 3.12, 1.14)?
-            .set_point(12, 2.77, 2.08)?
-            .set_point(13, 2.16, 2.89)?
-            .set_point(14, 1.36, 3.49)?;
-        triangle.generate_delaunay(true)?;
-        assert_eq!(triangle.get_npoint(), 15);
-        assert_eq!(triangle.get_ntriangle(), 15);
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 0.0, 1.0)?;
+        triangle.generate_delaunay(false)?;
+        assert_eq!(triangle.get_npoint(), 3);
+        assert_eq!(triangle.get_ntriangle(), 1);
         assert_eq!(triangle.get_ncorner(), 3);
+        assert_eq!(triangle.get_point(0), (0.0, 0.0));
+        assert_eq!(triangle.get_point(1), (1.0, 0.0));
+        assert_eq!(triangle.get_point(2), (0.0, 1.0));
+        assert_eq!(triangle.get_triangle_corner(0, 0), 0);
+        assert_eq!(triangle.get_triangle_corner(0, 1), 1);
+        assert_eq!(triangle.get_triangle_corner(0, 2), 2);
+        assert_eq!(triangle.get_voronoi_npoint(), 0);
+        assert_eq!(triangle.get_voronoi_nedge(), 0);
         Ok(())
     }
 
     #[test]
     fn voronoi_1_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(15, None, None, None)?;
+        let mut triangle = Triangle::new(3, None, None, None)?;
         triangle
             .set_point(0, 0.0, 0.0)?
-            .set_point(1, -0.416, 0.909)?
-            .set_point(2, -1.35, 0.436)?
-            .set_point(3, -1.64, -0.549)?
-            .set_point(4, -1.31, -1.51)?
-            .set_point(5, -0.532, -2.17)?
-            .set_point(6, 0.454, -2.41)?
-            .set_point(7, 1.45, -2.21)?
-            .set_point(8, 2.29, -1.66)?
-            .set_point(9, 2.88, -0.838)?
-            .set_point(10, 3.16, 0.131)?
-            .set_point(11, 3.12, 1.14)?
-            .set_point(12, 2.77, 2.08)?
-            .set_point(13, 2.16, 2.89)?
-            .set_point(14, 1.36, 3.49)?;
-        triangle.generate_voronoi(true)?;
-        assert_eq!(triangle.get_npoint(), 15);
-        assert_eq!(triangle.get_ntriangle(), 15);
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 0.0, 1.0)?;
+        triangle.generate_voronoi(false)?;
+        assert_eq!(triangle.get_npoint(), 3);
+        assert_eq!(triangle.get_ntriangle(), 1);
+        assert_eq!(triangle.get_ncorner(), 3);
+        assert_eq!(triangle.get_point(0), (0.0, 0.0));
+        assert_eq!(triangle.get_point(1), (1.0, 0.0));
+        assert_eq!(triangle.get_point(2), (0.0, 1.0));
+        assert_eq!(triangle.get_triangle_corner(0, 0), 0);
+        assert_eq!(triangle.get_triangle_corner(0, 1), 1);
+        assert_eq!(triangle.get_triangle_corner(0, 2), 2);
+        assert_eq!(triangle.get_voronoi_npoint(), 1);
+        assert_eq!(triangle.get_voronoi_point(0), (0.5, 0.5));
+        assert_eq!(triangle.get_voronoi_nedge(), 3);
+        assert_eq!(triangle.get_voronoi_edge_point_a(0), 0);
+        assert_eq!(
+            format!("{:?}", triangle.get_voronoi_edge_point_b(0)),
+            "Direction(0.0, -1.0)"
+        );
+        assert_eq!(triangle.get_voronoi_edge_point_a(1), 0);
+        assert_eq!(
+            format!("{:?}", triangle.get_voronoi_edge_point_b(1)),
+            "Direction(1.0, 1.0)"
+        );
+        assert_eq!(triangle.get_voronoi_edge_point_a(2), 0);
+        assert_eq!(
+            format!("{:?}", triangle.get_voronoi_edge_point_b(2)),
+            "Direction(-1.0, 0.0)"
+        );
         Ok(())
     }
 
@@ -412,6 +493,8 @@ mod tests {
         assert_eq!(triangle.get_triangle_corner(0, 0), 0);
         assert_eq!(triangle.get_triangle_corner(0, 1), 1);
         assert_eq!(triangle.get_triangle_corner(0, 2), 2);
+        assert_eq!(triangle.get_voronoi_npoint(), 0);
+        assert_eq!(triangle.get_voronoi_nedge(), 0);
         Ok(())
     }
 
