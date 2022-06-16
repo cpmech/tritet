@@ -252,12 +252,15 @@ int set_hole(struct ExtTriangle *triangle, int index, double x, double y) {
     return TRITET_SUCCESS;
 }
 
-int generate(struct ExtTriangle *triangle, int verbose, int quadratic, double global_max_area, double global_min_angle) {
+int mesh(struct ExtTriangle *triangle, int verbose, int quadratic, double global_max_area, double global_min_angle) {
     if (triangle == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
     if (triangle->input.pointlist == NULL) {
         return TRITET_ERROR_NULL_POINT_LIST;
+    }
+    if (triangle->input.segmentlist == NULL) {
+        return TRITET_ERROR_NULL_SEGMENT_LIST;
     }
 
     // Triangulate the points

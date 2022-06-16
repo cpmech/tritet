@@ -23,7 +23,7 @@ extern "C" {
         max_area: f64,
     ) -> i32;
     fn set_hole(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
-    fn generate(
+    fn mesh(
         triangle: *mut ExtTriangle,
         verbose: i32,
         quadratic: i32,
@@ -175,7 +175,7 @@ impl Triangle {
     }
 
     // The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
-    pub fn generate(
+    pub fn mesh(
         &mut self,
         verbose: bool,
         quadratic: bool,
@@ -191,7 +191,7 @@ impl Triangle {
             None => 0.0,
         };
         unsafe {
-            let status = generate(
+            let status = mesh(
                 self.ext_triangle,
                 if verbose { 1 } else { 0 },
                 if quadratic { 1 } else { 0 },
@@ -274,7 +274,7 @@ mod tests {
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        triangle.generate(false, false, None, None)?;
+        triangle.mesh(false, false, None, None)?;
         assert_eq!(triangle.get_npoint(), 3);
         assert_eq!(triangle.get_ntriangle(), 1);
         assert_eq!(triangle.get_ncorner(), 3);
@@ -301,7 +301,7 @@ mod tests {
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        triangle.generate(false, true, Some(0.1), Some(20.0))?;
+        triangle.mesh(false, true, Some(0.1), Some(20.0))?;
         assert_eq!(triangle.get_npoint(), 22);
         assert_eq!(triangle.get_ntriangle(), 7);
         assert_eq!(triangle.get_ncorner(), 6);

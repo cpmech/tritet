@@ -11,7 +11,7 @@ fn main() -> Result<(), StrError> {
         .set_segment(0, 0, 1)?
         .set_segment(1, 1, 2)?
         .set_segment(2, 2, 0)?;
-    triangle.generate(false, false, None, None)?;
+    triangle.mesh(false, false, None, None)?;
     println!("Done\n");
     Ok(())
 }
