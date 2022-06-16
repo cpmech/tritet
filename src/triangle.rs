@@ -271,12 +271,13 @@ impl Triangle {
         unsafe { get_ncorner(self.ext_triangle) as usize }
     }
 
-    pub fn get_point_x(&self, index: usize) -> f64 {
-        unsafe { get_point_x(self.ext_triangle, to_i32(index)) }
-    }
-
-    pub fn get_point_y(&self, index: usize) -> f64 {
-        unsafe { get_point_y(self.ext_triangle, to_i32(index)) }
+    pub fn get_point(&self, index: usize) -> (f64, f64) {
+        unsafe {
+            let index_i32 = to_i32(index);
+            let x = get_point_x(self.ext_triangle, index_i32);
+            let y = get_point_y(self.ext_triangle, index_i32);
+            (x, y)
+        }
     }
 
     pub fn get_triangle_corner(&self, index: usize, corner: usize) -> usize {
@@ -361,6 +362,7 @@ mod tests {
         triangle.generate_delaunay(true)?;
         assert_eq!(triangle.get_npoint(), 15);
         assert_eq!(triangle.get_ntriangle(), 15);
+        assert_eq!(triangle.get_ncorner(), 3);
         Ok(())
     }
 
@@ -404,12 +406,9 @@ mod tests {
         assert_eq!(triangle.get_npoint(), 3);
         assert_eq!(triangle.get_ntriangle(), 1);
         assert_eq!(triangle.get_ncorner(), 3);
-        assert_eq!(triangle.get_point_x(0), 0.0);
-        assert_eq!(triangle.get_point_y(0), 0.0);
-        assert_eq!(triangle.get_point_x(1), 1.0);
-        assert_eq!(triangle.get_point_y(1), 0.0);
-        assert_eq!(triangle.get_point_x(2), 0.0);
-        assert_eq!(triangle.get_point_y(2), 1.0);
+        assert_eq!(triangle.get_point(0), (0.0, 0.0));
+        assert_eq!(triangle.get_point(1), (1.0, 0.0));
+        assert_eq!(triangle.get_point(2), (0.0, 1.0));
         assert_eq!(triangle.get_triangle_corner(0, 0), 0);
         assert_eq!(triangle.get_triangle_corner(0, 1), 1);
         assert_eq!(triangle.get_triangle_corner(0, 2), 2);
