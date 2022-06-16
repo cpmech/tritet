@@ -19,6 +19,7 @@
 struct ExtTriangle {
     struct triangulateio input;
     struct triangulateio output;
+    struct triangulateio voronoi;
 };
 
 void zero_triangle_data(struct triangulateio *data) {
@@ -136,6 +137,7 @@ struct ExtTriangle *new_triangle(int npoint, int nsegment, int nregion, int nhol
     }
     zero_triangle_data(&triangle->input);
     zero_triangle_data(&triangle->output);
+    zero_triangle_data(&triangle->voronoi);
 
     // points
     triangle->input.pointlist = (double *)malloc(npoint * 2 * sizeof(double));
@@ -187,6 +189,7 @@ void drop_triangle(struct ExtTriangle *triangle) {
     }
     free_triangle_data(&triangle->input);
     free_triangle_data(&triangle->output);
+    free_triangle_data(&triangle->voronoi);
     free(triangle);
 }
 
@@ -282,6 +285,37 @@ int run_delaunay(struct ExtTriangle *triangle, int verbose) {
     return TRITET_SUCCESS;
 }
 
+int run_voronoi(struct ExtTriangle *triangle, int verbose) {
+    if (triangle == NULL) {
+        return TRITET_ERROR_NULL_DATA;
+    }
+    if (triangle->input.pointlist == NULL) {
+        return TRITET_ERROR_NULL_POINT_LIST;
+    }
+
+    // Triangulate the points
+    // Switches:
+    // * `z` -- number everything from zero (z)
+    // * `v` -- Voronoi diagram
+    char command[10];
+    strcpy(command, "zv");
+    if (verbose == TRITET_FALSE) {
+        strcat(command, "Q");
+    }
+    triangulate(command, &triangle->input, &triangle->output, &triangle->voronoi);
+
+    // After triangulate (with -p switch), output.regionlist gets the content of input.regionlist and
+    // output.holelist gets the content of input.holelist. Thus, these output variables must be set
+    // to NULL in order to tell free_data to ignore them and avoid a double-free memory issue.
+    triangle->output.regionlist = NULL;
+    triangle->output.holelist = NULL;
+
+    if (verbose == TRITET_TRUE) {
+        report(&triangle->voronoi, 0, 0, 0, 0, 1, 1);
+    }
+    return TRITET_SUCCESS;
+}
+
 int run_triangulate(struct ExtTriangle *triangle, int verbose, int quadratic, double global_max_area, double global_min_angle) {
     if (triangle == NULL) {
         return TRITET_ERROR_NULL_DATA;
@@ -310,7 +344,7 @@ int run_triangulate(struct ExtTriangle *triangle, int verbose, int quadratic, do
         char buf[32];
         int n = snprintf(buf, 32, "a%.15f", global_max_area);
         if (n >= 32) {
-            return TRITET_STRING_CONCAT_ERROR;
+            return TRITET_ERROR_STRING_CONCAT;
         }
         strcat(command, buf);
     }
@@ -318,7 +352,7 @@ int run_triangulate(struct ExtTriangle *triangle, int verbose, int quadratic, do
         char buf[32];
         int n = snprintf(buf, 32, "q%.15f", global_min_angle);
         if (n >= 32) {
-            return TRITET_STRING_CONCAT_ERROR;
+            return TRITET_ERROR_STRING_CONCAT;
         }
         strcat(command, buf);
     } else {
@@ -371,6 +405,70 @@ int get_triangle_corner(struct ExtTriangle *triangle, int index, int corner) {
         return triangle->output.trianglelist[index * triangle->output.numberofcorners + corner];
     } else {
         return 0;
+    }
+}
+
+int get_voronoi_npoint(struct ExtTriangle *triangle) {
+    return triangle->voronoi.numberofpoints;
+}
+
+int get_voronoi_point_x(struct ExtTriangle *triangle, int index) {
+    if (index < triangle->voronoi.numberofpoints) {
+        return triangle->voronoi.pointlist[index * 2];
+    } else {
+        return 0.0;
+    }
+}
+
+int get_voronoi_point_y(struct ExtTriangle *triangle, int index) {
+    if (index < triangle->voronoi.numberofpoints) {
+        return triangle->voronoi.pointlist[index * 2 + 1];
+    } else {
+        return 0.0;
+    }
+}
+
+int get_voronoi_nedge(struct ExtTriangle *triangle) {
+    return triangle->voronoi.numberofedges;
+}
+
+int get_voronoi_edge_point_a(struct ExtTriangle *triangle, int index) {
+    if (index < triangle->voronoi.numberofedges) {
+        return triangle->voronoi.edgelist[index * 2];
+    } else {
+        return 0;
+    }
+}
+
+int get_voronoi_edge_point_b(struct ExtTriangle *triangle, int index) {
+    if (index < triangle->voronoi.numberofedges) {
+        return triangle->voronoi.edgelist[index * 2 + 1];
+    } else {
+        return 0;
+    }
+}
+
+double get_voronoi_edge_point_b_direction_x(struct ExtTriangle *triangle, int index) {
+    if (index < triangle->voronoi.numberofedges) {
+        if (triangle->voronoi.edgelist[index * 2 + 1] == -1) {
+            return triangle->voronoi.normlist[index * 2];
+        } else {
+            return 0.0;
+        }
+    } else {
+        return 0.0;
+    }
+}
+
+double get_voronoi_edge_point_b_direction_y(struct ExtTriangle *triangle, int index) {
+    if (index < triangle->voronoi.numberofedges) {
+        if (triangle->voronoi.edgelist[index * 2 + 1] == -1) {
+            return triangle->voronoi.normlist[index * 2 + 1];
+        } else {
+            return 0.0;
+        }
+    } else {
+        return 0.0;
     }
 }
 
