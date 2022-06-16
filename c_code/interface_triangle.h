@@ -13,17 +13,19 @@
 #undef ANSI_DECLARATORS
 #undef VOID
 
+#include "constants.h"
 #include "tricall_report.h"
-
-const int TRUE = 1;
-const int FALSE = 0;
 
 struct ExtTriangle {
     struct triangulateio input;
     struct triangulateio output;
 };
 
-void set_all_null(struct triangulateio *data) {
+void zero_triangle_data(struct triangulateio *data) {
+    if (data == NULL) {
+        return;
+    }
+
     // points
     data->pointlist = NULL;
     data->pointattributelist = NULL;
@@ -60,7 +62,11 @@ void set_all_null(struct triangulateio *data) {
     data->numberofedges = 0;
 }
 
-void free_data(struct triangulateio *data) {
+void free_triangle_data(struct triangulateio *data) {
+    if (data == NULL) {
+        return;
+    }
+
     // Points
     if (data->pointlist != NULL) {
         free(data->pointlist);
@@ -115,17 +121,21 @@ void free_data(struct triangulateio *data) {
         free(data->normlist);
     }
 
-    set_all_null(data);
+    zero_triangle_data(data);
 }
 
 struct ExtTriangle *new_triangle(int npoint, int nsegment, int nregion, int nhole) {
+    if (npoint < 3) {
+        return NULL;
+    }
+
     // triangle
     struct ExtTriangle *triangle = (struct ExtTriangle *)malloc(sizeof(struct ExtTriangle));
     if (triangle == NULL) {
         return NULL;
     }
-    set_all_null(&triangle->input);
-    set_all_null(&triangle->output);
+    zero_triangle_data(&triangle->input);
+    zero_triangle_data(&triangle->output);
 
     // points
     triangle->input.pointlist = (double *)malloc(npoint * 2 * sizeof(double));
@@ -136,20 +146,21 @@ struct ExtTriangle *new_triangle(int npoint, int nsegment, int nregion, int nhol
     triangle->input.numberofpoints = npoint;
 
     // segments
-    triangle->input.segmentlist = (int *)malloc(nsegment * 2 * sizeof(int));
-    if (triangle->input.segmentlist == NULL) {
-        free(triangle->input.pointlist);
-        free(triangle);
-        return NULL;
+    if (nsegment > 0) {
+        triangle->input.segmentlist = (int *)malloc(nsegment * 2 * sizeof(int));
+        if (triangle->input.segmentlist == NULL) {
+            free_triangle_data(&triangle->input);
+            free(triangle);
+            return NULL;
+        }
+        triangle->input.numberofsegments = nsegment;
     }
-    triangle->input.numberofsegments = nsegment;
 
     // regions
     if (nregion > 0) {
         triangle->input.regionlist = (double *)malloc(nregion * 4 * sizeof(double));
         if (triangle->input.regionlist == NULL) {
-            free(triangle->input.segmentlist);
-            free(triangle->input.pointlist);
+            free_triangle_data(&triangle->input);
             free(triangle);
             return NULL;
         }
@@ -160,11 +171,7 @@ struct ExtTriangle *new_triangle(int npoint, int nsegment, int nregion, int nhol
     if (nhole > 0) {
         triangle->input.holelist = (double *)malloc(nhole * 2 * sizeof(double));
         if (triangle->input.holelist == NULL) {
-            if (triangle->input.regionlist != NULL) {
-                free(triangle->input.regionlist);
-            }
-            free(triangle->input.segmentlist);
-            free(triangle->input.pointlist);
+            free_triangle_data(&triangle->input);
             free(triangle);
             return NULL;
         }
@@ -178,34 +185,81 @@ void drop_triangle(struct ExtTriangle *triangle) {
     if (triangle == NULL) {
         return;
     }
-    free_data(&triangle->input);
-    free_data(&triangle->output);
+    free_triangle_data(&triangle->input);
+    free_triangle_data(&triangle->output);
     free(triangle);
 }
 
-void set_point(struct ExtTriangle *triangle, int index, double x, double y) {
+int set_point(struct ExtTriangle *triangle, int index, double x, double y) {
+    if (triangle == NULL) {
+        return TRITET_ERROR_NULL_DATA;
+    }
+    if (triangle->input.pointlist == NULL) {
+        return TRITET_ERROR_NULL_POINT_LIST;
+    }
+    if (index >= triangle->input.numberofpoints) {
+        return TRITET_ERROR_INVALID_POINT_INDEX;
+    }
     triangle->input.pointlist[index * 2] = x;
     triangle->input.pointlist[index * 2 + 1] = y;
+    return TRITET_SUCCESS;
 }
 
-void set_segment(struct ExtTriangle *triangle, int index, int left, int right) {
+int set_segment(struct ExtTriangle *triangle, int index, int left, int right) {
+    if (triangle == NULL) {
+        return TRITET_ERROR_NULL_DATA;
+    }
+    if (triangle->input.segmentlist == NULL) {
+        return TRITET_ERROR_NULL_SEGMENT_LIST;
+    }
+    if (index >= triangle->input.numberofsegments) {
+        return TRITET_ERROR_INVALID_SEGMENT_INDEX;
+    }
     triangle->input.segmentlist[index * 2] = left;
     triangle->input.segmentlist[index * 2 + 1] = right;
+    return TRITET_SUCCESS;
 }
 
-void set_region(struct ExtTriangle *triangle, int index, double x, double y, int attribute, double max_area) {
+int set_region(struct ExtTriangle *triangle, int index, double x, double y, int attribute, double max_area) {
+    if (triangle == NULL) {
+        return TRITET_ERROR_NULL_DATA;
+    }
+    if (triangle->input.regionlist == NULL) {
+        return TRITET_ERROR_NULL_REGION_LIST;
+    }
+    if (index >= triangle->input.numberofregions) {
+        return TRITET_ERROR_INVALID_REGION_INDEX;
+    }
     triangle->input.regionlist[index * 4] = x;
     triangle->input.regionlist[index * 4 + 1] = y;
     triangle->input.regionlist[index * 4 + 2] = attribute;
     triangle->input.regionlist[index * 4 + 3] = max_area;
+    return TRITET_SUCCESS;
 }
 
-void set_hole(struct ExtTriangle *triangle, int index, double x, double y) {
+int set_hole(struct ExtTriangle *triangle, int index, double x, double y) {
+    if (triangle == NULL) {
+        return TRITET_ERROR_NULL_DATA;
+    }
+    if (triangle->input.holelist == NULL) {
+        return TRITET_ERROR_NULL_HOLE_LIST;
+    }
+    if (index >= triangle->input.numberofholes) {
+        return TRITET_ERROR_INVALID_HOLE_INDEX;
+    }
     triangle->input.holelist[index * 2] = x;
     triangle->input.holelist[index * 2 + 1] = y;
+    return TRITET_SUCCESS;
 }
 
-void generate(struct ExtTriangle *triangle, int verbose, int quadratic, double global_max_area, double global_min_angle) {
+int generate(struct ExtTriangle *triangle, int verbose, int quadratic, double global_max_area, double global_min_angle) {
+    if (triangle == NULL) {
+        return TRITET_ERROR_NULL_DATA;
+    }
+    if (triangle->input.pointlist == NULL) {
+        return TRITET_ERROR_NULL_POINT_LIST;
+    }
+
     // Triangulate the points
     // Switches:
     // * `p` -- write a PSLG (p)
@@ -214,17 +268,17 @@ void generate(struct ExtTriangle *triangle, int verbose, int quadratic, double g
     // * `A` -- assign a regional attribute to each element (A)
     char command[128];
     strcpy(command, "pzA");
-    if (verbose == FALSE) {
+    if (verbose == TRITET_FALSE) {
         strcat(command, "Q");
     }
-    if (quadratic == TRUE) {
+    if (quadratic == TRITET_TRUE) {
         strcat(command, "o2");
     }
     if (global_max_area > 0.0) {
         char buf[32];
         int n = snprintf(buf, 32, "a%.15f", global_max_area);
         if (n >= 32) {
-            return;
+            return TRITET_STRING_CONCAT_ERROR;
         }
         strcat(command, buf);
     }
@@ -232,7 +286,7 @@ void generate(struct ExtTriangle *triangle, int verbose, int quadratic, double g
         char buf[32];
         int n = snprintf(buf, 32, "q%.15f", global_min_angle);
         if (n >= 32) {
-            return;
+            return TRITET_STRING_CONCAT_ERROR;
         }
         strcat(command, buf);
     } else {
@@ -246,9 +300,10 @@ void generate(struct ExtTriangle *triangle, int verbose, int quadratic, double g
     triangle->output.regionlist = NULL;
     triangle->output.holelist = NULL;
 
-    if (verbose == TRUE) {
+    if (verbose == TRITET_TRUE) {
         report(&triangle->output, 1, 1, 0, 1, 0, 0);
     }
+    return TRITET_SUCCESS;
 }
 
 int get_npoint(struct ExtTriangle *triangle) {
@@ -264,15 +319,27 @@ int get_ncorner(struct ExtTriangle *triangle) {
 }
 
 double get_point_x(struct ExtTriangle *triangle, int index) {
-    return triangle->output.pointlist[index * 2];
+    if (index < triangle->output.numberofpoints) {
+        return triangle->output.pointlist[index * 2];
+    } else {
+        return 0.0;
+    }
 }
 
 double get_point_y(struct ExtTriangle *triangle, int index) {
-    return triangle->output.pointlist[index * 2 + 1];
+    if (index < triangle->output.numberofpoints) {
+        return triangle->output.pointlist[index * 2 + 1];
+    } else {
+        return 0.0;
+    }
 }
 
 int get_triangle_corner(struct ExtTriangle *triangle, int index, int corner) {
-    return triangle->output.trianglelist[index * triangle->output.numberofcorners + corner];
+    if (index < triangle->output.numberoftriangles && corner < triangle->output.numberofcorners) {
+        return triangle->output.trianglelist[index * triangle->output.numberofcorners + corner];
+    } else {
+        return 0;
+    }
 }
 
 #endif  // INTERFACE_TRIANGLE_H
