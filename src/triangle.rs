@@ -57,6 +57,21 @@ pub enum VoronoiEdgePointB {
     Direction(f64, f64),
 }
 
+/// Maps indices used in this library (tritet) to indices used in Triangle
+///
+/// ```text
+/// This library (tritet)      Triangle
+///         NODES               CORNERS
+///           2                    2
+///          / \                  / \
+///         /   \                /   \
+///        5     4              4     3
+///       /       \            /       \
+///      /         \          /         \
+///     0-----3-----1        0-----5-----1
+/// ```
+const TRITET_TO_TRIANGLE: [usize; 6] = [0, 1, 2, 5, 3, 4];
+
 pub struct Triangle {
     ext_triangle: *mut ExtTriangle, // data allocated by the c-code
     npoint: usize,                  // number of points
@@ -328,7 +343,7 @@ impl Triangle {
         unsafe { get_ntriangle(self.ext_triangle) as usize }
     }
 
-    pub fn get_ncorner(&self) -> usize {
+    pub fn get_nnode(&self) -> usize {
         unsafe { get_ncorner(self.ext_triangle) as usize }
     }
 
@@ -341,8 +356,11 @@ impl Triangle {
         }
     }
 
-    pub fn get_triangle_corner(&self, index: usize, corner: usize) -> usize {
-        unsafe { get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize }
+    pub fn get_triangle_node(&self, index: usize, m: usize) -> usize {
+        unsafe {
+            let corner = TRITET_TO_TRIANGLE[m];
+            get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize
+        }
     }
 
     pub fn get_voronoi_npoint(&self) -> usize {
@@ -422,13 +440,13 @@ mod tests {
         triangle.generate_delaunay(false)?;
         assert_eq!(triangle.get_npoint(), 3);
         assert_eq!(triangle.get_ntriangle(), 1);
-        assert_eq!(triangle.get_ncorner(), 3);
+        assert_eq!(triangle.get_nnode(), 3);
         assert_eq!(triangle.get_point(0), (0.0, 0.0));
         assert_eq!(triangle.get_point(1), (1.0, 0.0));
         assert_eq!(triangle.get_point(2), (0.0, 1.0));
-        assert_eq!(triangle.get_triangle_corner(0, 0), 0);
-        assert_eq!(triangle.get_triangle_corner(0, 1), 1);
-        assert_eq!(triangle.get_triangle_corner(0, 2), 2);
+        assert_eq!(triangle.get_triangle_node(0, 0), 0);
+        assert_eq!(triangle.get_triangle_node(0, 1), 1);
+        assert_eq!(triangle.get_triangle_node(0, 2), 2);
         assert_eq!(triangle.get_voronoi_npoint(), 0);
         assert_eq!(triangle.get_voronoi_nedge(), 0);
         Ok(())
@@ -444,13 +462,13 @@ mod tests {
         triangle.generate_voronoi(false)?;
         assert_eq!(triangle.get_npoint(), 3);
         assert_eq!(triangle.get_ntriangle(), 1);
-        assert_eq!(triangle.get_ncorner(), 3);
+        assert_eq!(triangle.get_nnode(), 3);
         assert_eq!(triangle.get_point(0), (0.0, 0.0));
         assert_eq!(triangle.get_point(1), (1.0, 0.0));
         assert_eq!(triangle.get_point(2), (0.0, 1.0));
-        assert_eq!(triangle.get_triangle_corner(0, 0), 0);
-        assert_eq!(triangle.get_triangle_corner(0, 1), 1);
-        assert_eq!(triangle.get_triangle_corner(0, 2), 2);
+        assert_eq!(triangle.get_triangle_node(0, 0), 0);
+        assert_eq!(triangle.get_triangle_node(0, 1), 1);
+        assert_eq!(triangle.get_triangle_node(0, 2), 2);
         assert_eq!(triangle.get_voronoi_npoint(), 1);
         assert_eq!(triangle.get_voronoi_point(0), (0.5, 0.5));
         assert_eq!(triangle.get_voronoi_nedge(), 3);
@@ -486,13 +504,13 @@ mod tests {
         triangle.generate_mesh(false, false, None, None)?;
         assert_eq!(triangle.get_npoint(), 3);
         assert_eq!(triangle.get_ntriangle(), 1);
-        assert_eq!(triangle.get_ncorner(), 3);
+        assert_eq!(triangle.get_nnode(), 3);
         assert_eq!(triangle.get_point(0), (0.0, 0.0));
         assert_eq!(triangle.get_point(1), (1.0, 0.0));
         assert_eq!(triangle.get_point(2), (0.0, 1.0));
-        assert_eq!(triangle.get_triangle_corner(0, 0), 0);
-        assert_eq!(triangle.get_triangle_corner(0, 1), 1);
-        assert_eq!(triangle.get_triangle_corner(0, 2), 2);
+        assert_eq!(triangle.get_triangle_node(0, 0), 0);
+        assert_eq!(triangle.get_triangle_node(0, 1), 1);
+        assert_eq!(triangle.get_triangle_node(0, 2), 2);
         assert_eq!(triangle.get_voronoi_npoint(), 0);
         assert_eq!(triangle.get_voronoi_nedge(), 0);
         Ok(())
@@ -512,7 +530,7 @@ mod tests {
         triangle.generate_mesh(false, true, Some(0.1), Some(20.0))?;
         assert_eq!(triangle.get_npoint(), 22);
         assert_eq!(triangle.get_ntriangle(), 7);
-        assert_eq!(triangle.get_ncorner(), 6);
+        assert_eq!(triangle.get_nnode(), 6);
         Ok(())
     }
 }
