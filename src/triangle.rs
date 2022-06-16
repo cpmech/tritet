@@ -299,6 +299,8 @@ mod tests {
             .set_point(13, 2.16, 2.89)?
             .set_point(14, 1.36, 3.49)?;
         triangle.delaunay(true)?;
+        assert_eq!(triangle.get_npoint(), 15);
+        assert_eq!(triangle.get_ntriangle(), 15);
         Ok(())
     }
 
