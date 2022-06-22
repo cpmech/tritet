@@ -73,7 +73,7 @@ pub enum VoronoiEdgePointB {
 /// ```
 const TRITET_TO_TRIANGLE: [usize; 6] = [0, 1, 2, 5, 3, 4];
 
-/// Implements high-level functions to call Shewchuk's Triangle C-Code 
+/// Implements high-level functions to call Shewchuk's Triangle C-Code
 pub struct Triangle {
     ext_triangle: *mut ExtTriangle, // data allocated by the c-code
     npoint: usize,                  // number of points
@@ -158,7 +158,11 @@ impl Triangle {
     pub fn set_segment(&mut self, index: usize, a: usize, b: usize) -> Result<&mut Self, StrError> {
         let nsegment = match self.nsegment {
             Some(n) => n,
-            None => return Err("The number of segments must not be None to set segment"),
+            None => {
+                return Err(
+                    "The number of segments (given to 'new') must not be None to set segment",
+                )
+            }
         };
         unsafe {
             let status = set_segment(self.ext_triangle, to_i32(index), to_i32(a), to_i32(b));
@@ -194,7 +198,9 @@ impl Triangle {
     ) -> Result<&mut Self, StrError> {
         let nregion = match self.nregion {
             Some(n) => n,
-            None => return Err("The number of regions must not be None to set region"),
+            None => {
+                return Err("The number of regions (given to 'new') must not be None to set region")
+            }
         };
         unsafe {
             let status = set_region(
@@ -230,7 +236,9 @@ impl Triangle {
     pub fn set_hole(&mut self, index: usize, x: f64, y: f64) -> Result<&mut Self, StrError> {
         let nhole = match self.nhole {
             Some(n) => n,
-            None => return Err("The number of holes must not be None to set hole"),
+            None => {
+                return Err("The number of holes (given to 'new') must not be None to set hole")
+            }
         };
         unsafe {
             let status = set_hole(self.ext_triangle, to_i32(index), x, y);
@@ -296,7 +304,7 @@ impl Triangle {
     }
 
     /// Generates a conforming constrained Delaunay triangulation with some quality constraints
-    /// 
+    ///
     /// * `global_min_angle` -- The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
     pub fn generate_mesh(
         &mut self,
@@ -372,7 +380,7 @@ impl Triangle {
     }
 
     /// Returns the ID of a Triangle's node
-    /// 
+    ///
     /// * `m` -- goes from 0 to `nnode`
     pub fn get_triangle_node(&self, index: usize, m: usize) -> usize {
         unsafe {
@@ -439,6 +447,14 @@ mod tests {
     use crate::StrError;
 
     #[test]
+    fn new_captures_some_errors() {
+        assert_eq!(
+            Triangle::new(2, None, None, None).err(),
+            Some("npoint must be ≥ 3")
+        );
+    }
+
+    #[test]
     fn new_works() -> Result<(), StrError> {
         let triangle = Triangle::new(3, Some(3), None, None)?;
         assert_eq!(triangle.ext_triangle.is_null(), false);
@@ -450,6 +466,61 @@ mod tests {
         assert_eq!(triangle.all_segments_set, false);
         assert_eq!(triangle.all_regions_set, false);
         assert_eq!(triangle.all_holes_set, false);
+        Ok(())
+    }
+
+    #[test]
+    fn set_point_captures_some_errors() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(3, None, None, None)?;
+        assert_eq!(
+            triangle.set_point(4, 0.0, 0.0).err(),
+            Some("Index of point is out of bounds")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn set_segment_captures_some_errors() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(3, None, None, None)?;
+        assert_eq!(
+            triangle.set_segment(0, 0, 1).err(),
+            Some("The number of segments (given to 'new') must not be None to set segment")
+        );
+        let mut triangle = Triangle::new(3, Some(3), None, None)?;
+        assert_eq!(
+            triangle.set_segment(4, 0, 1).err(),
+            Some("Index of segment is out of bounds")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn set_region_captures_some_errors() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(3, None, None, None)?;
+        assert_eq!(
+            triangle.set_region(0, 0.33, 0.33, 1, 0.1).err(),
+            Some("The number of regions (given to 'new') must not be None to set region")
+        );
+        let mut triangle = Triangle::new(3, Some(3), Some(1), None)?;
+        assert_eq!(
+            triangle.set_region(1, 0.33, 0.33, 1, 0.1).err(),
+            Some("Index of region is out of bounds")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn set_hole_captures_some_errors() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(3, None, None, None)?;
+        assert_eq!(
+            triangle.set_hole(0, 0.33, 0.33).err(),
+            Some("The number of holes (given to 'new') must not be None to set hole")
+        );
+        let mut triangle = Triangle::new(3, Some(3), Some(1), Some(1))?;
+        assert_eq!(
+            triangle.set_hole(1, 0.33, 0.33).err(),
+            Some("Index of hole is out of bounds")
+        );
         Ok(())
     }
 
