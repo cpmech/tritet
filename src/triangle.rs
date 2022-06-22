@@ -48,6 +48,7 @@ extern "C" {
     fn get_voronoi_edge_point_b_direction_y(triangle: *mut ExtTriangle, index: i32) -> f64;
 }
 
+/// Defines the index or the direction related to the second point (B) of an edge on a Voronoi tesselation
 #[derive(Clone, Debug)]
 pub enum VoronoiEdgePointB {
     /// The index of point B
@@ -72,6 +73,7 @@ pub enum VoronoiEdgePointB {
 /// ```
 const TRITET_TO_TRIANGLE: [usize; 6] = [0, 1, 2, 5, 3, 4];
 
+/// Implements high-level functions to call Shewchuk's Triangle C-Code 
 pub struct Triangle {
     ext_triangle: *mut ExtTriangle, // data allocated by the c-code
     npoint: usize,                  // number of points
@@ -85,6 +87,7 @@ pub struct Triangle {
 }
 
 impl Triangle {
+    /// Allocates a new instance
     pub fn new(
         npoint: usize,
         nsegment: Option<usize>,
@@ -126,6 +129,7 @@ impl Triangle {
         }
     }
 
+    /// Sets the point coordinates
     pub fn set_point(&mut self, index: usize, x: f64, y: f64) -> Result<&mut Self, StrError> {
         unsafe {
             let status = set_point(self.ext_triangle, to_i32(index), x, y);
@@ -150,6 +154,7 @@ impl Triangle {
         Ok(self)
     }
 
+    /// Sets the segment endpoint IDs
     pub fn set_segment(&mut self, index: usize, a: usize, b: usize) -> Result<&mut Self, StrError> {
         let nsegment = match self.nsegment {
             Some(n) => n,
@@ -178,6 +183,7 @@ impl Triangle {
         Ok(self)
     }
 
+    /// Marks a region within the Planar Straight Line Graph (PSLG)
     pub fn set_region(
         &mut self,
         index: usize,
@@ -220,6 +226,7 @@ impl Triangle {
         Ok(self)
     }
 
+    /// Marks a hole within the Planar Straight Line Graph (PSLG)
     pub fn set_hole(&mut self, index: usize, x: f64, y: f64) -> Result<&mut Self, StrError> {
         let nhole = match self.nhole {
             Some(n) => n,
@@ -248,6 +255,7 @@ impl Triangle {
         Ok(self)
     }
 
+    /// Generates a Delaunay triangulation
     pub fn generate_delaunay(&self, verbose: bool) -> Result<(), StrError> {
         if !self.all_points_set {
             return Err("All points must be set to generate Delaunay triangulation");
@@ -267,6 +275,7 @@ impl Triangle {
         Ok(())
     }
 
+    /// Generates a Voronoi tesselation and Delaunay triangulation
     pub fn generate_voronoi(&self, verbose: bool) -> Result<(), StrError> {
         if !self.all_points_set {
             return Err("All points must be set to generate Voronoi tessellation");
@@ -286,7 +295,9 @@ impl Triangle {
         Ok(())
     }
 
-    // The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
+    /// Generates a conforming constrained Delaunay triangulation with some quality constraints
+    /// 
+    /// * `global_min_angle` -- The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
     pub fn generate_mesh(
         &mut self,
         verbose: bool,
@@ -335,18 +346,22 @@ impl Triangle {
         Ok(())
     }
 
+    /// Returns the number of points of the Delaunay triangulation (constrained or not)
     pub fn get_npoint(&self) -> usize {
         unsafe { get_npoint(self.ext_triangle) as usize }
     }
 
+    /// Returns the number of triangles on the Delaunay triangulation (constrained or not)
     pub fn get_ntriangle(&self) -> usize {
         unsafe { get_ntriangle(self.ext_triangle) as usize }
     }
 
+    /// Returns the number of nodes on a triangle (e.g., 3 or 6)
     pub fn get_nnode(&self) -> usize {
         unsafe { get_ncorner(self.ext_triangle) as usize }
     }
 
+    /// Returns the x-y coordinates of a point
     pub fn get_point(&self, index: usize) -> (f64, f64) {
         unsafe {
             let index_i32 = to_i32(index);
@@ -356,6 +371,9 @@ impl Triangle {
         }
     }
 
+    /// Returns the ID of a Triangle's node
+    /// 
+    /// * `m` -- goes from 0 to `nnode`
     pub fn get_triangle_node(&self, index: usize, m: usize) -> usize {
         unsafe {
             let corner = TRITET_TO_TRIANGLE[m];
@@ -363,10 +381,12 @@ impl Triangle {
         }
     }
 
+    /// Returns the number of points of the Voronoi tesselation
     pub fn get_voronoi_npoint(&self) -> usize {
         unsafe { get_voronoi_npoint(self.ext_triangle) as usize }
     }
 
+    /// Returns the x-y coordinates of a point on the Voronoi tesselation
     pub fn get_voronoi_point(&self, index: usize) -> (f64, f64) {
         unsafe {
             let index_i32 = to_i32(index);
@@ -376,14 +396,17 @@ impl Triangle {
         }
     }
 
+    /// Returns the number of edges on the Voronoi tesselation
     pub fn get_voronoi_nedge(&self) -> usize {
         unsafe { get_voronoi_nedge(self.ext_triangle) as usize }
     }
 
+    /// Returns the first point on an edge of the Voronoi tesselation
     pub fn get_voronoi_edge_point_a(&self, index: usize) -> usize {
         unsafe { get_voronoi_edge_point_a(self.ext_triangle, to_i32(index)) as usize }
     }
 
+    /// Returns the second point (or the direction) on an edge of the Voronoi tesselation
     pub fn get_voronoi_edge_point_b(&self, index: usize) -> VoronoiEdgePointB {
         unsafe {
             let index_i32 = to_i32(index);
