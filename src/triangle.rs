@@ -303,7 +303,7 @@ impl Triangle {
         Ok(())
     }
 
-    /// Generates a Voronoi tesselation and Delaunay triangulation
+    /// Generates a Voronoi tessellation and Delaunay triangulation
     ///
     /// # Input
     ///
@@ -447,12 +447,12 @@ impl Triangle {
         }
     }
 
-    /// Returns the number of points of the Voronoi tesselation
+    /// Returns the number of points of the Voronoi tessellation
     pub fn get_voronoi_npoint(&self) -> usize {
         unsafe { get_voronoi_npoint(self.ext_triangle) as usize }
     }
 
-    /// Returns the x-y coordinates of a point on the Voronoi tesselation
+    /// Returns the x-y coordinates of a point on the Voronoi tessellation
     ///
     /// # Input
     ///
@@ -466,7 +466,7 @@ impl Triangle {
         unsafe { get_voronoi_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
-    /// Returns the number of edges on the Voronoi tesselation
+    /// Returns the number of edges on the Voronoi tessellation
     pub fn get_voronoi_nedge(&self) -> usize {
         unsafe { get_voronoi_nedge(self.ext_triangle) as usize }
     }
