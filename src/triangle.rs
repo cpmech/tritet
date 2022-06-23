@@ -2,6 +2,7 @@ use crate::constants;
 use crate::to_i32::to_i32;
 use crate::StrError;
 use plotpy::{Canvas, Plot, PolyCode};
+use std::collections::HashMap;
 
 #[repr(C)]
 pub(crate) struct ExtTriangle {
@@ -38,6 +39,7 @@ extern "C" {
     fn get_ncorner(triangle: *mut ExtTriangle) -> i32;
     fn get_point(triangle: *mut ExtTriangle, index: i32, dim: i32) -> f64;
     fn get_triangle_corner(triangle: *mut ExtTriangle, index: i32, corner: i32) -> i32;
+    fn get_triangle_attribute(triangle: *mut ExtTriangle, index: i32) -> i32;
     fn get_voronoi_npoint(triangle: *mut ExtTriangle) -> i32;
     fn get_voronoi_point(triangle: *mut ExtTriangle, index: i32, dim: i32) -> f64;
     fn get_voronoi_nedge(triangle: *mut ExtTriangle) -> i32;
@@ -212,13 +214,17 @@ impl Triangle {
         x: f64,
         y: f64,
         attribute: usize,
-        max_area: f64,
+        max_area: Option<f64>,
     ) -> Result<&mut Self, StrError> {
         let nregion = match self.nregion {
             Some(n) => n,
             None => {
                 return Err("The number of regions (given to 'new') must not be None to set region")
             }
+        };
+        let area_constraint = match max_area {
+            Some(v) => v,
+            None => -1.0,
         };
         unsafe {
             let status = set_region(
@@ -227,7 +233,7 @@ impl Triangle {
                 x,
                 y,
                 to_i32(attribute),
-                max_area,
+                area_constraint,
             );
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
@@ -448,11 +454,24 @@ impl Triangle {
     ///
     /// * `index` -- is the index of the triangle and goes from 0 to `ntriangle`
     /// * `m` -- is the local index of the node and goes from 0 to `nnode`
+    ///
+    /// # Warning
+    ///
+    /// This function will return 0 if either `index` or `m` are out of range.
     pub fn get_triangle_node(&self, index: usize, m: usize) -> usize {
         unsafe {
             let corner = TRITET_TO_TRIANGLE[m];
             get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize
         }
+    }
+
+    /// Returns the attribute ID of a triangle
+    ///
+    /// # Warning
+    ///
+    /// This function will return 0 if either `index` or `m` are out of range.
+    pub fn get_triangle_attribute(&self, index: usize) -> usize {
+        unsafe { get_triangle_attribute(self.ext_triangle, to_i32(index)) as usize }
     }
 
     /// Returns the number of points of the Voronoi tessellation
@@ -515,8 +534,20 @@ impl Triangle {
         let mut x = vec![0.0; 2];
         let mut min = vec![f64::MAX; 2];
         let mut max = vec![f64::MIN; 2];
+        let mut colors: HashMap<usize, &'static str> = HashMap::new();
+        let mut index_color = 0;
         for tri in 0..n_triangle {
-            canvas.set_face_color(LIGHT_COLORS[0]);
+            let attribute = self.get_triangle_attribute(tri);
+            let color = match colors.get(&attribute) {
+                Some(c) => c,
+                None => {
+                    let c = LIGHT_COLORS[index_color % LIGHT_COLORS.len()];
+                    colors.insert(attribute, c);
+                    index_color += 1;
+                    c
+                }
+            };
+            canvas.set_face_color(color);
             canvas.polycurve_begin();
             for m in 0..3 {
                 let p = self.get_triangle_node(tri, m);
@@ -614,12 +645,12 @@ mod tests {
     fn set_region_captures_some_errors() -> Result<(), StrError> {
         let mut triangle = Triangle::new(3, None, None, None)?;
         assert_eq!(
-            triangle.set_region(0, 0.33, 0.33, 1, 0.1).err(),
+            triangle.set_region(0, 0.33, 0.33, 1, Some(0.1)).err(),
             Some("The number of regions (given to 'new') must not be None to set region")
         );
         let mut triangle = Triangle::new(3, Some(3), Some(1), None)?;
         assert_eq!(
-            triangle.set_region(1, 0.33, 0.33, 1, 0.1).err(),
+            triangle.set_region(1, 0.33, 0.33, 1, Some(0.1)).err(),
             Some("Index of region is out of bounds")
         );
         Ok(())
@@ -740,6 +771,9 @@ mod tests {
         assert_eq!(triangle.get_triangle_node(0, 0), 0);
         assert_eq!(triangle.get_triangle_node(0, 1), 1);
         assert_eq!(triangle.get_triangle_node(0, 2), 2);
+        assert_eq!(triangle.get_triangle_attribute(0), 0);
+        assert_eq!(triangle.get_triangle_attribute(1), 0);
+        assert_eq!(triangle.get_triangle_attribute(2), 0);
         assert_eq!(triangle.get_voronoi_npoint(), 0);
         assert_eq!(triangle.get_voronoi_nedge(), 0);
         Ok(())
@@ -768,6 +802,7 @@ mod tests {
         let triangle = Triangle::new(3, None, None, None)?;
         assert_eq!(triangle.get_point(100, 0), 0.0);
         assert_eq!(triangle.get_point(0, 100), 0.0);
+        assert_eq!(triangle.get_triangle_attribute(100), 0);
         assert_eq!(triangle.get_voronoi_point(100, 0), 0.0);
         assert_eq!(triangle.get_voronoi_point(0, 100), 0.0);
         assert_eq!(
@@ -798,6 +833,31 @@ mod tests {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/draw_works.svg")?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn mesh_3_works() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(4, Some(3), Some(1), None)?;
+        triangle
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 0.0, 1.0)?
+            .set_point(3, 0.5, 0.5)?
+            .set_region(0, 0.5, 0.2, 1, None)?;
+        triangle
+            .set_segment(0, 0, 1)?
+            .set_segment(1, 1, 2)?
+            .set_segment(2, 2, 0)?;
+        triangle.generate_mesh(false, true, Some(0.25), None)?;
+        assert_eq!(triangle.get_triangle_attribute(0), 1);
+        assert_eq!(triangle.get_triangle_attribute(1), 0);
+        let mut plot = triangle.draw_triangles();
+        if false {
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/mesh_3_works.svg")?;
         }
         Ok(())
     }

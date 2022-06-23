@@ -224,6 +224,8 @@ int set_segment(struct ExtTriangle *triangle, int index, int a, int b) {
 }
 
 int set_region(struct ExtTriangle *triangle, int index, double x, double y, int attribute, double max_area) {
+    // Shewchuk: If you are using the -A and -a switches simultaneously and wish to assign an attribute
+    // to some region without imposing an area constraint, use a negative maximum area.
     if (triangle == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -395,6 +397,14 @@ double get_point(struct ExtTriangle *triangle, int index, int dim) {
 int get_triangle_corner(struct ExtTriangle *triangle, int index, int corner) {
     if (index < triangle->output.numberoftriangles && corner < triangle->output.numberofcorners) {
         return triangle->output.trianglelist[index * triangle->output.numberofcorners + corner];
+    } else {
+        return 0;
+    }
+}
+
+int get_triangle_attribute(struct ExtTriangle *triangle, int index) {
+    if (index < triangle->output.numberoftriangleattributes) {
+        return triangle->output.triangleattributelist[index * triangle->output.numberoftriangleattributes];
     } else {
         return 0;
     }
