@@ -398,12 +398,12 @@ impl Triangle {
     }
 
     /// Returns the number of points of the Delaunay triangulation (constrained or not)
-    pub fn get_npoint(&self) -> usize {
+    pub fn npoint(&self) -> usize {
         unsafe { get_npoint(self.ext_triangle) as usize }
     }
 
     /// Returns the number of triangles on the Delaunay triangulation (constrained or not)
-    pub fn get_ntriangle(&self) -> usize {
+    pub fn ntriangle(&self) -> usize {
         unsafe { get_ntriangle(self.ext_triangle) as usize }
     }
 
@@ -419,7 +419,7 @@ impl Triangle {
     ///  /         \
     /// 0-----3-----1
     /// ```
-    pub fn get_nnode(&self) -> usize {
+    pub fn nnode(&self) -> usize {
         unsafe { get_ncorner(self.ext_triangle) as usize }
     }
 
@@ -433,7 +433,7 @@ impl Triangle {
     /// # Warning
     ///
     /// This function will return 0.0 if either `index` or `dim` are out of range.
-    pub fn get_point(&self, index: usize, dim: usize) -> f64 {
+    pub fn point(&self, index: usize, dim: usize) -> f64 {
         unsafe { get_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
@@ -458,7 +458,7 @@ impl Triangle {
     /// # Warning
     ///
     /// This function will return 0 if either `index` or `m` are out of range.
-    pub fn get_triangle_node(&self, index: usize, m: usize) -> usize {
+    pub fn triangle_node(&self, index: usize, m: usize) -> usize {
         unsafe {
             let corner = TRITET_TO_TRIANGLE[m];
             get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize
@@ -470,12 +470,12 @@ impl Triangle {
     /// # Warning
     ///
     /// This function will return 0 if either `index` or `m` are out of range.
-    pub fn get_triangle_attribute(&self, index: usize) -> usize {
+    pub fn triangle_attribute(&self, index: usize) -> usize {
         unsafe { get_triangle_attribute(self.ext_triangle, to_i32(index)) as usize }
     }
 
     /// Returns the number of points of the Voronoi tessellation
-    pub fn get_voronoi_npoint(&self) -> usize {
+    pub fn voronoi_npoint(&self) -> usize {
         unsafe { get_voronoi_npoint(self.ext_triangle) as usize }
     }
 
@@ -489,12 +489,12 @@ impl Triangle {
     /// # Warning
     ///
     /// This function will return 0.0 if either `index` or `dim` are out of range.
-    pub fn get_voronoi_point(&self, index: usize, dim: usize) -> f64 {
+    pub fn voronoi_point(&self, index: usize, dim: usize) -> f64 {
         unsafe { get_voronoi_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the number of edges on the Voronoi tessellation
-    pub fn get_voronoi_nedge(&self) -> usize {
+    pub fn voronoi_nedge(&self) -> usize {
         unsafe { get_voronoi_nedge(self.ext_triangle) as usize }
     }
 
@@ -508,7 +508,7 @@ impl Triangle {
     /// # Warning
     ///
     /// This function will return Index(0) if either `index` or `side` are out of range.
-    pub fn get_voronoi_edge_point(&self, index: usize, side: usize) -> VoronoiEdgePoint {
+    pub fn voronoi_edge_point(&self, index: usize, side: usize) -> VoronoiEdgePoint {
         unsafe {
             let index_i32 = to_i32(index);
             let id = get_voronoi_edge_point(self.ext_triangle, index_i32, to_i32(side));
@@ -525,7 +525,7 @@ impl Triangle {
     /// Draw triangles
     pub fn draw_triangles(&self) -> Plot {
         let mut plot = Plot::new();
-        let n_triangle = self.get_ntriangle();
+        let n_triangle = self.ntriangle();
         if n_triangle < 1 {
             return plot;
         }
@@ -537,7 +537,7 @@ impl Triangle {
         let mut colors: HashMap<usize, &'static str> = HashMap::new();
         let mut index_color = 0;
         for tri in 0..n_triangle {
-            let attribute = self.get_triangle_attribute(tri);
+            let attribute = self.triangle_attribute(tri);
             let color = match colors.get(&attribute) {
                 Some(c) => c,
                 None => {
@@ -550,9 +550,9 @@ impl Triangle {
             canvas.set_face_color(color);
             canvas.polycurve_begin();
             for m in 0..3 {
-                let p = self.get_triangle_node(tri, m);
+                let p = self.triangle_node(tri, m);
                 for dim in 0..2 {
-                    x[dim] = self.get_point(p, dim);
+                    x[dim] = self.point(p, dim);
                     min[dim] = f64::min(min[dim], x[dim]);
                     max[dim] = f64::max(max[dim], x[dim]);
                 }
@@ -679,20 +679,20 @@ mod tests {
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
         triangle.generate_delaunay(false)?;
-        assert_eq!(triangle.get_npoint(), 3);
-        assert_eq!(triangle.get_ntriangle(), 1);
-        assert_eq!(triangle.get_nnode(), 3);
-        assert_eq!(triangle.get_point(0, 0), 0.0);
-        assert_eq!(triangle.get_point(0, 1), 0.0);
-        assert_eq!(triangle.get_point(1, 0), 1.0);
-        assert_eq!(triangle.get_point(1, 1), 0.0);
-        assert_eq!(triangle.get_point(2, 0), 0.0);
-        assert_eq!(triangle.get_point(2, 1), 1.0);
-        assert_eq!(triangle.get_triangle_node(0, 0), 0);
-        assert_eq!(triangle.get_triangle_node(0, 1), 1);
-        assert_eq!(triangle.get_triangle_node(0, 2), 2);
-        assert_eq!(triangle.get_voronoi_npoint(), 0);
-        assert_eq!(triangle.get_voronoi_nedge(), 0);
+        assert_eq!(triangle.npoint(), 3);
+        assert_eq!(triangle.ntriangle(), 1);
+        assert_eq!(triangle.nnode(), 3);
+        assert_eq!(triangle.point(0, 0), 0.0);
+        assert_eq!(triangle.point(0, 1), 0.0);
+        assert_eq!(triangle.point(1, 0), 1.0);
+        assert_eq!(triangle.point(1, 1), 0.0);
+        assert_eq!(triangle.point(2, 0), 0.0);
+        assert_eq!(triangle.point(2, 1), 1.0);
+        assert_eq!(triangle.triangle_node(0, 0), 0);
+        assert_eq!(triangle.triangle_node(0, 1), 1);
+        assert_eq!(triangle.triangle_node(0, 2), 2);
+        assert_eq!(triangle.voronoi_npoint(), 0);
+        assert_eq!(triangle.voronoi_nedge(), 0);
         Ok(())
     }
 
@@ -704,44 +704,44 @@ mod tests {
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
         triangle.generate_voronoi(false)?;
-        assert_eq!(triangle.get_npoint(), 3);
-        assert_eq!(triangle.get_ntriangle(), 1);
-        assert_eq!(triangle.get_nnode(), 3);
-        assert_eq!(triangle.get_point(0, 0), 0.0);
-        assert_eq!(triangle.get_point(0, 1), 0.0);
-        assert_eq!(triangle.get_point(1, 0), 1.0);
-        assert_eq!(triangle.get_point(1, 1), 0.0);
-        assert_eq!(triangle.get_point(2, 0), 0.0);
-        assert_eq!(triangle.get_point(2, 1), 1.0);
-        assert_eq!(triangle.get_triangle_node(0, 0), 0);
-        assert_eq!(triangle.get_triangle_node(0, 1), 1);
-        assert_eq!(triangle.get_triangle_node(0, 2), 2);
-        assert_eq!(triangle.get_voronoi_npoint(), 1);
-        assert_eq!(triangle.get_voronoi_point(0, 0), 0.5);
-        assert_eq!(triangle.get_voronoi_point(0, 1), 0.5);
-        assert_eq!(triangle.get_voronoi_nedge(), 3);
+        assert_eq!(triangle.npoint(), 3);
+        assert_eq!(triangle.ntriangle(), 1);
+        assert_eq!(triangle.nnode(), 3);
+        assert_eq!(triangle.point(0, 0), 0.0);
+        assert_eq!(triangle.point(0, 1), 0.0);
+        assert_eq!(triangle.point(1, 0), 1.0);
+        assert_eq!(triangle.point(1, 1), 0.0);
+        assert_eq!(triangle.point(2, 0), 0.0);
+        assert_eq!(triangle.point(2, 1), 1.0);
+        assert_eq!(triangle.triangle_node(0, 0), 0);
+        assert_eq!(triangle.triangle_node(0, 1), 1);
+        assert_eq!(triangle.triangle_node(0, 2), 2);
+        assert_eq!(triangle.voronoi_npoint(), 1);
+        assert_eq!(triangle.voronoi_point(0, 0), 0.5);
+        assert_eq!(triangle.voronoi_point(0, 1), 0.5);
+        assert_eq!(triangle.voronoi_nedge(), 3);
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point(0, 0)),
+            format!("{:?}", triangle.voronoi_edge_point(0, 0)),
             "Index(0)"
         );
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point(0, 1)),
+            format!("{:?}", triangle.voronoi_edge_point(0, 1)),
             "Direction(0.0, -1.0)"
         );
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point(1, 0)),
+            format!("{:?}", triangle.voronoi_edge_point(1, 0)),
             "Index(0)"
         );
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point(1, 1)),
+            format!("{:?}", triangle.voronoi_edge_point(1, 1)),
             "Direction(1.0, 1.0)"
         );
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point(2, 0)),
+            format!("{:?}", triangle.voronoi_edge_point(2, 0)),
             "Index(0)"
         );
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point(2, 1)),
+            format!("{:?}", triangle.voronoi_edge_point(2, 1)),
             "Direction(-1.0, 0.0)"
         );
         Ok(())
@@ -759,23 +759,23 @@ mod tests {
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
         triangle.generate_mesh(false, false, None, None)?;
-        assert_eq!(triangle.get_npoint(), 3);
-        assert_eq!(triangle.get_ntriangle(), 1);
-        assert_eq!(triangle.get_nnode(), 3);
-        assert_eq!(triangle.get_point(0, 0), 0.0);
-        assert_eq!(triangle.get_point(0, 1), 0.0);
-        assert_eq!(triangle.get_point(1, 0), 1.0);
-        assert_eq!(triangle.get_point(1, 1), 0.0);
-        assert_eq!(triangle.get_point(2, 0), 0.0);
-        assert_eq!(triangle.get_point(2, 1), 1.0);
-        assert_eq!(triangle.get_triangle_node(0, 0), 0);
-        assert_eq!(triangle.get_triangle_node(0, 1), 1);
-        assert_eq!(triangle.get_triangle_node(0, 2), 2);
-        assert_eq!(triangle.get_triangle_attribute(0), 0);
-        assert_eq!(triangle.get_triangle_attribute(1), 0);
-        assert_eq!(triangle.get_triangle_attribute(2), 0);
-        assert_eq!(triangle.get_voronoi_npoint(), 0);
-        assert_eq!(triangle.get_voronoi_nedge(), 0);
+        assert_eq!(triangle.npoint(), 3);
+        assert_eq!(triangle.ntriangle(), 1);
+        assert_eq!(triangle.nnode(), 3);
+        assert_eq!(triangle.point(0, 0), 0.0);
+        assert_eq!(triangle.point(0, 1), 0.0);
+        assert_eq!(triangle.point(1, 0), 1.0);
+        assert_eq!(triangle.point(1, 1), 0.0);
+        assert_eq!(triangle.point(2, 0), 0.0);
+        assert_eq!(triangle.point(2, 1), 1.0);
+        assert_eq!(triangle.triangle_node(0, 0), 0);
+        assert_eq!(triangle.triangle_node(0, 1), 1);
+        assert_eq!(triangle.triangle_node(0, 2), 2);
+        assert_eq!(triangle.triangle_attribute(0), 0);
+        assert_eq!(triangle.triangle_attribute(1), 0);
+        assert_eq!(triangle.triangle_attribute(2), 0);
+        assert_eq!(triangle.voronoi_npoint(), 0);
+        assert_eq!(triangle.voronoi_nedge(), 0);
         Ok(())
     }
 
@@ -791,26 +791,26 @@ mod tests {
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
         triangle.generate_mesh(false, true, Some(0.1), Some(20.0))?;
-        assert_eq!(triangle.get_npoint(), 22);
-        assert_eq!(triangle.get_ntriangle(), 7);
-        assert_eq!(triangle.get_nnode(), 6);
+        assert_eq!(triangle.npoint(), 22);
+        assert_eq!(triangle.ntriangle(), 7);
+        assert_eq!(triangle.nnode(), 6);
         Ok(())
     }
 
     #[test]
     fn get_methods_work_with_wrong_indices() -> Result<(), StrError> {
         let triangle = Triangle::new(3, None, None, None)?;
-        assert_eq!(triangle.get_point(100, 0), 0.0);
-        assert_eq!(triangle.get_point(0, 100), 0.0);
-        assert_eq!(triangle.get_triangle_attribute(100), 0);
-        assert_eq!(triangle.get_voronoi_point(100, 0), 0.0);
-        assert_eq!(triangle.get_voronoi_point(0, 100), 0.0);
+        assert_eq!(triangle.point(100, 0), 0.0);
+        assert_eq!(triangle.point(0, 100), 0.0);
+        assert_eq!(triangle.triangle_attribute(100), 0);
+        assert_eq!(triangle.voronoi_point(100, 0), 0.0);
+        assert_eq!(triangle.voronoi_point(0, 100), 0.0);
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point(100, 0)),
+            format!("{:?}", triangle.voronoi_edge_point(100, 0)),
             "Index(0)"
         );
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point(0, 100)),
+            format!("{:?}", triangle.voronoi_edge_point(0, 100)),
             "Index(0)"
         );
         Ok(())
@@ -851,8 +851,9 @@ mod tests {
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
         triangle.generate_mesh(false, true, Some(0.25), None)?;
-        assert_eq!(triangle.get_triangle_attribute(0), 1);
-        assert_eq!(triangle.get_triangle_attribute(1), 0);
+        assert_eq!(triangle.ntriangle(), 2);
+        assert_eq!(triangle.triangle_attribute(0), 1);
+        assert_eq!(triangle.triangle_attribute(1), 0);
         let mut plot = triangle.draw_triangles();
         if false {
             plot.set_equal_axes(true)
