@@ -1014,7 +1014,7 @@ mod tests {
         //     .set_point(7, 0.230951, 0.558482)?
         //     .set_point(8, 0.0307942, 0.459123)?
         //     .set_point(9, 0.540745, 0.331184)?;
-        triangle.generate_voronoi(true)?;
+        triangle.generate_voronoi(false)?;
         let mut plot = Plot::new();
         triangle.draw_voronoi(&mut plot);
         if false {
