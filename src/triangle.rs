@@ -35,23 +35,19 @@ extern "C" {
     fn get_npoint(triangle: *mut ExtTriangle) -> i32;
     fn get_ntriangle(triangle: *mut ExtTriangle) -> i32;
     fn get_ncorner(triangle: *mut ExtTriangle) -> i32;
-    fn get_point_x(triangle: *mut ExtTriangle, index: i32) -> f64;
-    fn get_point_y(triangle: *mut ExtTriangle, index: i32) -> f64;
+    fn get_point(triangle: *mut ExtTriangle, index: i32, dim: i32) -> f64;
     fn get_triangle_corner(triangle: *mut ExtTriangle, index: i32, corner: i32) -> i32;
     fn get_voronoi_npoint(triangle: *mut ExtTriangle) -> i32;
-    fn get_voronoi_point_x(triangle: *mut ExtTriangle, index: i32) -> f64;
-    fn get_voronoi_point_y(triangle: *mut ExtTriangle, index: i32) -> f64;
+    fn get_voronoi_point(triangle: *mut ExtTriangle, index: i32, dim: i32) -> f64;
     fn get_voronoi_nedge(triangle: *mut ExtTriangle) -> i32;
-    fn get_voronoi_edge_point_a(triangle: *mut ExtTriangle, index: i32) -> i32;
-    fn get_voronoi_edge_point_b(triangle: *mut ExtTriangle, index: i32) -> i32;
-    fn get_voronoi_edge_point_b_direction_x(triangle: *mut ExtTriangle, index: i32) -> f64;
-    fn get_voronoi_edge_point_b_direction_y(triangle: *mut ExtTriangle, index: i32) -> f64;
+    fn get_voronoi_edge_point(triangle: *mut ExtTriangle, index: i32, side: i32) -> i32;
+    fn get_voronoi_edge_point_b_direction(triangle: *mut ExtTriangle, index: i32, dim: i32) -> f64;
 }
 
-/// Defines the index or the direction related to the second point (B) of an edge on a Voronoi tesselation
+/// Holds the index of an endpoint on a Voronoi edge or the direction of the Voronoi edge
 #[derive(Clone, Debug)]
-pub enum VoronoiEdgePointB {
-    /// The index of point B
+pub enum VoronoiEdgePoint {
+    /// The index of the endpoint
     Index(usize),
 
     /// The direction of the infinite ray
@@ -418,13 +414,9 @@ impl Triangle {
     /// # Input
     ///
     /// * `index` -- is the index of the point and goes from 0 to `npoint`
-    pub fn get_point(&self, index: usize) -> (f64, f64) {
-        unsafe {
-            let index_i32 = to_i32(index);
-            let x = get_point_x(self.ext_triangle, index_i32);
-            let y = get_point_y(self.ext_triangle, index_i32);
-            (x, y)
-        }
+    /// * `dim` -- is the space dimension index: 0 or 1
+    pub fn get_point(&self, index: usize, dim: usize) -> f64 {
+        unsafe { get_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the ID of a Triangle's node
@@ -461,13 +453,9 @@ impl Triangle {
     /// # Input
     ///
     /// * `index` -- is the index of the point and goes from 0 to `voronoi_npoint`
-    pub fn get_voronoi_point(&self, index: usize) -> (f64, f64) {
-        unsafe {
-            let index_i32 = to_i32(index);
-            let x = get_voronoi_point_x(self.ext_triangle, index_i32);
-            let y = get_voronoi_point_y(self.ext_triangle, index_i32);
-            (x, y)
-        }
+    /// * `dim` -- is the space dimension index: 0 or 1
+    pub fn get_voronoi_point(&self, index: usize, dim: usize) -> f64 {
+        unsafe { get_voronoi_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the number of edges on the Voronoi tesselation
@@ -475,28 +463,20 @@ impl Triangle {
         unsafe { get_voronoi_nedge(self.ext_triangle) as usize }
     }
 
-    /// Returns the first point on an edge of the Voronoi tesselation
-    ///
-    /// # Input
+    /// Returns the index of an endpoint on a Voronoi edge or the direction of the Voronoi edge
     ///
     /// * `index` -- is the index of the edge and goes from 0 to `voronoi_nedge`
-    pub fn get_voronoi_edge_point_a(&self, index: usize) -> usize {
-        unsafe { get_voronoi_edge_point_a(self.ext_triangle, to_i32(index)) as usize }
-    }
-
-    /// Returns the second point (or the direction) on an edge of the Voronoi tesselation
-    ///
-    /// * `index` -- is the index of the edge and goes from 0 to `voronoi_nedge`
-    pub fn get_voronoi_edge_point_b(&self, index: usize) -> VoronoiEdgePointB {
+    /// * `side` -- indicates the endpoint: 0 or 1
+    pub fn get_voronoi_edge_point(&self, index: usize, side: usize) -> VoronoiEdgePoint {
         unsafe {
             let index_i32 = to_i32(index);
-            let b = get_voronoi_edge_point_b(self.ext_triangle, index_i32);
-            if b == -1 {
-                let x = get_voronoi_edge_point_b_direction_x(self.ext_triangle, index_i32);
-                let y = get_voronoi_edge_point_b_direction_y(self.ext_triangle, index_i32);
-                VoronoiEdgePointB::Direction(x, y)
+            let id = get_voronoi_edge_point(self.ext_triangle, index_i32, to_i32(side));
+            if id == -1 {
+                let x = get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 0);
+                let y = get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 1);
+                VoronoiEdgePoint::Direction(x, y)
             } else {
-                VoronoiEdgePointB::Index(b as usize)
+                VoronoiEdgePoint::Index(id as usize)
             }
         }
     }
@@ -516,11 +496,11 @@ impl Drop for Triangle {
 #[cfg(test)]
 mod tests {
     use super::Triangle;
-    use crate::{StrError, VoronoiEdgePointB};
+    use crate::{StrError, VoronoiEdgePoint};
 
     #[test]
     fn derive_works() {
-        let option = VoronoiEdgePointB::Index(0);
+        let option = VoronoiEdgePoint::Index(0);
         let cloned = option.clone();
         assert_eq!(format!("{:?}", option), "Index(0)");
         assert_eq!(format!("{:?}", cloned), "Index(0)");
@@ -615,9 +595,12 @@ mod tests {
         assert_eq!(triangle.get_npoint(), 3);
         assert_eq!(triangle.get_ntriangle(), 1);
         assert_eq!(triangle.get_nnode(), 3);
-        assert_eq!(triangle.get_point(0), (0.0, 0.0));
-        assert_eq!(triangle.get_point(1), (1.0, 0.0));
-        assert_eq!(triangle.get_point(2), (0.0, 1.0));
+        assert_eq!(triangle.get_point(0, 0), 0.0);
+        assert_eq!(triangle.get_point(0, 1), 0.0);
+        assert_eq!(triangle.get_point(1, 0), 1.0);
+        assert_eq!(triangle.get_point(1, 1), 0.0);
+        assert_eq!(triangle.get_point(2, 0), 0.0);
+        assert_eq!(triangle.get_point(2, 1), 1.0);
         assert_eq!(triangle.get_triangle_node(0, 0), 0);
         assert_eq!(triangle.get_triangle_node(0, 1), 1);
         assert_eq!(triangle.get_triangle_node(0, 2), 2);
@@ -637,28 +620,41 @@ mod tests {
         assert_eq!(triangle.get_npoint(), 3);
         assert_eq!(triangle.get_ntriangle(), 1);
         assert_eq!(triangle.get_nnode(), 3);
-        assert_eq!(triangle.get_point(0), (0.0, 0.0));
-        assert_eq!(triangle.get_point(1), (1.0, 0.0));
-        assert_eq!(triangle.get_point(2), (0.0, 1.0));
+        assert_eq!(triangle.get_point(0, 0), 0.0);
+        assert_eq!(triangle.get_point(0, 1), 0.0);
+        assert_eq!(triangle.get_point(1, 0), 1.0);
+        assert_eq!(triangle.get_point(1, 1), 0.0);
+        assert_eq!(triangle.get_point(2, 0), 0.0);
+        assert_eq!(triangle.get_point(2, 1), 1.0);
         assert_eq!(triangle.get_triangle_node(0, 0), 0);
         assert_eq!(triangle.get_triangle_node(0, 1), 1);
         assert_eq!(triangle.get_triangle_node(0, 2), 2);
         assert_eq!(triangle.get_voronoi_npoint(), 1);
-        assert_eq!(triangle.get_voronoi_point(0), (0.5, 0.5));
+        assert_eq!(triangle.get_voronoi_point(0, 0), 0.5);
+        assert_eq!(triangle.get_voronoi_point(0, 1), 0.5);
         assert_eq!(triangle.get_voronoi_nedge(), 3);
-        assert_eq!(triangle.get_voronoi_edge_point_a(0), 0);
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point_b(0)),
+            format!("{:?}", triangle.get_voronoi_edge_point(0, 0)),
+            "Index(0)"
+        );
+        assert_eq!(
+            format!("{:?}", triangle.get_voronoi_edge_point(0, 1)),
             "Direction(0.0, -1.0)"
         );
-        assert_eq!(triangle.get_voronoi_edge_point_a(1), 0);
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point_b(1)),
+            format!("{:?}", triangle.get_voronoi_edge_point(1, 0)),
+            "Index(0)"
+        );
+        assert_eq!(
+            format!("{:?}", triangle.get_voronoi_edge_point(1, 1)),
             "Direction(1.0, 1.0)"
         );
-        assert_eq!(triangle.get_voronoi_edge_point_a(2), 0);
         assert_eq!(
-            format!("{:?}", triangle.get_voronoi_edge_point_b(2)),
+            format!("{:?}", triangle.get_voronoi_edge_point(2, 0)),
+            "Index(0)"
+        );
+        assert_eq!(
+            format!("{:?}", triangle.get_voronoi_edge_point(2, 1)),
             "Direction(-1.0, 0.0)"
         );
         Ok(())
@@ -679,9 +675,12 @@ mod tests {
         assert_eq!(triangle.get_npoint(), 3);
         assert_eq!(triangle.get_ntriangle(), 1);
         assert_eq!(triangle.get_nnode(), 3);
-        assert_eq!(triangle.get_point(0), (0.0, 0.0));
-        assert_eq!(triangle.get_point(1), (1.0, 0.0));
-        assert_eq!(triangle.get_point(2), (0.0, 1.0));
+        assert_eq!(triangle.get_point(0, 0), 0.0);
+        assert_eq!(triangle.get_point(0, 1), 0.0);
+        assert_eq!(triangle.get_point(1, 0), 1.0);
+        assert_eq!(triangle.get_point(1, 1), 0.0);
+        assert_eq!(triangle.get_point(2, 0), 0.0);
+        assert_eq!(triangle.get_point(2, 1), 1.0);
         assert_eq!(triangle.get_triangle_node(0, 0), 0);
         assert_eq!(triangle.get_triangle_node(0, 1), 1);
         assert_eq!(triangle.get_triangle_node(0, 2), 2);

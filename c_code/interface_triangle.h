@@ -384,17 +384,9 @@ int get_ncorner(struct ExtTriangle *triangle) {
     return triangle->output.numberofcorners;
 }
 
-double get_point_x(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->output.numberofpoints) {
-        return triangle->output.pointlist[index * 2];
-    } else {
-        return 0.0;
-    }
-}
-
-double get_point_y(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->output.numberofpoints) {
-        return triangle->output.pointlist[index * 2 + 1];
+double get_point(struct ExtTriangle *triangle, int index, int dim) {
+    if (index < triangle->output.numberofpoints && (dim == 0 || dim == 1)) {
+        return triangle->output.pointlist[index * 2 + dim];
     } else {
         return 0.0;
     }
@@ -412,17 +404,9 @@ int get_voronoi_npoint(struct ExtTriangle *triangle) {
     return triangle->voronoi.numberofpoints;
 }
 
-int get_voronoi_point_x(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->voronoi.numberofpoints) {
-        return triangle->voronoi.pointlist[index * 2];
-    } else {
-        return 0.0;
-    }
-}
-
-int get_voronoi_point_y(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->voronoi.numberofpoints) {
-        return triangle->voronoi.pointlist[index * 2 + 1];
+int get_voronoi_point(struct ExtTriangle *triangle, int index, int dim) {
+    if (index < triangle->voronoi.numberofpoints && (dim == 0 || dim == 1)) {
+        return triangle->voronoi.pointlist[index * 2 + dim];
     } else {
         return 0.0;
     }
@@ -432,38 +416,18 @@ int get_voronoi_nedge(struct ExtTriangle *triangle) {
     return triangle->voronoi.numberofedges;
 }
 
-int get_voronoi_edge_point_a(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->voronoi.numberofedges) {
-        return triangle->voronoi.edgelist[index * 2];
+int get_voronoi_edge_point(struct ExtTriangle *triangle, int index, int side) {
+    if (index < triangle->voronoi.numberofedges && (side == 0 || side == 1)) {
+        return triangle->voronoi.edgelist[index * 2 + side];
     } else {
         return 0;
     }
 }
 
-int get_voronoi_edge_point_b(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->voronoi.numberofedges) {
-        return triangle->voronoi.edgelist[index * 2 + 1];
-    } else {
-        return 0;
-    }
-}
-
-double get_voronoi_edge_point_b_direction_x(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->voronoi.numberofedges) {
+double get_voronoi_edge_point_b_direction(struct ExtTriangle *triangle, int index, int dim) {
+    if (index < triangle->voronoi.numberofedges && (dim == 0 || dim == 1)) {
         if (triangle->voronoi.edgelist[index * 2 + 1] == -1) {
-            return triangle->voronoi.normlist[index * 2];
-        } else {
-            return 0.0;
-        }
-    } else {
-        return 0.0;
-    }
-}
-
-double get_voronoi_edge_point_b_direction_y(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->voronoi.numberofedges) {
-        if (triangle->voronoi.edgelist[index * 2 + 1] == -1) {
-            return triangle->voronoi.normlist[index * 2 + 1];
+            return triangle->voronoi.normlist[index * 2 + dim];
         } else {
             return 0.0;
         }
