@@ -1,7 +1,7 @@
 use crate::constants;
 use crate::to_i32::to_i32;
 use crate::StrError;
-use plotpy::{Canvas, Plot, PolyCode, Text};
+use plotpy::{Canvas, Curve, Plot, PolyCode, Text};
 use std::collections::HashMap;
 
 #[repr(C)]
@@ -498,20 +498,32 @@ impl Triangle {
         unsafe { get_voronoi_nedge(self.ext_triangle) as usize }
     }
 
-    /// Returns the index of an endpoint on a Voronoi edge or the direction of the Voronoi edge
+    /// Returns the index of the first endpoint on a Voronoi edge
     ///
     /// # Input
     ///
     /// * `index` -- is the index of the edge and goes from 0 to `voronoi_nedge`
-    /// * `side` -- indicates the endpoint: 0 or 1
     ///
     /// # Warning
     ///
-    /// This function will return Index(0) if either `index` or `side` are out of range.
-    pub fn voronoi_edge_point(&self, index: usize, side: usize) -> VoronoiEdgePoint {
+    /// This function will return 0 if either `index` is out of range.
+    pub fn voronoi_edge_point_a(&self, index: usize) -> usize {
+        unsafe { get_voronoi_edge_point(self.ext_triangle, to_i32(index), 0) as usize }
+    }
+
+    /// Returns the index of the second endpoint on a Voronoi edge or the direction of the Voronoi edge
+    ///
+    /// # Input
+    ///
+    /// * `index` -- is the index of the edge and goes from 0 to `voronoi_nedge`
+    ///
+    /// # Warning
+    ///
+    /// This function will return Index(0) if either `index` is out of range.
+    pub fn voronoi_edge_point_b(&self, index: usize) -> VoronoiEdgePoint {
         unsafe {
             let index_i32 = to_i32(index);
-            let id = get_voronoi_edge_point(self.ext_triangle, index_i32, to_i32(side));
+            let id = get_voronoi_edge_point(self.ext_triangle, index_i32, 1);
             if id == -1 {
                 let x = get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 0);
                 let y = get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 1);
@@ -525,17 +537,18 @@ impl Triangle {
     /// Draw triangles
     pub fn draw_triangles(
         &self,
+        plot: &mut Plot,
+        set_range: bool,
         with_point_ids: bool,
         with_triangle_ids: bool,
         with_attribute_ids: bool,
         fontsize_point_ids: Option<f64>,
         fontsize_triangle_ids: Option<f64>,
         fontsize_attribute_ids: Option<f64>,
-    ) -> Plot {
-        let mut plot = Plot::new();
+    ) {
         let n_triangle = self.ntriangle();
         if n_triangle < 1 {
-            return plot;
+            return;
         }
         let mut canvas = Canvas::new();
         let mut point_ids = Text::new();
@@ -629,7 +642,7 @@ impl Triangle {
                 point_ids.draw(x, y, format!("{}", p).as_str());
             }
         }
-        plot.set_range(min[0], max[0], min[1], max[1]).add(&canvas);
+        plot.add(&canvas);
         if with_triangle_ids {
             plot.add(&triangle_ids);
         }
@@ -639,7 +652,86 @@ impl Triangle {
         if with_attribute_ids {
             plot.add(&attribute_ids);
         }
-        plot
+        if set_range {
+            plot.set_range(min[0], max[0], min[1], max[1]);
+        }
+    }
+
+    /// Draws Voronoi diagram
+    pub fn draw_voronoi(&self, plot: &mut Plot) {
+        if self.voronoi_npoint() < 1 || self.voronoi_nedge() < 1 {
+            return;
+        }
+        let mut x = vec![0.0; 2];
+        let mut min = vec![f64::MAX; 2];
+        let mut max = vec![f64::MIN; 2];
+        let mut markers = Curve::new();
+        markers
+            .set_marker_color("gold")
+            .set_marker_line_color("gold")
+            .set_marker_style("o")
+            .set_stop_clip(true);
+        for p in 0..self.npoint() {
+            for dim in 0..2 {
+                x[dim] = self.point(p, dim);
+                min[dim] = f64::min(min[dim], x[dim]);
+                max[dim] = f64::max(max[dim], x[dim]);
+            }
+            markers.draw(&[x[0]], &[x[1]]);
+        }
+        for q in 0..self.voronoi_npoint() {
+            for dim in 0..2 {
+                x[dim] = self.voronoi_point(q, dim);
+                min[dim] = f64::min(min[dim], x[dim]);
+                max[dim] = f64::max(max[dim], x[dim]);
+            }
+        }
+        let mut canvas = Canvas::new();
+        canvas.polycurve_begin();
+        for e in 0..self.voronoi_nedge() {
+            let a = self.voronoi_edge_point_a(e);
+            let xa = self.voronoi_point(a, 0);
+            let ya = self.voronoi_point(a, 1);
+            let b_or_direction = self.voronoi_edge_point_b(e);
+            match b_or_direction {
+                VoronoiEdgePoint::Index(b) => {
+                    let xb = self.voronoi_point(b, 0);
+                    let yb = self.voronoi_point(b, 1);
+                    canvas.polycurve_add(xa, ya, PolyCode::MoveTo);
+                    canvas.polycurve_add(xb, yb, PolyCode::LineTo);
+                }
+                VoronoiEdgePoint::Direction(dx, dy) => {
+                    let mx = if dx > 0.0 {
+                        (max[0] - xa) / dx
+                    } else if dx < 0.0 {
+                        (min[0] - xa) / dx
+                    } else {
+                        0.0
+                    };
+                    let my = if dy > 0.0 {
+                        (max[1] - ya) / dy
+                    } else if dy < 0.0 {
+                        (min[1] - ya) / dy
+                    } else {
+                        0.0
+                    };
+                    let m = if mx < my { mx } else { my };
+                    if m > 0.0 {
+                        let xb = xa + m * dx;
+                        let yb = ya + m * dy;
+                        min[0] = f64::min(min[0], xb);
+                        max[0] = f64::max(max[0], xb);
+                        min[1] = f64::min(min[1], yb);
+                        max[1] = f64::max(max[1], yb);
+                        canvas.polycurve_add(xa, ya, PolyCode::MoveTo);
+                        canvas.polycurve_add(xb, yb, PolyCode::LineTo);
+                    }
+                }
+            }
+        }
+        canvas.polycurve_end(false);
+        plot.set_range(min[0], max[0], min[1], max[1]);
+        plot.add(&canvas).add(&markers);
     }
 }
 
@@ -658,6 +750,7 @@ impl Drop for Triangle {
 mod tests {
     use super::Triangle;
     use crate::{StrError, VoronoiEdgePoint};
+    use plotpy::Plot;
 
     #[test]
     fn derive_works() {
@@ -794,28 +887,19 @@ mod tests {
         assert_eq!(triangle.voronoi_point(0, 0), 0.5);
         assert_eq!(triangle.voronoi_point(0, 1), 0.5);
         assert_eq!(triangle.voronoi_nedge(), 3);
+        assert_eq!(triangle.voronoi_edge_point_a(0), 0);
         assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point(0, 0)),
-            "Index(0)"
-        );
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point(0, 1)),
+            format!("{:?}", triangle.voronoi_edge_point_b(0)),
             "Direction(0.0, -1.0)"
         );
+        assert_eq!(triangle.voronoi_edge_point_a(1), 0);
         assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point(1, 0)),
-            "Index(0)"
-        );
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point(1, 1)),
+            format!("{:?}", triangle.voronoi_edge_point_b(1)),
             "Direction(1.0, 1.0)"
         );
+        assert_eq!(triangle.voronoi_edge_point_a(2), 0);
         assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point(2, 0)),
-            "Index(0)"
-        );
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point(2, 1)),
+            format!("{:?}", triangle.voronoi_edge_point_b(2)),
             "Direction(-1.0, 0.0)"
         );
         Ok(())
@@ -879,19 +963,16 @@ mod tests {
         assert_eq!(triangle.triangle_attribute(100), 0);
         assert_eq!(triangle.voronoi_point(100, 0), 0.0);
         assert_eq!(triangle.voronoi_point(0, 100), 0.0);
+        assert_eq!(triangle.voronoi_edge_point_a(100), 0,);
         assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point(100, 0)),
-            "Index(0)"
-        );
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point(0, 100)),
+            format!("{:?}", triangle.voronoi_edge_point_b(100)),
             "Index(0)"
         );
         Ok(())
     }
 
     #[test]
-    fn draw_works() -> Result<(), StrError> {
+    fn draw_triangles_works() -> Result<(), StrError> {
         let mut triangle = Triangle::new(3, Some(3), None, None)?;
         triangle
             .set_point(0, 0.0, 0.0)?
@@ -902,11 +983,44 @@ mod tests {
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
         triangle.generate_mesh(false, true, Some(0.25), None)?;
-        let mut plot = triangle.draw_triangles(true, true, true, None, None, None);
+        let mut plot = Plot::new();
+        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
-                .save("/tmp/tritet/draw_works.svg")?;
+                .save("/tmp/tritet/draw_triangles_works.svg")?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn draw_voronoi_works() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(5, None, None, None)?;
+        triangle
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 1.0, 1.0)?
+            .set_point(3, 0.0, 1.0)?
+            .set_point(4, 0.5, 0.5)?;
+        // let mut triangle = Triangle::new(10, None, None, None)?;
+        // triangle
+        //     .set_point(0, 0.478554, 0.00869692)?
+        //     .set_point(1, 0.13928, 0.180603)?
+        //     .set_point(2, 0.578587, 0.760349)?
+        //     .set_point(3, 0.903726, 0.975904)?
+        //     .set_point(4, 0.0980015, 0.981755)?
+        //     .set_point(5, 0.133721, 0.348832)?
+        //     .set_point(6, 0.648071, 0.369534)?
+        //     .set_point(7, 0.230951, 0.558482)?
+        //     .set_point(8, 0.0307942, 0.459123)?
+        //     .set_point(9, 0.540745, 0.331184)?;
+        triangle.generate_voronoi(true)?;
+        let mut plot = Plot::new();
+        triangle.draw_voronoi(&mut plot);
+        if false {
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/draw_voronoi_works.svg")?;
         }
         Ok(())
     }
@@ -928,7 +1042,8 @@ mod tests {
         assert_eq!(triangle.ntriangle(), 2);
         assert_eq!(triangle.triangle_attribute(0), 1);
         assert_eq!(triangle.triangle_attribute(1), 1);
-        let mut plot = triangle.draw_triangles(true, true, true, None, None, None);
+        let mut plot = Plot::new();
+        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
@@ -971,7 +1086,17 @@ mod tests {
         assert_eq!(triangle.ntriangle(), 14);
         assert_eq!(triangle.triangle_attribute(0), 1);
         assert_eq!(triangle.triangle_attribute(12), 2);
-        let mut plot = triangle.draw_triangles(true, true, true, Some(12.0), Some(20.0), None);
+        let mut plot = Plot::new();
+        triangle.draw_triangles(
+            &mut plot,
+            true,
+            true,
+            true,
+            true,
+            Some(12.0),
+            Some(20.0),
+            None,
+        );
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
