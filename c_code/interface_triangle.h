@@ -403,7 +403,7 @@ int get_triangle_corner(struct ExtTriangle *triangle, int index, int corner) {
 }
 
 int get_triangle_attribute(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->output.numberoftriangleattributes) {
+    if (index < triangle->output.numberoftriangles && triangle->output.numberoftriangleattributes > 0) {
         return triangle->output.triangleattributelist[index * triangle->output.numberoftriangleattributes];
     } else {
         return 0;

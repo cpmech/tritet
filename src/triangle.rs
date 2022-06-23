@@ -1,7 +1,7 @@
 use crate::constants;
 use crate::to_i32::to_i32;
 use crate::StrError;
-use plotpy::{Canvas, Plot, PolyCode};
+use plotpy::{Canvas, Plot, PolyCode, Text};
 use std::collections::HashMap;
 
 #[repr(C)]
@@ -469,7 +469,7 @@ impl Triangle {
     ///
     /// # Warning
     ///
-    /// This function will return 0 if either `index` or `m` are out of range.
+    /// This function will return 0 if either `index` is out of range.
     pub fn triangle_attribute(&self, index: usize) -> usize {
         unsafe { get_triangle_attribute(self.ext_triangle, to_i32(index)) as usize }
     }
@@ -523,15 +523,59 @@ impl Triangle {
     }
 
     /// Draw triangles
-    pub fn draw_triangles(&self) -> Plot {
+    pub fn draw_triangles(
+        &self,
+        with_point_ids: bool,
+        with_triangle_ids: bool,
+        with_attribute_ids: bool,
+        fontsize_point_ids: Option<f64>,
+        fontsize_triangle_ids: Option<f64>,
+        fontsize_attribute_ids: Option<f64>,
+    ) -> Plot {
         let mut plot = Plot::new();
         let n_triangle = self.ntriangle();
         if n_triangle < 1 {
             return plot;
         }
         let mut canvas = Canvas::new();
+        let mut point_ids = Text::new();
+        let mut triangle_ids = Text::new();
+        let mut attribute_ids = Text::new();
+        if with_point_ids {
+            point_ids
+                .set_color("red")
+                .set_align_horizontal("center")
+                .set_align_vertical("center")
+                .set_bbox(true)
+                .set_bbox_facecolor("white")
+                .set_bbox_alpha(0.8)
+                .set_bbox_style("circle");
+            if let Some(fsz) = fontsize_point_ids {
+                point_ids.set_fontsize(fsz);
+            }
+        }
+        if with_triangle_ids {
+            triangle_ids
+                .set_color("blue")
+                .set_align_horizontal("center")
+                .set_align_vertical("center");
+            if let Some(fsz) = fontsize_triangle_ids {
+                triangle_ids.set_fontsize(fsz);
+            }
+        }
+        if with_attribute_ids {
+            attribute_ids
+                .set_color("black")
+                .set_align_horizontal("center")
+                .set_align_vertical("center");
+            if let Some(fsz) = fontsize_attribute_ids {
+                attribute_ids.set_fontsize(fsz);
+            }
+        }
         canvas.set_edge_color("black");
         let mut x = vec![0.0; 2];
+        let mut xmid = vec![0.0; 2];
+        let mut xatt = vec![0.0; 2];
         let mut min = vec![f64::MAX; 2];
         let mut max = vec![f64::MIN; 2];
         let mut colors: HashMap<usize, &'static str> = HashMap::new();
@@ -549,12 +593,16 @@ impl Triangle {
             };
             canvas.set_face_color(color);
             canvas.polycurve_begin();
+            for dim in 0..2 {
+                xmid[dim] = 0.0;
+            }
             for m in 0..3 {
                 let p = self.triangle_node(tri, m);
                 for dim in 0..2 {
                     x[dim] = self.point(p, dim);
                     min[dim] = f64::min(min[dim], x[dim]);
                     max[dim] = f64::max(max[dim], x[dim]);
+                    xmid[dim] += x[dim] / 3.0;
                 }
                 if m == 0 {
                     canvas.polycurve_add(x[0], x[1], PolyCode::MoveTo);
@@ -563,8 +611,34 @@ impl Triangle {
                 }
             }
             canvas.polycurve_end(true);
+            if with_triangle_ids {
+                triangle_ids.draw(xmid[0], xmid[1], format!("{}", tri).as_str());
+            }
+            if with_attribute_ids {
+                for dim in 0..2 {
+                    x[dim] = self.point(self.triangle_node(tri, 0), dim);
+                    xatt[dim] = (x[dim] + xmid[dim]) / 2.0;
+                }
+                attribute_ids.draw(xatt[0], xatt[1], format!("[{}]", attribute).as_str());
+            }
+        }
+        if with_point_ids {
+            for p in 0..self.npoint() {
+                let x = self.point(p, 0);
+                let y = self.point(p, 1);
+                point_ids.draw(x, y, format!("{}", p).as_str());
+            }
         }
         plot.set_range(min[0], max[0], min[1], max[1]).add(&canvas);
+        if with_triangle_ids {
+            plot.add(&triangle_ids);
+        }
+        if with_point_ids {
+            plot.add(&point_ids);
+        }
+        if with_attribute_ids {
+            plot.add(&attribute_ids);
+        }
         plot
     }
 }
@@ -828,7 +902,7 @@ mod tests {
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
         triangle.generate_mesh(false, true, Some(0.25), None)?;
-        let mut plot = triangle.draw_triangles();
+        let mut plot = triangle.draw_triangles(true, true, true, None, None, None);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
@@ -853,12 +927,55 @@ mod tests {
         triangle.generate_mesh(false, true, Some(0.25), None)?;
         assert_eq!(triangle.ntriangle(), 2);
         assert_eq!(triangle.triangle_attribute(0), 1);
-        assert_eq!(triangle.triangle_attribute(1), 0);
-        let mut plot = triangle.draw_triangles();
+        assert_eq!(triangle.triangle_attribute(1), 1);
+        let mut plot = triangle.draw_triangles(true, true, true, None, None, None);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/mesh_3_works.svg")?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn mesh_4_works() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(12, Some(10), Some(2), Some(1))?;
+        triangle
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 1.0, 1.0)?
+            .set_point(3, 0.0, 1.0)?
+            .set_point(4, 0.2, 0.2)?
+            .set_point(5, 0.8, 0.2)?
+            .set_point(6, 0.8, 0.8)?
+            .set_point(7, 0.2, 0.8)?
+            .set_point(8, 0.0, 0.5)?
+            .set_point(9, 0.2, 0.5)?
+            .set_point(10, 0.8, 0.5)?
+            .set_point(11, 1.0, 0.5)?
+            .set_region(0, 0.1, 0.1, 1, None)?
+            .set_region(1, 0.1, 0.9, 2, None)?
+            .set_hole(0, 0.5, 0.5)?;
+        triangle
+            .set_segment(0, 0, 1)?
+            .set_segment(1, 1, 2)?
+            .set_segment(2, 2, 3)?
+            .set_segment(3, 3, 0)?
+            .set_segment(4, 4, 5)?
+            .set_segment(5, 5, 6)?
+            .set_segment(6, 6, 7)?
+            .set_segment(7, 7, 4)?
+            .set_segment(8, 8, 9)?
+            .set_segment(9, 10, 11)?;
+        triangle.generate_mesh(false, true, None, None)?;
+        assert_eq!(triangle.ntriangle(), 14);
+        assert_eq!(triangle.triangle_attribute(0), 1);
+        assert_eq!(triangle.triangle_attribute(12), 2);
+        let mut plot = triangle.draw_triangles(true, true, true, Some(12.0), Some(20.0), None);
+        if false {
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/mesh_4_works.svg")?;
         }
         Ok(())
     }

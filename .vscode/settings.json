@@ -29,7 +29,8 @@
     "trianglearealist",
     "triangleattributelist",
     "trianglelist",
-    "TRICALL"
+    "TRICALL",
+    "xatt"
   ],
   "files.associations": {
     "*.C": "cpp",
