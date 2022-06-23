@@ -1,6 +1,7 @@
 use crate::constants;
 use crate::to_i32::to_i32;
 use crate::StrError;
+use plotpy::{Canvas, Plot, PolyCode};
 
 #[repr(C)]
 pub(crate) struct ExtTriangle {
@@ -68,6 +69,13 @@ pub enum VoronoiEdgePoint {
 ///     0-----3-----1        0-----5-----1
 /// ```
 const TRITET_TO_TRIANGLE: [usize; 6] = [0, 1, 2, 5, 3, 4];
+
+/// Defines a set of "light" colors
+const LIGHT_COLORS: [&'static str; 17] = [
+    "#cbe4f9", "#cdf5f6", "#eff9da", "#f9ebdf", "#f9d8d6", "#d6cdea", "#acddde", "#caf1de",
+    "#e1f8dc", "#fef8dd", "#ffe7c7", "#f7d8ba", "#d0fffe", "#fffddb", "#e4ffde", "#ffd3fd",
+    "#ffe7d3",
+];
 
 /// Implements high-level functions to call Shewchuk's Triangle C-Code
 pub struct Triangle {
@@ -494,6 +502,40 @@ impl Triangle {
             }
         }
     }
+
+    /// Draw triangles
+    pub fn draw_triangles(&self) -> Plot {
+        let mut plot = Plot::new();
+        let n_triangle = self.get_ntriangle();
+        if n_triangle < 1 {
+            return plot;
+        }
+        let mut canvas = Canvas::new();
+        canvas.set_edge_color("black");
+        let mut x = vec![0.0; 2];
+        let mut min = vec![f64::MAX; 2];
+        let mut max = vec![f64::MIN; 2];
+        for tri in 0..n_triangle {
+            canvas.set_face_color(LIGHT_COLORS[0]);
+            canvas.polycurve_begin();
+            for m in 0..3 {
+                let p = self.get_triangle_node(tri, m);
+                for dim in 0..2 {
+                    x[dim] = self.get_point(p, dim);
+                    min[dim] = f64::min(min[dim], x[dim]);
+                    max[dim] = f64::max(max[dim], x[dim]);
+                }
+                if m == 0 {
+                    canvas.polycurve_add(x[0], x[1], PolyCode::MoveTo);
+                } else {
+                    canvas.polycurve_add(x[0], x[1], PolyCode::LineTo);
+                }
+            }
+            canvas.polycurve_end(true);
+        }
+        plot.set_range(min[0], max[0], min[1], max[1]).add(&canvas);
+        plot
+    }
 }
 
 impl Drop for Triangle {
@@ -736,6 +778,27 @@ mod tests {
             format!("{:?}", triangle.get_voronoi_edge_point(0, 100)),
             "Index(0)"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn draw_works() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(3, Some(3), None, None)?;
+        triangle
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 0.0, 1.0)?;
+        triangle
+            .set_segment(0, 0, 1)?
+            .set_segment(1, 1, 2)?
+            .set_segment(2, 2, 0)?;
+        triangle.generate_mesh(false, true, Some(0.25), None)?;
+        let mut plot = triangle.draw_triangles();
+        if false {
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/draw_works.svg")?;
+        }
         Ok(())
     }
 }

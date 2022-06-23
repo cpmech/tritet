@@ -12,6 +12,7 @@ categories = ["mathematics", "science"]
 keywords = ["2D", "3D", "mesh", "geometry"]
 
 [dependencies]
+plotpy = { path = "../plotpy", version = "0.3" }
 
 [build-dependencies]
 cc = "1.0"
