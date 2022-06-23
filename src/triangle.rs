@@ -415,6 +415,10 @@ impl Triangle {
     ///
     /// * `index` -- is the index of the point and goes from 0 to `npoint`
     /// * `dim` -- is the space dimension index: 0 or 1
+    ///
+    /// # Warning
+    ///
+    /// This function will return 0.0 if either `index` or `dim` are out of range.
     pub fn get_point(&self, index: usize, dim: usize) -> f64 {
         unsafe { get_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
@@ -454,6 +458,10 @@ impl Triangle {
     ///
     /// * `index` -- is the index of the point and goes from 0 to `voronoi_npoint`
     /// * `dim` -- is the space dimension index: 0 or 1
+    ///
+    /// # Warning
+    ///
+    /// This function will return 0.0 if either `index` or `dim` are out of range.
     pub fn get_voronoi_point(&self, index: usize, dim: usize) -> f64 {
         unsafe { get_voronoi_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
@@ -465,8 +473,14 @@ impl Triangle {
 
     /// Returns the index of an endpoint on a Voronoi edge or the direction of the Voronoi edge
     ///
+    /// # Input
+    ///
     /// * `index` -- is the index of the edge and goes from 0 to `voronoi_nedge`
     /// * `side` -- indicates the endpoint: 0 or 1
+    ///
+    /// # Warning
+    ///
+    /// This function will return Index(0) if either `index` or `side` are out of range.
     pub fn get_voronoi_edge_point(&self, index: usize, side: usize) -> VoronoiEdgePoint {
         unsafe {
             let index_i32 = to_i32(index);
@@ -704,6 +718,24 @@ mod tests {
         assert_eq!(triangle.get_npoint(), 22);
         assert_eq!(triangle.get_ntriangle(), 7);
         assert_eq!(triangle.get_nnode(), 6);
+        Ok(())
+    }
+
+    #[test]
+    fn get_methods_work_with_wrong_indices() -> Result<(), StrError> {
+        let triangle = Triangle::new(3, None, None, None)?;
+        assert_eq!(triangle.get_point(100, 0), 0.0);
+        assert_eq!(triangle.get_point(0, 100), 0.0);
+        assert_eq!(triangle.get_voronoi_point(100, 0), 0.0);
+        assert_eq!(triangle.get_voronoi_point(0, 100), 0.0);
+        assert_eq!(
+            format!("{:?}", triangle.get_voronoi_edge_point(100, 0)),
+            "Index(0)"
+        );
+        assert_eq!(
+            format!("{:?}", triangle.get_voronoi_edge_point(0, 100)),
+            "Index(0)"
+        );
         Ok(())
     }
 }
