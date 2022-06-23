@@ -516,7 +516,15 @@ impl Drop for Triangle {
 #[cfg(test)]
 mod tests {
     use super::Triangle;
-    use crate::StrError;
+    use crate::{StrError, VoronoiEdgePointB};
+
+    #[test]
+    fn derive_works() {
+        let option = VoronoiEdgePointB::Index(0);
+        let cloned = option.clone();
+        assert_eq!(format!("{:?}", option), "Index(0)");
+        assert_eq!(format!("{:?}", cloned), "Index(0)");
+    }
 
     #[test]
     fn new_captures_some_errors() {
