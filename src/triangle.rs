@@ -114,7 +114,7 @@ const LIGHT_COLORS: [&'static str; 17] = [
 ///     triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
-///     //     .save("/tmp/tritet/example_triangle_delaunay_1.svg")?;
+///     //     .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
 ///     Ok(())
 /// }
 /// ```
@@ -150,7 +150,7 @@ const LIGHT_COLORS: [&'static str; 17] = [
 ///     triangle.draw_voronoi(&mut plot);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
-///     //     .save("/tmp/tritet/example_triangle_voronoi_1.svg")?;
+///     //     .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
 ///     Ok(())
 /// }
 /// ```
@@ -210,7 +210,7 @@ const LIGHT_COLORS: [&'static str; 17] = [
 ///     triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
-///     //     .save("/tmp/tritet/example_triangle_mesh_1.svg")?;
+///     //     .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
 ///     Ok(())
 /// }
 /// ```
