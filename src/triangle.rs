@@ -57,28 +57,6 @@ pub enum VoronoiEdgePoint {
     Direction(f64, f64),
 }
 
-/// Maps indices used in this library (tritet) to indices used in Triangle
-///
-/// ```text
-/// This library (tritet)      Triangle
-///         NODES               CORNERS
-///           2                    2
-///          / \                  / \
-///         /   \                /   \
-///        5     4              4     3
-///       /       \            /       \
-///      /         \          /         \
-///     0-----3-----1        0-----5-----1
-/// ```
-const TRITET_TO_TRIANGLE: [usize; 6] = [0, 1, 2, 5, 3, 4];
-
-/// Defines a set of "light" colors
-const LIGHT_COLORS: [&'static str; 17] = [
-    "#cbe4f9", "#cdf5f6", "#eff9da", "#f9ebdf", "#f9d8d6", "#d6cdea", "#acddde", "#caf1de",
-    "#e1f8dc", "#fef8dd", "#ffe7c7", "#f7d8ba", "#d0fffe", "#fffddb", "#e4ffde", "#ffd3fd",
-    "#ffe7d3",
-];
-
 /// Implements high-level functions to call Shewchuk's Triangle C-Code
 ///
 /// # Examples
@@ -566,17 +544,6 @@ impl Triangle {
     }
 
     /// Returns the number of nodes on a triangle (e.g., 3 or 6)
-    ///
-    /// ```text
-    ///     NODES
-    ///       2
-    ///      / \     The middle nodes are
-    ///     /   \    only generated if the
-    ///    5     4   quadratic flag is true
-    ///   /       \
-    ///  /         \
-    /// 0-----3-----1
-    /// ```
     pub fn nnode(&self) -> usize {
         unsafe { get_ncorner(self.ext_triangle) as usize }
     }
@@ -595,7 +562,7 @@ impl Triangle {
         unsafe { get_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
-    /// Returns the ID of a Triangle's node
+    /// Returns the ID of a triangle's node
     ///
     /// ```text
     ///     NODES
@@ -618,7 +585,7 @@ impl Triangle {
     /// This function will return 0 if either `index` or `m` are out of range.
     pub fn triangle_node(&self, index: usize, m: usize) -> usize {
         unsafe {
-            let corner = TRITET_TO_TRIANGLE[m];
+            let corner = constants::TRITET_TO_TRIANGLE[m];
             get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize
         }
     }
@@ -751,12 +718,13 @@ impl Triangle {
         let mut max = vec![f64::MIN; 2];
         let mut colors: HashMap<usize, &'static str> = HashMap::new();
         let mut index_color = 0;
+        let clr = constants::LIGHT_COLORS;
         for tri in 0..n_triangle {
             let attribute = self.triangle_attribute(tri);
             let color = match colors.get(&attribute) {
                 Some(c) => c,
                 None => {
-                    let c = LIGHT_COLORS[index_color % LIGHT_COLORS.len()];
+                    let c = clr[index_color % clr.len()];
                     colors.insert(attribute, c);
                     index_color += 1;
                     c
