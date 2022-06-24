@@ -231,6 +231,15 @@ pub struct Triangle {
     all_holes_set: bool,            // indicates that all holes have been set
 }
 
+impl Drop for Triangle {
+    /// Tells the c-code to release memory
+    fn drop(&mut self) {
+        unsafe {
+            drop_triangle(self.ext_triangle);
+        }
+    }
+}
+
 impl Triangle {
     /// Allocates a new instance
     pub fn new(
@@ -858,15 +867,6 @@ impl Triangle {
         canvas.polycurve_end(false);
         plot.set_range(min[0], max[0], min[1], max[1]);
         plot.add(&canvas).add(&markers);
-    }
-}
-
-impl Drop for Triangle {
-    /// Tells the c-code to release memory
-    fn drop(&mut self) {
-        unsafe {
-            drop_triangle(self.ext_triangle);
-        }
     }
 }
 
