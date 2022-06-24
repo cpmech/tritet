@@ -13,8 +13,21 @@ struct ExtTetgen *new_tetgen(int npoint, int nfacet, int nregion, int nhole) {
     if (tetgen == NULL) {
         return NULL;
     }
-    tetgen->input = new tetgenio;
-    tetgen->output = new tetgenio;
+
+    tetgenio *input = new tetgenio;
+    if (input == NULL) {
+        return NULL;
+    }
+    input->initialize();
+
+    tetgenio *output = new tetgenio;
+    if (output == NULL) {
+        return NULL;
+    }
+    output->initialize();
+
+    tetgen->input = input;
+    tetgen->output = output;
     return tetgen;
 }
 

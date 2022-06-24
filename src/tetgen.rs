@@ -41,6 +41,9 @@ extern "C" {
     fn tet_get_tetrahedron_attribute(tetgen: *mut ExtTetgen, index: i32) -> i32;
 }
 
+/// Implements high-level functions to call Si's Tetgen Cpp-Code
+///
+/// **Note:** All indices are are zero-based.
 pub struct Tetgen {
     ext_tetgen: *mut ExtTetgen, // data allocated by the c-code
     npoint: usize,              // number of points
@@ -199,6 +202,15 @@ impl Tetgen {
                 }
                 if status == constants::TRITET_ERROR_INVALID_FACET_INDEX {
                     return Err("index of facet is out of bounds");
+                }
+                if status == constants::TRITET_ERROR_NULL_FACET_POLYGON_LIST {
+                    return Err("INTERNAL ERROR: found NULL facet polygon list");
+                }
+                if status == constants::TRITET_ERROR_INVALID_FACET_NUM_POLYGON {
+                    return Err("INTERNAL ERROR: found invalid facet number of polygon");
+                }
+                if status == constants::TRITET_ERROR_INVALID_FACET_POINT_INDEX {
+                    return Err("index of facet point is out of bounds");
                 }
                 if status == constants::TRITET_ERROR_INVALID_FACET_POINT_ID {
                     return Err("id of facet point is out of bounds");

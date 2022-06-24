@@ -59,6 +59,8 @@ pub enum VoronoiEdgePoint {
 
 /// Implements high-level functions to call Shewchuk's Triangle C-Code
 ///
+/// **Note:** All indices are are zero-based.
+///
 /// # Examples
 ///
 /// ## Delaunay triangulation
