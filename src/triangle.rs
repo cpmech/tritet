@@ -119,7 +119,7 @@ impl Triangle {
         unsafe {
             let ext_triangle = new_triangle(npoint_i32, nsegment_i32, nregion_i32, nhole_i32);
             if ext_triangle.is_null() {
-                return Err("INTERNAL ERROR: Cannot allocate ExtTriangle");
+                return Err("INTERNAL ERROR: cannot allocate ExtTriangle");
             }
             Ok(Triangle {
                 ext_triangle,
@@ -141,15 +141,15 @@ impl Triangle {
             let status = set_point(self.ext_triangle, to_i32(index), x, y);
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: Found NULL data");
+                    return Err("INTERNAL ERROR: found NULL data");
                 }
                 if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: Found NULL point list");
+                    return Err("INTERNAL ERROR: found NULL point list");
                 }
                 if status == constants::TRITET_ERROR_INVALID_POINT_INDEX {
-                    return Err("Index of point is out of bounds");
+                    return Err("index of point is out of bounds");
                 }
-                return Err("INTERNAL ERROR: Some error occurred");
+                return Err("INTERNAL ERROR: some error occurred");
             }
         }
         if index == self.npoint - 1 {
@@ -170,25 +170,21 @@ impl Triangle {
     pub fn set_segment(&mut self, index: usize, a: usize, b: usize) -> Result<&mut Self, StrError> {
         let nsegment = match self.nsegment {
             Some(n) => n,
-            None => {
-                return Err(
-                    "The number of segments (given to 'new') must not be None to set segment",
-                )
-            }
+            None => return Err("cannot set segment because the number of segments is None"),
         };
         unsafe {
             let status = set_segment(self.ext_triangle, to_i32(index), to_i32(a), to_i32(b));
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: Found NULL data");
+                    return Err("INTERNAL ERROR: found NULL data");
                 }
                 if status == constants::TRITET_ERROR_NULL_SEGMENT_LIST {
-                    return Err("INTERNAL ERROR: Found NULL segment list");
+                    return Err("INTERNAL ERROR: found NULL segment list");
                 }
                 if status == constants::TRITET_ERROR_INVALID_SEGMENT_INDEX {
-                    return Err("Index of segment is out of bounds");
+                    return Err("index of segment is out of bounds");
                 }
-                return Err("INTERNAL ERROR: Some error occurred");
+                return Err("INTERNAL ERROR: some error occurred");
             }
         }
         if index == nsegment - 1 {
@@ -218,9 +214,7 @@ impl Triangle {
     ) -> Result<&mut Self, StrError> {
         let nregion = match self.nregion {
             Some(n) => n,
-            None => {
-                return Err("The number of regions (given to 'new') must not be None to set region")
-            }
+            None => return Err("cannot set region because the number of regions is None"),
         };
         let area_constraint = match max_area {
             Some(v) => v,
@@ -237,15 +231,15 @@ impl Triangle {
             );
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: Found NULL data");
+                    return Err("INTERNAL ERROR: found NULL data");
                 }
                 if status == constants::TRITET_ERROR_NULL_REGION_LIST {
-                    return Err("INTERNAL ERROR: Found NULL region list");
+                    return Err("INTERNAL ERROR: found NULL region list");
                 }
                 if status == constants::TRITET_ERROR_INVALID_REGION_INDEX {
-                    return Err("Index of region is out of bounds");
+                    return Err("index of region is out of bounds");
                 }
-                return Err("INTERNAL ERROR: Some error occurred");
+                return Err("INTERNAL ERROR: some error occurred");
             }
         }
         if index == nregion - 1 {
@@ -266,23 +260,21 @@ impl Triangle {
     pub fn set_hole(&mut self, index: usize, x: f64, y: f64) -> Result<&mut Self, StrError> {
         let nhole = match self.nhole {
             Some(n) => n,
-            None => {
-                return Err("The number of holes (given to 'new') must not be None to set hole")
-            }
+            None => return Err("cannot set hole because the number of holes is None"),
         };
         unsafe {
             let status = set_hole(self.ext_triangle, to_i32(index), x, y);
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: Found NULL data");
+                    return Err("INTERNAL ERROR: found NULL data");
                 }
                 if status == constants::TRITET_ERROR_NULL_HOLE_LIST {
-                    return Err("INTERNAL ERROR: Found NULL hole list");
+                    return Err("INTERNAL ERROR: found NULL hole list");
                 }
                 if status == constants::TRITET_ERROR_INVALID_HOLE_INDEX {
-                    return Err("Index of hole is out of bounds");
+                    return Err("index of hole is out of bounds");
                 }
-                return Err("INTERNAL ERROR: Some error occurred");
+                return Err("INTERNAL ERROR: some error occurred");
             }
         }
         if index == nhole - 1 {
@@ -300,18 +292,18 @@ impl Triangle {
     /// * `verbose` -- Prints Triangle's messages to the console
     pub fn generate_delaunay(&self, verbose: bool) -> Result<(), StrError> {
         if !self.all_points_set {
-            return Err("All points must be set to generate Delaunay triangulation");
+            return Err("cannot generate Delaunay triangulation because not all points are set");
         }
         unsafe {
             let status = run_delaunay(self.ext_triangle, if verbose { 1 } else { 0 });
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: Found NULL data");
+                    return Err("INTERNAL ERROR: found NULL data");
                 }
                 if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: Found NULL point list");
+                    return Err("INTERNAL ERROR: found NULL point list");
                 }
-                return Err("INTERNAL ERROR: Some error occurred");
+                return Err("INTERNAL ERROR: some error occurred");
             }
         }
         Ok(())
@@ -324,18 +316,18 @@ impl Triangle {
     /// * `verbose` -- Prints Triangle's messages to the console
     pub fn generate_voronoi(&self, verbose: bool) -> Result<(), StrError> {
         if !self.all_points_set {
-            return Err("All points must be set to generate Voronoi tessellation");
+            return Err("cannot generate Voronoi tessellation because not all points are set");
         }
         unsafe {
             let status = run_voronoi(self.ext_triangle, if verbose { 1 } else { 0 });
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: Found NULL data");
+                    return Err("INTERNAL ERROR: found NULL data");
                 }
                 if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: Found NULL point list");
+                    return Err("INTERNAL ERROR: found NULL point list");
                 }
-                return Err("INTERNAL ERROR: Some error occurred");
+                return Err("INTERNAL ERROR: some error occurred");
             }
         }
         Ok(())
@@ -357,10 +349,10 @@ impl Triangle {
         global_min_angle: Option<f64>,
     ) -> Result<(), StrError> {
         if !self.all_points_set {
-            return Err("All points must be set to generate mesh");
+            return Err("cannot generate mesh because not all points are set");
         }
         if !self.all_segments_set {
-            return Err("All segments must be set to generate mesh");
+            return Err("cannot generate mesh because not all segments are set");
         }
         let max_area = match global_max_area {
             Some(v) => v,
@@ -380,18 +372,18 @@ impl Triangle {
             );
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: Found NULL data");
+                    return Err("INTERNAL ERROR: found NULL data");
                 }
                 if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: Found NULL point list");
+                    return Err("INTERNAL ERROR: found NULL point list");
                 }
                 if status == constants::TRITET_ERROR_NULL_SEGMENT_LIST {
-                    return Err("List of segments must be defined first");
+                    return Err("list of segments must be defined first");
                 }
                 if status == constants::TRITET_ERROR_STRING_CONCAT {
-                    return Err("Cannot write string with commands for Triangle");
+                    return Err("INTERNAL ERROR: cannot write string with commands for Triangle");
                 }
-                return Err("INTERNAL ERROR: Some error occurred");
+                return Err("INTERNAL ERROR: some error occurred");
             }
         }
         Ok(())
@@ -788,7 +780,7 @@ mod tests {
         let mut triangle = Triangle::new(3, None, None, None)?;
         assert_eq!(
             triangle.set_point(4, 0.0, 0.0).err(),
-            Some("Index of point is out of bounds")
+            Some("index of point is out of bounds")
         );
         Ok(())
     }
@@ -798,12 +790,12 @@ mod tests {
         let mut triangle = Triangle::new(3, None, None, None)?;
         assert_eq!(
             triangle.set_segment(0, 0, 1).err(),
-            Some("The number of segments (given to 'new') must not be None to set segment")
+            Some("cannot set segment because the number of segments is None")
         );
         let mut triangle = Triangle::new(3, Some(3), None, None)?;
         assert_eq!(
             triangle.set_segment(4, 0, 1).err(),
-            Some("Index of segment is out of bounds")
+            Some("index of segment is out of bounds")
         );
         Ok(())
     }
@@ -813,12 +805,12 @@ mod tests {
         let mut triangle = Triangle::new(3, None, None, None)?;
         assert_eq!(
             triangle.set_region(0, 0.33, 0.33, 1, Some(0.1)).err(),
-            Some("The number of regions (given to 'new') must not be None to set region")
+            Some("cannot set region because the number of regions is None")
         );
         let mut triangle = Triangle::new(3, Some(3), Some(1), None)?;
         assert_eq!(
             triangle.set_region(1, 0.33, 0.33, 1, Some(0.1)).err(),
-            Some("Index of region is out of bounds")
+            Some("index of region is out of bounds")
         );
         Ok(())
     }
@@ -828,12 +820,12 @@ mod tests {
         let mut triangle = Triangle::new(3, None, None, None)?;
         assert_eq!(
             triangle.set_hole(0, 0.33, 0.33).err(),
-            Some("The number of holes (given to 'new') must not be None to set hole")
+            Some("cannot set hole because the number of holes is None")
         );
         let mut triangle = Triangle::new(3, Some(3), Some(1), Some(1))?;
         assert_eq!(
             triangle.set_hole(1, 0.33, 0.33).err(),
-            Some("Index of hole is out of bounds")
+            Some("index of hole is out of bounds")
         );
         Ok(())
     }
