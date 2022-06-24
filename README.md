@@ -168,3 +168,5 @@ fn main() -> Result<(), StrError> {
     Ok(())
 }
 ```
+
+![doc_triangle_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_mesh_1.svg)
