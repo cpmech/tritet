@@ -119,6 +119,8 @@ const LIGHT_COLORS: [&'static str; 17] = [
 /// }
 /// ```
 ///
+/// ![doc_triangle_delaunay_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_delaunay_1.svg)
+///
 /// ## Voronoi tessellation
 ///
 /// ```
@@ -154,6 +156,8 @@ const LIGHT_COLORS: [&'static str; 17] = [
 ///     Ok(())
 /// }
 /// ```
+///
+/// ![doc_triangle_voronoi_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_voronoi_1.svg)
 ///
 /// ## Mesh generation
 ///
@@ -214,6 +218,8 @@ const LIGHT_COLORS: [&'static str; 17] = [
 ///     Ok(())
 /// }
 /// ```
+///
+/// ![doc_triangle_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_mesh_1.svg)
 ///
 /// # Definition of geometric terms -- by J.R.Shewchuk
 ///
