@@ -103,6 +103,11 @@ impl Triangle {
         if npoint < 3 {
             return Err("npoint must be ≥ 3");
         }
+        if let Some(ns) = nsegment {
+            if ns < 3 {
+                return Err("nsegment must be ≥ 3");
+            }
+        }
         let npoint_i32: i32 = to_i32(npoint);
         let nsegment_i32: i32 = match nsegment {
             Some(v) => to_i32(v),
@@ -757,6 +762,10 @@ mod tests {
         assert_eq!(
             Triangle::new(2, None, None, None).err(),
             Some("npoint must be ≥ 3")
+        );
+        assert_eq!(
+            Triangle::new(3, Some(2), None, None).err(),
+            Some("nsegment must be ≥ 3")
         );
     }
 
