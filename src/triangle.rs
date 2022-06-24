@@ -342,17 +342,17 @@ impl Triangle {
     /// * `global_max_area` -- The maximum area constraint for all generated triangles
     /// * `global_min_angle` -- The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
     pub fn generate_mesh(
-        &mut self,
+        &self,
         verbose: bool,
         quadratic: bool,
         global_max_area: Option<f64>,
         global_min_angle: Option<f64>,
     ) -> Result<(), StrError> {
         if !self.all_points_set {
-            return Err("cannot generate mesh because not all points are set");
+            return Err("cannot generate mesh of triangles because not all points are set");
         }
         if !self.all_segments_set {
-            return Err("cannot generate mesh because not all segments are set");
+            return Err("cannot generate mesh of triangles because not all segments are set");
         }
         let max_area = match global_max_area {
             Some(v) => v,
@@ -378,7 +378,7 @@ impl Triangle {
                     return Err("INTERNAL ERROR: found NULL point list");
                 }
                 if status == constants::TRITET_ERROR_NULL_SEGMENT_LIST {
-                    return Err("list of segments must be defined first");
+                    return Err("INTERNAL ERROR: list of segments must be defined first");
                 }
                 if status == constants::TRITET_ERROR_STRING_CONCAT {
                     return Err("INTERNAL ERROR: cannot write string with commands for Triangle");
@@ -826,6 +826,32 @@ mod tests {
         assert_eq!(
             triangle.set_hole(1, 0.33, 0.33).err(),
             Some("index of hole is out of bounds")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn generate_methods_capture_some_errors() -> Result<(), StrError> {
+        let mut triangle = Triangle::new(3, Some(3), None, None)?;
+        assert_eq!(
+            triangle.generate_delaunay(false).err(),
+            Some("cannot generate Delaunay triangulation because not all points are set")
+        );
+        assert_eq!(
+            triangle.generate_voronoi(false).err(),
+            Some("cannot generate Voronoi tessellation because not all points are set")
+        );
+        assert_eq!(
+            triangle.generate_mesh(false, false, None, None).err(),
+            Some("cannot generate mesh of triangles because not all points are set")
+        );
+        triangle
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 0.0, 1.0)?;
+        assert_eq!(
+            triangle.generate_mesh(false, false, None, None).err(),
+            Some("cannot generate mesh of triangles because not all segments are set")
         );
         Ok(())
     }
