@@ -366,8 +366,8 @@ impl Triangle {
     /// # Input
     ///
     /// * `index` -- is the index of the region and goes from 0 to `nregion` (passed down to `new`)
-    /// * `x` -- is the x-coordinate of the hole
-    /// * `y` -- is the x-coordinate of the hole
+    /// * `x` -- is the x-coordinate of the region
+    /// * `y` -- is the y-coordinate of the region
     /// * `attribute` -- is the attribute ID to group the triangles belonging to this region
     /// * `max_area` -- is the maximum area constraint for the triangles belonging to this region
     pub fn set_region(
@@ -422,7 +422,7 @@ impl Triangle {
     ///
     /// * `index` -- is the index of the hole and goes from 0 to `nhole` (passed down to `new`)
     /// * `x` -- is the x-coordinate of the hole
-    /// * `y` -- is the x-coordinate of the hole
+    /// * `y` -- is the y-coordinate of the hole
     pub fn set_hole(&mut self, index: usize, x: f64, y: f64) -> Result<&mut Self, StrError> {
         let nhole = match self.nhole {
             Some(n) => n,
