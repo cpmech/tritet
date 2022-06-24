@@ -375,7 +375,7 @@ impl Tetgen {
             return Err("cannot generate mesh of tetrahedra because not all points are set");
         }
         if !self.all_facets_set {
-            return Err("cannot generate mesh of tetrahedra because not all faces are set");
+            return Err("cannot generate mesh of tetrahedra because not all facets are set");
         }
         let max_volume = match global_volume_area {
             Some(v) => v,
@@ -607,7 +607,7 @@ mod tests {
             tetgen.set_hole(0, 0.33, 0.33, 0.33).err(),
             Some("cannot set hole because the number of holes is None")
         );
-        let mut tetgen = Tetgen::new(3, Some(3), Some(1), Some(1))?;
+        let mut tetgen = Tetgen::new(4, Some(4), Some(1), Some(1))?;
         assert_eq!(
             tetgen.set_hole(1, 0.33, 0.33, 0.33).err(),
             Some("index of hole is out of bounds")
@@ -633,7 +633,7 @@ mod tests {
             .set_point(3, 0.0, 0.0, 1.0)?;
         assert_eq!(
             tetgen.generate_mesh(false, false, None, None).err(),
-            Some("cannot generate mesh of tetrahedra because not all segments are set")
+            Some("cannot generate mesh of tetrahedra because not all facets are set")
         );
         Ok(())
     }

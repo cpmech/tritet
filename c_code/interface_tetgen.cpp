@@ -8,6 +8,21 @@ extern "C" {
 #include "interface_tetgen.h"
 }
 
+void drop_tetgen(struct ExtTetgen *tetgen) {
+    if (tetgen == NULL) {
+        return;
+    }
+    tetgenio *input = reinterpret_cast<tetgenio *>(tetgen->input);
+    if (input != NULL) {
+        delete input;
+    }
+    tetgenio *output = reinterpret_cast<tetgenio *>(tetgen->output);
+    if (output != NULL) {
+        delete output;
+    }
+    free(tetgen);
+}
+
 struct ExtTetgen *new_tetgen(int npoint, int nfacet, int nregion, int nhole) {
     struct ExtTetgen *tetgen = (struct ExtTetgen *)malloc(sizeof(struct ExtTetgen));
     if (tetgen == NULL) {
@@ -16,36 +31,60 @@ struct ExtTetgen *new_tetgen(int npoint, int nfacet, int nregion, int nhole) {
 
     tetgenio *input = new tetgenio;
     if (input == NULL) {
+        drop_tetgen(tetgen);
         return NULL;
     }
     input->initialize();
+    tetgen->input = input;
 
     tetgenio *output = new tetgenio;
     if (output == NULL) {
+        drop_tetgen(tetgen);
         return NULL;
     }
     output->initialize();
-
-    tetgen->input = input;
     tetgen->output = output;
-    return tetgen;
-}
 
-void drop_tetgen(struct ExtTetgen *tetgen) {
-    if (tetgen == NULL) {
-        return;
+    // points
+    input->firstnumber = 0;
+    input->numberofpoints = npoint;
+    input->pointlist = new double[npoint * 3];
+    if (input->pointlist == NULL) {
+        drop_tetgen(tetgen);
+        return NULL;
     }
-    tetgenio *input = reinterpret_cast<tetgenio *>(tetgen->input);
-    tetgenio *output = reinterpret_cast<tetgenio *>(tetgen->output);
-    if (input != NULL) {
-        input->deinitialize();
+
+    // facets
+    if (nfacet > 0) {
+        input->numberoffacets = nfacet;
+        input->facetlist = new tetgenio::facet[nfacet];
+        if (input->facetlist == NULL) {
+            drop_tetgen(tetgen);
+            return NULL;
+        }
     }
-    if (output != NULL) {
-        output->deinitialize();
+
+    // regions
+    if (nregion > 0) {
+        input->numberofregions = nregion;
+        input->regionlist = new double[nregion * 5];
+        if (input->regionlist == NULL) {
+            drop_tetgen(tetgen);
+            return NULL;
+        }
     }
-    delete input;
-    delete output;
-    free(tetgen);
+
+    // holes
+    if (nhole > 0) {
+        input->numberofholes = nhole;
+        input->holelist = new double[nhole * 3];
+        if (input->holelist == NULL) {
+            drop_tetgen(tetgen);
+            return NULL;
+        }
+    }
+
+    return tetgen;
 }
 
 int tet_set_point(struct ExtTetgen *tetgen, int index, double x, double y, double z) {
