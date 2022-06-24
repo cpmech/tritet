@@ -6,6 +6,7 @@
     "edgelist",
     "edgemarkerlist",
     "holelist",
+    "malloc",
     "Manocha",
     "neighborlist",
     "normlist",
