@@ -173,7 +173,7 @@ int tet_run_delaunay(struct ExtTetgen *tetgen, int verbose) {
         return TRITET_ERROR_NULL_DATA;
     }
 
-    // Triangulate the points
+    // Tetrahedralize the points
     // Switches:
     // * `z` -- number everything from zero (z)
     char command[10];
