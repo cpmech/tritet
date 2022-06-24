@@ -80,6 +80,161 @@ const LIGHT_COLORS: [&'static str; 17] = [
 ];
 
 /// Implements high-level functions to call Shewchuk's Triangle C-Code
+///
+/// # Examples
+///
+/// ## Delaunay triangulation
+///
+/// ```
+/// use plotpy::Plot;
+/// use tritet::{StrError, Triangle};
+///
+/// fn main() -> Result<(), StrError> {
+///     // allocate data for 10 points
+///     let mut triangle = Triangle::new(10, None, None, None)?;
+///
+///     // set points
+///     triangle
+///         .set_point(0, 0.478554, 0.00869692)?
+///         .set_point(1, 0.13928, 0.180603)?
+///         .set_point(2, 0.578587, 0.760349)?
+///         .set_point(3, 0.903726, 0.975904)?
+///         .set_point(4, 0.0980015, 0.981755)?
+///         .set_point(5, 0.133721, 0.348832)?
+///         .set_point(6, 0.648071, 0.369534)?
+///         .set_point(7, 0.230951, 0.558482)?
+///         .set_point(8, 0.0307942, 0.459123)?
+///         .set_point(9, 0.540745, 0.331184)?;
+///
+///     // generate Delaunay triangulation
+///     triangle.generate_delaunay(false)?;
+///
+///     // draw triangles
+///     let mut plot = Plot::new();
+///     triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///     // plot.set_equal_axes(true)
+///     //     .set_figure_size_points(600.0, 600.0)
+///     //     .save("/tmp/tritet/example_triangle_delaunay_1.svg")?;
+///     Ok(())
+/// }
+/// ```
+///
+/// ## Voronoi tessellation
+///
+/// ```
+/// use plotpy::Plot;
+/// use tritet::{StrError, Triangle};
+///
+/// fn main() -> Result<(), StrError> {
+///     // allocate data for 10 points
+///     let mut triangle = Triangle::new(10, None, None, None)?;
+///
+///     // set points
+///     triangle
+///         .set_point(0, 0.478554, 0.00869692)?
+///         .set_point(1, 0.13928, 0.180603)?
+///         .set_point(2, 0.578587, 0.760349)?
+///         .set_point(3, 0.903726, 0.975904)?
+///         .set_point(4, 0.0980015, 0.981755)?
+///         .set_point(5, 0.133721, 0.348832)?
+///         .set_point(6, 0.648071, 0.369534)?
+///         .set_point(7, 0.230951, 0.558482)?
+///         .set_point(8, 0.0307942, 0.459123)?
+///         .set_point(9, 0.540745, 0.331184)?;
+///
+///     // generate Voronoi tessellation
+///     triangle.generate_voronoi(false)?;
+///
+///     // draw Voronoi diagram
+///     let mut plot = Plot::new();
+///     triangle.draw_voronoi(&mut plot);
+///     // plot.set_equal_axes(true)
+///     //     .set_figure_size_points(600.0, 600.0)
+///     //     .save("/tmp/tritet/example_triangle_voronoi_1.svg")?;
+///     Ok(())
+/// }
+/// ```
+///
+/// ## Mesh generation
+///
+/// ```
+/// use plotpy::Plot;
+/// use tritet::{StrError, Triangle};
+///
+/// fn main() -> Result<(), StrError> {
+///     // allocate data for 12 points, 10 segments, 2 regions, and 1 hole
+///     let mut triangle = Triangle::new(12, Some(10), Some(2), Some(1))?;
+///
+///     // set points
+///     triangle
+///         .set_point(0, 0.0, 0.0)?
+///         .set_point(1, 1.0, 0.0)?
+///         .set_point(2, 1.0, 1.0)?
+///         .set_point(3, 0.0, 1.0)?
+///         .set_point(4, 0.2, 0.2)?
+///         .set_point(5, 0.8, 0.2)?
+///         .set_point(6, 0.8, 0.8)?
+///         .set_point(7, 0.2, 0.8)?
+///         .set_point(8, 0.0, 0.5)?
+///         .set_point(9, 0.2, 0.5)?
+///         .set_point(10, 0.8, 0.5)?
+///         .set_point(11, 1.0, 0.5)?;
+///
+///     // set segments
+///     triangle
+///         .set_segment(0, 0, 1)?
+///         .set_segment(1, 1, 2)?
+///         .set_segment(2, 2, 3)?
+///         .set_segment(3, 3, 0)?
+///         .set_segment(4, 4, 5)?
+///         .set_segment(5, 5, 6)?
+///         .set_segment(6, 6, 7)?
+///         .set_segment(7, 7, 4)?
+///         .set_segment(8, 8, 9)?
+///         .set_segment(9, 10, 11)?;
+///
+///     // set regions
+///     triangle
+///         .set_region(0, 0.1, 0.1, 1, None)?
+///         .set_region(1, 0.1, 0.9, 2, None)?;
+///
+///     // set holes
+///     triangle.set_hole(0, 0.5, 0.5)?;
+///
+///     // generate o2 mesh without constraints
+///     triangle.generate_mesh(false, true, None, None)?;
+///     assert_eq!(triangle.ntriangle(), 14);
+///
+///     // draw mesh
+///     let mut plot = Plot::new();
+///     triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///     // plot.set_equal_axes(true)
+///     //     .set_figure_size_points(600.0, 600.0)
+///     //     .save("/tmp/tritet/example_triangle_mesh_1.svg")?;
+///     Ok(())
+/// }
+/// ```
+///
+/// # Definition of geometric terms -- by J.R.Shewchuk
+///
+/// For convenience, the following definitions are mirrored from [J. R. Shewchuk' Triangle Website](https://www.cs.cmu.edu/~quake/triangle.defs.html#ccdt).
+///
+/// A Delaunay triangulation of a vertex set is a triangulation of the vertex set with the property that no vertex in the vertex set falls in the interior of the circumcircle (circle that passes through all three vertices) of any triangle in the triangulation.
+///
+/// A Voronoi diagram of a vertex set is a subdivision of the plane into polygonal regions (some of which may be infinite), where each region is the set of points in the plane that are closer to some input vertex than to any other input vertex. (The Voronoi diagram is the geometric dual of the Delaunay triangulation.)
+///
+/// A Planar Straight Line Graph (PSLG) is a collection of vertices and segments. Segments are edges whose endpoints are vertices in the PSLG, and whose presence in any mesh generated from the PSLG is enforced.
+///
+/// A constrained Delaunay triangulation of a PSLG is similar to a Delaunay triangulation, but each PSLG segment is present as a single edge in the triangulation. A constrained Delaunay triangulation is not truly a Delaunay triangulation. Some of its triangles might not be Delaunay, but they are all constrained Delaunay.
+///
+/// A conforming Delaunay triangulation (CDT) of a PSLG is a true Delaunay triangulation in which each PSLG segment may have been subdivided into several edges by the insertion of additional vertices, called Steiner points. Steiner points are necessary to allow the segments to exist in the mesh while maintaining the Delaunay property. Steiner points are also inserted to meet constraints on the minimum angle and maximum triangle area.
+///
+/// A constrained conforming Delaunay triangulation (CCDT) of a PSLG is a constrained Delaunay triangulation that includes Steiner points. It usually takes fewer vertices to make a good-quality CCDT than a good-quality CDT, because the triangles do not need to be Delaunay (although they still must be constrained Delaunay).
+///
+/// # References
+///
+/// * **Jonathan Richard Shewchuk**, Triangle: Engineering a 2D Quality Mesh Generator and Delaunay Triangulator, in Applied Computational Geometry: Towards Geometric Engineering (Ming C. Lin and Dinesh Manocha, editors), volume 1148 of Lecture Notes in Computer Science, pages 203-222, Springer-Verlag, Berlin, May 1996.
+/// * **Jonathan Richard Shewchuk**, Delaunay Refinement Algorithms for Triangular Mesh Generation, Computational Geometry: Theory and Applications 22(1-3):21-74, May 2002.
 pub struct Triangle {
     ext_triangle: *mut ExtTriangle, // data allocated by the c-code
     npoint: usize,                  // number of points
@@ -1015,7 +1170,7 @@ mod tests {
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
-                .save("/tmp/tritet/draw_triangles_works.svg")?;
+                .save("/tmp/tritet/triangle_draw_triangles_works.svg")?;
         }
         Ok(())
     }
@@ -1029,25 +1184,14 @@ mod tests {
             .set_point(2, 1.0, 1.0)?
             .set_point(3, 0.0, 1.0)?
             .set_point(4, 0.5, 0.5)?;
-        // let mut triangle = Triangle::new(10, None, None, None)?;
-        // triangle
-        //     .set_point(0, 0.478554, 0.00869692)?
-        //     .set_point(1, 0.13928, 0.180603)?
-        //     .set_point(2, 0.578587, 0.760349)?
-        //     .set_point(3, 0.903726, 0.975904)?
-        //     .set_point(4, 0.0980015, 0.981755)?
-        //     .set_point(5, 0.133721, 0.348832)?
-        //     .set_point(6, 0.648071, 0.369534)?
-        //     .set_point(7, 0.230951, 0.558482)?
-        //     .set_point(8, 0.0307942, 0.459123)?
-        //     .set_point(9, 0.540745, 0.331184)?;
         triangle.generate_voronoi(false)?;
+        assert_eq!(triangle.voronoi_npoint(), 4);
         let mut plot = Plot::new();
         triangle.draw_voronoi(&mut plot);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
-                .save("/tmp/tritet/draw_voronoi_works.svg")?;
+                .save("/tmp/tritet/triangle_draw_voronoi_works.svg")?;
         }
         Ok(())
     }
@@ -1074,7 +1218,7 @@ mod tests {
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
-                .save("/tmp/tritet/mesh_3_works.svg")?;
+                .save("/tmp/tritet/triangle_mesh_3_works.svg")?;
         }
         Ok(())
     }
@@ -1127,7 +1271,7 @@ mod tests {
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
-                .save("/tmp/tritet/mesh_4_works.svg")?;
+                .save("/tmp/tritet/triangle_mesh_4_works.svg")?;
         }
         Ok(())
     }
