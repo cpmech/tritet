@@ -4,8 +4,10 @@
 pub type StrError = &'static str;
 
 mod constants;
+mod tetgen;
 mod to_i32;
 mod triangle;
+pub use crate::tetgen::*;
 pub use crate::triangle::*;
 
 // run code from README file
