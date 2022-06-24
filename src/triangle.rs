@@ -337,6 +337,9 @@ impl Triangle {
                 if status == constants::TRITET_ERROR_INVALID_SEGMENT_INDEX {
                     return Err("index of segment is out of bounds");
                 }
+                if status == constants::TRITET_ERROR_INVALID_SEGMENT_POINT_ID {
+                    return Err("id of segment point is out of bounds");
+                }
                 return Err("INTERNAL ERROR: some error occurred");
             }
         }
@@ -934,6 +937,10 @@ mod tests {
         assert_eq!(
             triangle.set_segment(4, 0, 1).err(),
             Some("index of segment is out of bounds")
+        );
+        assert_eq!(
+            triangle.set_segment(0, 0, 4).err(),
+            Some("id of segment point is out of bounds")
         );
         Ok(())
     }

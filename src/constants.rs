@@ -1,17 +1,24 @@
 pub(crate) const TRITET_SUCCESS: i32 = 0;
+
 pub(crate) const TRITET_ERROR_NULL_DATA: i32 = 10;
 pub(crate) const TRITET_ERROR_STRING_CONCAT: i32 = 20;
+
 pub(crate) const TRITET_ERROR_NULL_POINT_LIST: i32 = 100;
 pub(crate) const TRITET_ERROR_NULL_SEGMENT_LIST: i32 = 200;
-pub(crate) const TRITET_ERROR_NULL_FACET_LIST: i32 = 210;
-pub(crate) const TRITET_ERROR_NULL_REGION_LIST: i32 = 300;
-pub(crate) const TRITET_ERROR_NULL_HOLE_LIST: i32 = 400;
+pub(crate) const TRITET_ERROR_NULL_FACET_LIST: i32 = 300;
+pub(crate) const TRITET_ERROR_NULL_FACET_POLYGON_LIST: i32 = 400;
+pub(crate) const TRITET_ERROR_NULL_REGION_LIST: i32 = 500;
+pub(crate) const TRITET_ERROR_NULL_HOLE_LIST: i32 = 600;
+
 pub(crate) const TRITET_ERROR_INVALID_POINT_INDEX: i32 = 1000;
 pub(crate) const TRITET_ERROR_INVALID_SEGMENT_INDEX: i32 = 2000;
-pub(crate) const TRITET_ERROR_INVALID_FACET_INDEX: i32 = 2010;
-pub(crate) const TRITET_ERROR_INVALID_REGION_INDEX: i32 = 3000;
-pub(crate) const TRITET_ERROR_INVALID_HOLE_INDEX: i32 = 4000;
+pub(crate) const TRITET_ERROR_INVALID_SEGMENT_POINT_ID: i32 = 3000;
+pub(crate) const TRITET_ERROR_INVALID_FACET_INDEX: i32 = 4000;
 pub(crate) const TRITET_ERROR_INVALID_FACET_POINT_INDEX: i32 = 5000;
+pub(crate) const TRITET_ERROR_INVALID_FACET_POINT_ID: i32 = 6000;
+pub(crate) const TRITET_ERROR_INVALID_REGION_INDEX: i32 = 7000;
+pub(crate) const TRITET_ERROR_INVALID_HOLE_INDEX: i32 = 8000;
+pub(crate) const TRITET_ERROR_INVALID_FACET_NUM_POLYGON: i32 = 9000;
 
 /// Maps indices used in this library (tritet) to indices used in Triangle
 ///

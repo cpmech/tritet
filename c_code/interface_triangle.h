@@ -218,6 +218,9 @@ int set_segment(struct ExtTriangle *triangle, int index, int a, int b) {
     if (index >= triangle->input.numberofsegments) {
         return TRITET_ERROR_INVALID_SEGMENT_INDEX;
     }
+    if (a >= triangle->input.numberofpoints || b >= triangle->input.numberofpoints) {
+        return TRITET_ERROR_INVALID_SEGMENT_POINT_ID;
+    }
     triangle->input.segmentlist[index * 2] = a;
     triangle->input.segmentlist[index * 2 + 1] = b;
     return TRITET_SUCCESS;
@@ -375,18 +378,30 @@ int run_triangulate(struct ExtTriangle *triangle, int verbose, int quadratic, do
 }
 
 int get_npoint(struct ExtTriangle *triangle) {
+    if (triangle == NULL) {
+        return 0;
+    }
     return triangle->output.numberofpoints;
 }
 
 int get_ntriangle(struct ExtTriangle *triangle) {
+    if (triangle == NULL) {
+        return 0;
+    }
     return triangle->output.numberoftriangles;
 }
 
 int get_ncorner(struct ExtTriangle *triangle) {
+    if (triangle == NULL) {
+        return 0;
+    }
     return triangle->output.numberofcorners;
 }
 
 double get_point(struct ExtTriangle *triangle, int index, int dim) {
+    if (triangle == NULL) {
+        return 0.0;
+    }
     if (index < triangle->output.numberofpoints && (dim == 0 || dim == 1)) {
         return triangle->output.pointlist[index * 2 + dim];
     } else {
@@ -395,6 +410,9 @@ double get_point(struct ExtTriangle *triangle, int index, int dim) {
 }
 
 int get_triangle_corner(struct ExtTriangle *triangle, int index, int corner) {
+    if (triangle == NULL) {
+        return 0;
+    }
     if (index < triangle->output.numberoftriangles && corner < triangle->output.numberofcorners) {
         return triangle->output.trianglelist[index * triangle->output.numberofcorners + corner];
     } else {
@@ -403,6 +421,9 @@ int get_triangle_corner(struct ExtTriangle *triangle, int index, int corner) {
 }
 
 int get_triangle_attribute(struct ExtTriangle *triangle, int index) {
+    if (triangle == NULL) {
+        return 0;
+    }
     if (index < triangle->output.numberoftriangles && triangle->output.numberoftriangleattributes > 0) {
         return triangle->output.triangleattributelist[index * triangle->output.numberoftriangleattributes];
     } else {
@@ -411,10 +432,16 @@ int get_triangle_attribute(struct ExtTriangle *triangle, int index) {
 }
 
 int get_voronoi_npoint(struct ExtTriangle *triangle) {
+    if (triangle == NULL) {
+        return 0;
+    }
     return triangle->voronoi.numberofpoints;
 }
 
 int get_voronoi_point(struct ExtTriangle *triangle, int index, int dim) {
+    if (triangle == NULL) {
+        return 0.0;
+    }
     if (index < triangle->voronoi.numberofpoints && (dim == 0 || dim == 1)) {
         return triangle->voronoi.pointlist[index * 2 + dim];
     } else {
@@ -423,10 +450,16 @@ int get_voronoi_point(struct ExtTriangle *triangle, int index, int dim) {
 }
 
 int get_voronoi_nedge(struct ExtTriangle *triangle) {
+    if (triangle == NULL) {
+        return 0;
+    }
     return triangle->voronoi.numberofedges;
 }
 
 int get_voronoi_edge_point(struct ExtTriangle *triangle, int index, int side) {
+    if (triangle == NULL) {
+        return 0;
+    }
     if (index < triangle->voronoi.numberofedges && (side == 0 || side == 1)) {
         return triangle->voronoi.edgelist[index * 2 + side];
     } else {
@@ -435,6 +468,9 @@ int get_voronoi_edge_point(struct ExtTriangle *triangle, int index, int side) {
 }
 
 double get_voronoi_edge_point_b_direction(struct ExtTriangle *triangle, int index, int dim) {
+    if (triangle == NULL) {
+        return 0.0;
+    }
     if (index < triangle->voronoi.numberofedges && (dim == 0 || dim == 1)) {
         if (triangle->voronoi.edgelist[index * 2 + 1] == -1) {
             return triangle->voronoi.normlist[index * 2 + dim];
