@@ -1,7 +1,7 @@
 use tritet::{StrError, Triangle};
 
 fn main() -> Result<(), StrError> {
-    println!("Running Mem Check\n");
+    println!("Running Mem Check on Triangle\n");
     delaunay()?;
     voronoi()?;
     mesh()?;
