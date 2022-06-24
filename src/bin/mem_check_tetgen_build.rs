@@ -1,7 +1,32 @@
+use std::thread;
+// use std::time::Duration;
 use tritet::{StrError, Tetgen};
 
-fn main() -> Result<(), StrError> {
+fn main() {
     println!("Running Mem Check on Tetgen\n");
+    let handle_1 = thread::spawn(|| {
+        // thread::sleep(Duration::from_millis(750));
+        println!("..1..");
+        run_all().unwrap();
+    });
+    let handle_2 = thread::spawn(|| {
+        // thread::sleep(Duration::from_millis(500));
+        println!("..2..");
+        run_all().unwrap();
+    });
+    let handle_3 = thread::spawn(|| {
+        // thread::sleep(Duration::from_millis(250));
+        println!("..3..");
+        run_all().unwrap();
+    });
+    handle_1.join().unwrap();
+    handle_2.join().unwrap();
+    handle_3.join().unwrap();
+    println!("\nDone\n");
+}
+
+fn run_all() -> Result<(), StrError> {
+    println!("run tests on tetgen");
     let _tet = Tetgen::new(4, Some(4), Some(1), Some(1))?;
     new_captures_some_errors();
     set_point_captures_some_errors()?;
@@ -10,7 +35,6 @@ fn main() -> Result<(), StrError> {
     set_region_captures_some_errors()?;
     set_hole_captures_some_errors()?;
     generate_methods_capture_some_errors()?;
-    println!("Done\n");
     Ok(())
 }
 
