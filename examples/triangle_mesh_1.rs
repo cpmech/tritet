@@ -83,7 +83,6 @@ fn main() -> Result<(), StrError> {
 
     // generate mesh without constraints
     triangle.generate_mesh(true, true, None, None)?;
-    // assert_eq!(triangle.ntriangle(), 14);
 
     // draw mesh
     let mut plot = Plot::new();
