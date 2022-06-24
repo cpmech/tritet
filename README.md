@@ -2,7 +2,7 @@
 
 This project presents a Rust code to generate triangle and tetrahedron meshes by calling
 [Triangle](https://www.cs.cmu.edu/~quake/triangle.html) and
-[Tetgen](http://tetgen.org/).
+[Tetgen (1.4)](http://tetgen.org/).
 However, the code here does not create a one-to-one interface to these great libraries.
 Also, this create tries to keep it as simple as possible.
 
