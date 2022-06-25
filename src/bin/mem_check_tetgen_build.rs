@@ -1,36 +1,33 @@
+#![allow(unused)]
+
 use std::thread;
-// use std::time::Duration;
+use std::time::Duration;
 use tritet::{StrError, Tetgen};
 
 fn main() {
     println!("Running Mem Check on Tetgen\n");
-    let handle_1 = thread::spawn(|| {
-        // thread::sleep(Duration::from_millis(750));
-        println!("..1..");
-        run_all().unwrap();
+    let handles: Vec<_> = (0..10)
+        .into_iter()
+        .map(|i| {
+            thread::spawn(move || {
+                // thread::sleep(Duration::from_millis(10 * 250 - i * 250));
+                println!("..{}..", i);
+                run_all().unwrap();
+            })
+        })
+        .collect();
+    handles.into_iter().for_each(|h| {
+        let _ = h.join().unwrap();
     });
-    let handle_2 = thread::spawn(|| {
-        // thread::sleep(Duration::from_millis(500));
-        println!("..2..");
-        run_all().unwrap();
-    });
-    let handle_3 = thread::spawn(|| {
-        // thread::sleep(Duration::from_millis(250));
-        println!("..3..");
-        run_all().unwrap();
-    });
-    handle_1.join().unwrap();
-    handle_2.join().unwrap();
-    handle_3.join().unwrap();
+    thread::sleep(Duration::from_millis(250));
     println!("\nDone\n");
 }
 
 fn run_all() -> Result<(), StrError> {
-    println!("run tests on tetgen");
-    let _tet = Tetgen::new(4, Some(4), Some(1), Some(1))?;
+    // println!("run tests on tetgen");
+    let _tet = Tetgen::new(4, Some(vec![3]), Some(1), Some(1))?;
     new_captures_some_errors();
     set_point_captures_some_errors()?;
-    set_facet_npoint_captures_some_errors()?;
     set_facet_point_captures_some_errors()?;
     set_region_captures_some_errors()?;
     set_hole_captures_some_errors()?;
@@ -43,10 +40,10 @@ fn new_captures_some_errors() {
         Tetgen::new(3, None, None, None).err(),
         Some("npoint must be ≥ 4")
     );
-    assert_eq!(
-        Tetgen::new(4, Some(3), None, None).err(),
-        Some("nfacet must be ≥ 4")
-    );
+    // assert_eq!(
+    //     Tetgen::new(4, Some(vec![3, 3, 3]), None, None).err(),
+    //     Some("nfacet must be ≥ 4")
+    // );
 }
 
 fn set_point_captures_some_errors() -> Result<(), StrError> {
@@ -58,36 +55,17 @@ fn set_point_captures_some_errors() -> Result<(), StrError> {
     Ok(())
 }
 
-fn set_facet_npoint_captures_some_errors() -> Result<(), StrError> {
-    let mut tetgen = Tetgen::new(4, None, None, None)?;
-    assert_eq!(
-        tetgen.set_facet_npoint(0, 3).err(),
-        Some("cannot set facet npoint because the number of facets is None")
-    );
-    let mut tetgen = Tetgen::new(4, Some(4), None, None)?;
-    assert_eq!(
-        tetgen.set_facet_npoint(5, 2).err(),
-        Some("npoint on a facet must be ≥ 3")
-    );
-    assert_eq!(
-        tetgen.set_facet_npoint(5, 3).err(),
-        Some("index of facet is out of bounds")
-    );
-    Ok(())
-}
-
 fn set_facet_point_captures_some_errors() -> Result<(), StrError> {
     let mut tetgen = Tetgen::new(4, None, None, None)?;
     assert_eq!(
         tetgen.set_facet_point(0, 0, 0).err(),
-        Some("cannot set facet point because the number of facets is None")
+        Some("cannot set facet point because facet_npoint is None")
     );
-    let mut tetgen = Tetgen::new(4, Some(4), None, None)?;
+    let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), None, None)?;
     assert_eq!(
         tetgen.set_facet_point(5, 0, 0).err(),
         Some("index of facet is out of bounds")
     );
-    tetgen.set_facet_npoint(0, 3)?;
     assert_eq!(
         tetgen.set_facet_point(0, 4, 0).err(),
         Some("index of facet point is out of bounds")
@@ -105,7 +83,7 @@ fn set_region_captures_some_errors() -> Result<(), StrError> {
         tetgen.set_region(0, 0.33, 0.33, 0.33, 1, Some(0.1)).err(),
         Some("cannot set region because the number of regions is None")
     );
-    let mut tetgen = Tetgen::new(4, Some(4), Some(1), None)?;
+    let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), Some(1), None)?;
     assert_eq!(
         tetgen.set_region(1, 0.33, 0.33, 0.33, 1, Some(0.1)).err(),
         Some("index of region is out of bounds")
@@ -119,7 +97,7 @@ fn set_hole_captures_some_errors() -> Result<(), StrError> {
         tetgen.set_hole(0, 0.33, 0.33, 0.33).err(),
         Some("cannot set hole because the number of holes is None")
     );
-    let mut tetgen = Tetgen::new(4, Some(4), Some(1), Some(1))?;
+    let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), Some(1), Some(1))?;
     assert_eq!(
         tetgen.set_hole(1, 0.33, 0.33, 0.33).err(),
         Some("index of hole is out of bounds")
@@ -128,7 +106,7 @@ fn set_hole_captures_some_errors() -> Result<(), StrError> {
 }
 
 fn generate_methods_capture_some_errors() -> Result<(), StrError> {
-    let mut tetgen = Tetgen::new(4, Some(4), None, None)?;
+    let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), None, None)?;
     assert_eq!(
         tetgen.generate_delaunay(false).err(),
         Some("cannot generate Delaunay tetrahedralization because not all points are set")

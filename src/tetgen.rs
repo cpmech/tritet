@@ -1,22 +1,25 @@
+#![allow(unused)]
+
 use crate::constants;
-use crate::to_i32::to_i32;
+use crate::conversion::{to_i32, to_u64};
+use crate::global;
 use crate::StrError;
 
-#[repr(C)]
-pub(crate) struct ExtTetgen {
-    data: [u8; 0],
-    marker: core::marker::PhantomData<(*mut u8, core::marker::PhantomPinned)>,
-}
-
 extern "C" {
-    // Tetgen
-    fn new_tetgen(npoint: i32, nfacet: i32, nregion: i32, nhole: i32) -> *mut ExtTetgen;
-    fn drop_tetgen(tetgen: *mut ExtTetgen);
-    fn tet_set_point(tetgen: *mut ExtTetgen, index: i32, x: f64, y: f64, z: f64) -> i32;
-    fn tet_set_facet_npoint(tetgen: *mut ExtTetgen, index: i32, npoint: i32) -> i32;
-    fn tet_set_facet_point(tetgen: *mut ExtTetgen, index: i32, m: i32, p: i32) -> i32;
+    fn new_tetgen(
+        handle: u64,
+        npoint: i32,
+        nfacet: i32,
+        facet_npoint: *const i32,
+        nregion: i32,
+        nhole: i32,
+    ) -> i32;
+    fn drop_tetgen(handle: u64);
+    fn tet_set_point(handle: u64, index: i32, x: f64, y: f64, z: f64) -> i32;
+    fn tet_set_facet_npoint(handle: u64, index: i32, npoint: i32) -> i32;
+    fn tet_set_facet_point(handle: u64, index: i32, m: i32, p: i32) -> i32;
     fn tet_set_region(
-        tetgen: *mut ExtTetgen,
+        handle: u64,
         index: i32,
         x: f64,
         y: f64,
@@ -24,45 +27,46 @@ extern "C" {
         attribute: i32,
         max_volume: f64,
     ) -> i32;
-    fn tet_set_hole(tetgen: *mut ExtTetgen, index: i32, x: f64, y: f64, z: f64) -> i32;
-    fn tet_run_delaunay(tetgen: *mut ExtTetgen, verbose: i32) -> i32;
+    fn tet_set_hole(handle: u64, index: i32, x: f64, y: f64, z: f64) -> i32;
+    fn tet_run_delaunay(handle: u64, verbose: i32) -> i32;
     fn tet_run_tetrahedralize(
-        tetgen: *mut ExtTetgen,
+        handle: u64,
         verbose: i32,
         o2: i32,
         global_max_volume: f64,
         global_min_angle: f64,
     ) -> i32;
-    fn tet_get_npoint(tetgen: *mut ExtTetgen) -> i32;
-    fn tet_get_ntetrahedron(tetgen: *mut ExtTetgen) -> i32;
-    fn tet_get_ncorner(tetgen: *mut ExtTetgen) -> i32;
-    fn tet_get_point(tetgen: *mut ExtTetgen, index: i32, dim: i32) -> f64;
-    fn tet_get_tetrahedron_corner(tetgen: *mut ExtTetgen, index: i32, corner: i32) -> i32;
-    fn tet_get_tetrahedron_attribute(tetgen: *mut ExtTetgen, index: i32) -> i32;
+    fn tet_get_npoint(handle: u64) -> i32;
+    fn tet_get_ntetrahedron(handle: u64) -> i32;
+    fn tet_get_ncorner(handle: u64) -> i32;
+    fn tet_get_point(handle: u64, index: i32, dim: i32) -> f64;
+    fn tet_get_tetrahedron_corner(handle: u64, index: i32, corner: i32) -> i32;
+    fn tet_get_tetrahedron_attribute(handle: u64, index: i32) -> i32;
 }
 
 /// Implements high-level functions to call Si's Tetgen Cpp-Code
 ///
 /// **Note:** All indices are are zero-based.
 pub struct Tetgen {
-    ext_tetgen: *mut ExtTetgen, // data allocated by the c-code
-    npoint: usize,              // number of points
-    nfacet: Option<usize>,      // number of "facets"
-    nregion: Option<usize>,     // number of regions
-    nhole: Option<usize>,       // number of holes
-    all_points_set: bool,       // indicates that all points have been set
-    all_facets_set: bool,       // indicates that all facets have been set
-    all_regions_set: bool,      // indicates that all regions have been set
-    all_holes_set: bool,        // indicates that all holes have been set
-    total_facet_npoint: usize,  // total number of facet points
-    facet_npoint_set: usize,    // number of facet points set already
+    handle: u64,                      // handle to c-data
+    npoint: usize,                    // number of points
+    facet_npoint: Option<Vec<usize>>, // number of points on each facet
+    nregion: Option<usize>,           // number of regions
+    nhole: Option<usize>,             // number of holes
+    all_points_set: bool,             // indicates that all points have been set
+    all_facets_set: bool,             // indicates that all facets have been set
+    all_regions_set: bool,            // indicates that all regions have been set
+    all_holes_set: bool,              // indicates that all holes have been set
+    total_facet_npoint: usize,        // total number of facet points
+    facet_npoint_set: usize,          // number of facet points set already
 }
 
 impl Drop for Tetgen {
     /// Tells the c-code to release memory
     fn drop(&mut self) {
         unsafe {
-            drop_tetgen(self.ext_tetgen);
+            let _ = global::ACCESS_C_CODE.lock().unwrap();
+            drop_tetgen(self.handle);
         }
     }
 }
@@ -71,22 +75,24 @@ impl Tetgen {
     /// Allocates a new instance
     pub fn new(
         npoint: usize,
-        nfacet: Option<usize>,
+        facet_npoint: Option<Vec<usize>>,
         nregion: Option<usize>,
         nhole: Option<usize>,
     ) -> Result<Self, StrError> {
         if npoint < 4 {
             return Err("npoint must be ≥ 4");
         }
-        if let Some(ns) = nfacet {
-            if ns < 4 {
-                return Err("nfacet must be ≥ 4");
-            }
-        }
+        let fnp = facet_npoint.clone();
         let npoint_i32: i32 = to_i32(npoint);
-        let nfacet_i32: i32 = match nfacet {
-            Some(v) => to_i32(v),
-            None => 0,
+        let facet_npoint_i32: Vec<i32> = match facet_npoint {
+            Some(v) => {
+                // if v.len() < 4 {
+                //     return Err("nfacet must be ≥ 4");
+                // }
+                v.into_iter().map(|n| to_i32(n)).collect()
+            }
+
+            None => Vec::new(),
         };
         let nregion_i32: i32 = match nregion {
             Some(v) => to_i32(v),
@@ -96,25 +102,41 @@ impl Tetgen {
             Some(v) => to_i32(v),
             None => 0,
         };
+        let handle = to_u64(global::generate_handle());
         unsafe {
-            let ext_tetgen = new_tetgen(npoint_i32, nfacet_i32, nregion_i32, nhole_i32);
-            if ext_tetgen.is_null() {
-                return Err("INTERNAL ERROR: cannot allocate ExtTetgen");
+            let _ = global::ACCESS_C_CODE
+                .lock()
+                .map_err(|_| "INTERNAL ERROR: cannot lock access to c-code")?;
+            let status = new_tetgen(
+                handle,
+                npoint_i32,
+                to_i32(facet_npoint_i32.len()),
+                facet_npoint_i32.as_ptr(),
+                nregion_i32,
+                nhole_i32,
+            );
+            if status != constants::TRITET_SUCCESS {
+                if status == constants::TRITET_ERROR_NULL_DATA {
+                    return Err("INTERNAL ERROR: found NULL data");
+                }
+                if status == constants::TRITET_ERROR_INITIALIZE_FAILED {
+                    return Err("INTERNAL ERROR: cannot initialize c-data");
+                }
             }
-            Ok(Tetgen {
-                ext_tetgen,
-                npoint,
-                nfacet,
-                nregion,
-                nhole,
-                all_points_set: false,
-                all_facets_set: false,
-                all_regions_set: false,
-                all_holes_set: false,
-                total_facet_npoint: 0,
-                facet_npoint_set: 0,
-            })
-        }
+        };
+        Ok(Tetgen {
+            handle,
+            npoint,
+            facet_npoint: fnp,
+            nregion,
+            nhole,
+            all_points_set: false,
+            all_facets_set: false,
+            all_regions_set: false,
+            all_holes_set: false,
+            total_facet_npoint: 0,
+            facet_npoint_set: 0,
+        })
     }
 
     /// Sets the point coordinates
@@ -126,7 +148,7 @@ impl Tetgen {
         z: f64,
     ) -> Result<&mut Self, StrError> {
         unsafe {
-            let status = tet_set_point(self.ext_tetgen, to_i32(index), x, y, z);
+            let status = tet_set_point(self.handle, to_i32(index), x, y, z);
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -148,32 +170,6 @@ impl Tetgen {
         Ok(self)
     }
 
-    /// Sets the number of points on a facet
-    pub fn set_facet_npoint(&mut self, index: usize, npoint: usize) -> Result<&mut Self, StrError> {
-        if self.nfacet.is_none() {
-            return Err("cannot set facet npoint because the number of facets is None");
-        };
-        if npoint < 3 {
-            return Err("npoint on a facet must be ≥ 3");
-        }
-        unsafe {
-            let status = tet_set_facet_npoint(self.ext_tetgen, to_i32(index), to_i32(npoint));
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_FACET_LIST {
-                    return Err("INTERNAL ERROR: found NULL facet list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_FACET_INDEX {
-                    return Err("index of facet is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
-        }
-        Ok(self)
-    }
-
     /// Sets the facet's point IDs
     ///
     /// # Input
@@ -187,12 +183,12 @@ impl Tetgen {
         m: usize,
         p: usize,
     ) -> Result<&mut Self, StrError> {
-        let nfacet = match self.nfacet {
+        let facet_npoint = match &self.facet_npoint {
             Some(n) => n,
-            None => return Err("cannot set facet point because the number of facets is None"),
+            None => return Err("cannot set facet point because facet_npoint is None"),
         };
         unsafe {
-            let status = tet_set_facet_point(self.ext_tetgen, to_i32(index), to_i32(m), to_i32(p));
+            let status = tet_set_facet_point(self.handle, to_i32(index), to_i32(m), to_i32(p));
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -218,15 +214,15 @@ impl Tetgen {
                 return Err("INTERNAL ERROR: some error occurred");
             }
         }
-        if index == nfacet - 1 {
-            self.all_facets_set = true;
-            if self.facet_npoint_set != self.total_facet_npoint {
-                self.facet_npoint_set += 1;
-            }
-        } else {
-            self.all_facets_set = false;
-            self.facet_npoint_set += 1;
-        }
+        // if index == nfacet - 1 {
+        //     self.all_facets_set = true;
+        //     if self.facet_npoint_set != self.total_facet_npoint {
+        //         self.facet_npoint_set += 1;
+        //     }
+        // } else {
+        //     self.all_facets_set = false;
+        //     self.facet_npoint_set += 1;
+        // }
         Ok(self)
     }
 
@@ -259,7 +255,7 @@ impl Tetgen {
         };
         unsafe {
             let status = tet_set_region(
-                self.ext_tetgen,
+                self.handle,
                 to_i32(index),
                 x,
                 y,
@@ -308,7 +304,7 @@ impl Tetgen {
             None => return Err("cannot set hole because the number of holes is None"),
         };
         unsafe {
-            let status = tet_set_hole(self.ext_tetgen, to_i32(index), x, y, z);
+            let status = tet_set_hole(self.handle, to_i32(index), x, y, z);
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -342,7 +338,7 @@ impl Tetgen {
             );
         }
         unsafe {
-            let status = tet_run_delaunay(self.ext_tetgen, if verbose { 1 } else { 0 });
+            let status = tet_run_delaunay(self.handle, if verbose { 1 } else { 0 });
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -387,7 +383,7 @@ impl Tetgen {
         };
         unsafe {
             let status = tet_run_tetrahedralize(
-                self.ext_tetgen,
+                self.handle,
                 if verbose { 1 } else { 0 },
                 if o2 { 1 } else { 0 },
                 max_volume,
@@ -414,17 +410,17 @@ impl Tetgen {
 
     /// Returns the number of points of the Delaunay triangulation (constrained or not)
     pub fn npoint(&self) -> usize {
-        unsafe { tet_get_npoint(self.ext_tetgen) as usize }
+        unsafe { tet_get_npoint(self.handle) as usize }
     }
 
     /// Returns the number of tetrahedra on the Delaunay triangulation (constrained or not)
     pub fn ntetrahedron(&self) -> usize {
-        unsafe { tet_get_ntetrahedron(self.ext_tetgen) as usize }
+        unsafe { tet_get_ntetrahedron(self.handle) as usize }
     }
 
     /// Returns the number of nodes on a tetrahedron (e.g., 4 or 10)
     pub fn nnode(&self) -> usize {
-        unsafe { tet_get_ncorner(self.ext_tetgen) as usize }
+        unsafe { tet_get_ncorner(self.handle) as usize }
     }
 
     /// Returns the x-y-z coordinates of a point
@@ -438,7 +434,7 @@ impl Tetgen {
     ///
     /// This function will return 0.0 if either `index` or `dim` are out of range.
     pub fn point(&self, index: usize, dim: usize) -> f64 {
-        unsafe { tet_get_point(self.ext_tetgen, to_i32(index), to_i32(dim)) }
+        unsafe { tet_get_point(self.handle, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the ID of a tetrahedron's node
@@ -484,7 +480,7 @@ impl Tetgen {
     pub fn tetgen_node(&self, index: usize, m: usize) -> usize {
         unsafe {
             let corner = constants::TRITET_TO_TETGEN[m];
-            tet_get_tetrahedron_corner(self.ext_tetgen, to_i32(index), to_i32(corner)) as usize
+            tet_get_tetrahedron_corner(self.handle, to_i32(index), to_i32(corner)) as usize
         }
     }
 
@@ -494,7 +490,7 @@ impl Tetgen {
     ///
     /// This function will return 0 if either `index` is out of range.
     pub fn tetgen_attribute(&self, index: usize) -> usize {
-        unsafe { tet_get_tetrahedron_attribute(self.ext_tetgen, to_i32(index)) as usize }
+        unsafe { tet_get_tetrahedron_attribute(self.handle, to_i32(index)) as usize }
     }
 }
 
@@ -511,18 +507,18 @@ mod tests {
             Tetgen::new(3, None, None, None).err(),
             Some("npoint must be ≥ 4")
         );
-        assert_eq!(
-            Tetgen::new(4, Some(3), None, None).err(),
-            Some("nfacet must be ≥ 4")
-        );
+        // assert_eq!(
+        //     Tetgen::new(4, Some(3), None, None).err(),
+        //     Some("nfacet must be ≥ 4")
+        // );
     }
 
     #[test]
     fn new_works() -> Result<(), StrError> {
-        let tetgen = Tetgen::new(4, Some(4), None, None)?;
-        assert_eq!(tetgen.ext_tetgen.is_null(), false);
+        let tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), None, None)?;
+        assert!(tetgen.handle > 0);
         assert_eq!(tetgen.npoint, 4);
-        assert_eq!(tetgen.nfacet, Some(4));
+        assert_eq!(tetgen.facet_npoint, Some(vec![3, 3, 3, 3]));
         assert_eq!(tetgen.nregion, None);
         assert_eq!(tetgen.nhole, None);
         assert_eq!(tetgen.all_points_set, false);
@@ -543,37 +539,17 @@ mod tests {
     }
 
     #[test]
-    fn set_facet_npoint_captures_some_errors() -> Result<(), StrError> {
-        let mut tetgen = Tetgen::new(4, None, None, None)?;
-        assert_eq!(
-            tetgen.set_facet_npoint(0, 3).err(),
-            Some("cannot set facet npoint because the number of facets is None")
-        );
-        let mut tetgen = Tetgen::new(4, Some(4), None, None)?;
-        assert_eq!(
-            tetgen.set_facet_npoint(5, 2).err(),
-            Some("npoint on a facet must be ≥ 3")
-        );
-        assert_eq!(
-            tetgen.set_facet_npoint(5, 3).err(),
-            Some("index of facet is out of bounds")
-        );
-        Ok(())
-    }
-
-    #[test]
     fn set_facet_point_captures_some_errors() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         assert_eq!(
             tetgen.set_facet_point(0, 0, 0).err(),
-            Some("cannot set facet point because the number of facets is None")
+            Some("cannot set facet point because facet_npoint is None")
         );
-        let mut tetgen = Tetgen::new(4, Some(4), None, None)?;
+        let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), None, None)?;
         assert_eq!(
             tetgen.set_facet_point(5, 0, 0).err(),
             Some("index of facet is out of bounds")
         );
-        tetgen.set_facet_npoint(0, 3)?;
         assert_eq!(
             tetgen.set_facet_point(0, 4, 0).err(),
             Some("index of facet point is out of bounds")
@@ -592,7 +568,7 @@ mod tests {
             tetgen.set_region(0, 0.33, 0.33, 0.33, 1, Some(0.1)).err(),
             Some("cannot set region because the number of regions is None")
         );
-        let mut tetgen = Tetgen::new(4, Some(4), Some(1), None)?;
+        let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), Some(1), None)?;
         assert_eq!(
             tetgen.set_region(1, 0.33, 0.33, 0.33, 1, Some(0.1)).err(),
             Some("index of region is out of bounds")
@@ -607,7 +583,7 @@ mod tests {
             tetgen.set_hole(0, 0.33, 0.33, 0.33).err(),
             Some("cannot set hole because the number of holes is None")
         );
-        let mut tetgen = Tetgen::new(4, Some(4), Some(1), Some(1))?;
+        let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), Some(1), Some(1))?;
         assert_eq!(
             tetgen.set_hole(1, 0.33, 0.33, 0.33).err(),
             Some("index of hole is out of bounds")
@@ -617,7 +593,7 @@ mod tests {
 
     #[test]
     fn generate_methods_capture_some_errors() -> Result<(), StrError> {
-        let mut tetgen = Tetgen::new(4, Some(4), None, None)?;
+        let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), None, None)?;
         assert_eq!(
             tetgen.generate_delaunay(false).err(),
             Some("cannot generate Delaunay tetrahedralization because not all points are set")

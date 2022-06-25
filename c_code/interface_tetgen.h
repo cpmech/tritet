@@ -1,39 +1,38 @@
 #ifndef INTERFACE_TETGEN_H
 #define INTERFACE_TETGEN_H
 
-struct ExtTetgen {
-    void* input;   // pointer to tetgenio
-    void* output;  // pointer to tetgenio
-};
+#include <inttypes.h>
 
-struct ExtTetgen* new_tetgen(int npoint, int nfacet, int nregion, int nhole);
+#include "constants.h"
 
-void drop_tetgen(struct ExtTetgen* tetgen);
+int new_tetgen(HANDLE handle, int npoint, int nfacet, int32_t const *facet_npoint, int nregion, int nhole);
 
-int tet_set_point(struct ExtTetgen* tetgen, int index, double x, double y, double z);
+void drop_tetgen(HANDLE handle);
 
-int tet_set_facet_npoint(struct ExtTetgen* tetgen, int index, int npoint);
+int tet_set_point(HANDLE handle, int index, double x, double y, double z);
 
-int tet_set_facet_point(struct ExtTetgen* tetgen, int index, int m, int p);
+int tet_set_facet_npoint(HANDLE handle, int index, int npoint);
 
-int tet_set_region(struct ExtTetgen* tetgen, int index, double x, double y, double z, int attribute, double max_volume);
+int tet_set_facet_point(HANDLE handle, int index, int m, int p);
 
-int tet_set_hole(struct ExtTetgen* tetgen, int index, double x, double y, double z);
+int tet_set_region(HANDLE handle, int index, double x, double y, double z, int attribute, double max_volume);
 
-int tet_run_delaunay(struct ExtTetgen* tetgen, int verbose);
+int tet_set_hole(HANDLE handle, int index, double x, double y, double z);
 
-int tet_run_tetrahedralize(struct ExtTetgen* tetgen, int verbose, int o2, double global_max_volume, double global_min_angle);
+int tet_run_delaunay(HANDLE handle, int verbose);
 
-int tet_get_npoint(struct ExtTetgen* tetgen);
+int tet_run_tetrahedralize(HANDLE handle, int verbose, int o2, double global_max_volume, double global_min_angle);
 
-int tet_get_ntetrahedron(struct ExtTetgen* tetgen);
+int tet_get_npoint(HANDLE handle);
 
-int tet_get_ncorner(struct ExtTetgen* tetgen);
+int tet_get_ntetrahedron(HANDLE handle);
 
-double tet_get_point(struct ExtTetgen* tetgen, int index, int dim);
+int tet_get_ncorner(HANDLE handle);
 
-int tet_get_tetrahedron_corner(struct ExtTetgen* tetgen, int index, int corner);
+double tet_get_point(HANDLE handle, int index, int dim);
 
-int tet_get_tetrahedron_attribute(struct ExtTetgen* tetgen, int index);
+int tet_get_tetrahedron_corner(HANDLE handle, int index, int corner);
+
+int tet_get_tetrahedron_attribute(HANDLE handle, int index);
 
 #endif  // INTERFACE_TETGEN_H

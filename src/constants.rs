@@ -2,6 +2,7 @@ pub(crate) const TRITET_SUCCESS: i32 = 0;
 
 pub(crate) const TRITET_ERROR_NULL_DATA: i32 = 10;
 pub(crate) const TRITET_ERROR_STRING_CONCAT: i32 = 20;
+pub(crate) const TRITET_ERROR_INITIALIZE_FAILED: i32 = 30;
 
 pub(crate) const TRITET_ERROR_NULL_POINT_LIST: i32 = 100;
 pub(crate) const TRITET_ERROR_NULL_SEGMENT_LIST: i32 = 200;

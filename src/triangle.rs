@@ -1,5 +1,5 @@
 use crate::constants;
-use crate::to_i32::to_i32;
+use crate::conversion::to_i32;
 use crate::StrError;
 use plotpy::{Canvas, Curve, Plot, PolyCode, Text};
 use std::collections::HashMap;

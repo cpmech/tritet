@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#define HANDLE unsigned long long int
+
 const int TRITET_TRUE = 1;
 const int TRITET_FALSE = 0;
 
@@ -8,6 +10,7 @@ const int TRITET_SUCCESS = 0;
 
 const int TRITET_ERROR_NULL_DATA = 10;
 const int TRITET_ERROR_STRING_CONCAT = 20;
+const int TRITET_ERROR_INITIALIZE_FAILED = 30;
 
 const int TRITET_ERROR_NULL_POINT_LIST = 100;
 const int TRITET_ERROR_NULL_SEGMENT_LIST = 200;
