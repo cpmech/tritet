@@ -9,6 +9,12 @@ fn main() {
     for i in 0..20 {
         let handle = thread::spawn(move || {
             println!("..{}..", i);
+            new_captures_some_errors();
+            set_point_captures_some_errors().unwrap();
+            set_segment_captures_some_errors().unwrap();
+            set_region_captures_some_errors().unwrap();
+            set_hole_captures_some_errors().unwrap();
+            generate_methods_capture_some_errors().unwrap();
             delaunay().unwrap();
             voronoi().unwrap();
             mesh().unwrap();
@@ -22,6 +28,97 @@ fn main() {
 
     thread::sleep(Duration::from_millis(250));
     println!("Done\n");
+}
+
+fn new_captures_some_errors() {
+    assert_eq!(
+        Triangle::new(2, None, None, None).err(),
+        Some("npoint must be ≥ 3")
+    );
+    assert_eq!(
+        Triangle::new(3, Some(2), None, None).err(),
+        Some("nsegment must be ≥ 3")
+    );
+}
+
+fn set_point_captures_some_errors() -> Result<(), StrError> {
+    let mut triangle = Triangle::new(3, None, None, None)?;
+    assert_eq!(
+        triangle.set_point(4, 0.0, 0.0).err(),
+        Some("index of point is out of bounds")
+    );
+    Ok(())
+}
+
+fn set_segment_captures_some_errors() -> Result<(), StrError> {
+    let mut triangle = Triangle::new(3, None, None, None)?;
+    assert_eq!(
+        triangle.set_segment(0, 0, 1).err(),
+        Some("cannot set segment because the number of segments is None")
+    );
+    let mut triangle = Triangle::new(3, Some(3), None, None)?;
+    assert_eq!(
+        triangle.set_segment(4, 0, 1).err(),
+        Some("index of segment is out of bounds")
+    );
+    assert_eq!(
+        triangle.set_segment(0, 0, 4).err(),
+        Some("id of segment point is out of bounds")
+    );
+    Ok(())
+}
+
+fn set_region_captures_some_errors() -> Result<(), StrError> {
+    let mut triangle = Triangle::new(3, None, None, None)?;
+    assert_eq!(
+        triangle.set_region(0, 0.33, 0.33, 1, Some(0.1)).err(),
+        Some("cannot set region because the number of regions is None")
+    );
+    let mut triangle = Triangle::new(3, Some(3), Some(1), None)?;
+    assert_eq!(
+        triangle.set_region(1, 0.33, 0.33, 1, Some(0.1)).err(),
+        Some("index of region is out of bounds")
+    );
+    Ok(())
+}
+
+fn set_hole_captures_some_errors() -> Result<(), StrError> {
+    let mut triangle = Triangle::new(3, None, None, None)?;
+    assert_eq!(
+        triangle.set_hole(0, 0.33, 0.33).err(),
+        Some("cannot set hole because the number of holes is None")
+    );
+    let mut triangle = Triangle::new(3, Some(3), Some(1), Some(1))?;
+    assert_eq!(
+        triangle.set_hole(1, 0.33, 0.33).err(),
+        Some("index of hole is out of bounds")
+    );
+    Ok(())
+}
+
+fn generate_methods_capture_some_errors() -> Result<(), StrError> {
+    let mut triangle = Triangle::new(3, Some(3), None, None)?;
+    assert_eq!(
+        triangle.generate_delaunay(false).err(),
+        Some("cannot generate Delaunay triangulation because not all points are set")
+    );
+    assert_eq!(
+        triangle.generate_voronoi(false).err(),
+        Some("cannot generate Voronoi tessellation because not all points are set")
+    );
+    assert_eq!(
+        triangle.generate_mesh(false, false, None, None).err(),
+        Some("cannot generate mesh of triangles because not all points are set")
+    );
+    triangle
+        .set_point(0, 0.0, 0.0)?
+        .set_point(1, 1.0, 0.0)?
+        .set_point(2, 0.0, 1.0)?;
+    assert_eq!(
+        triangle.generate_mesh(false, false, None, None).err(),
+        Some("cannot generate mesh of triangles because not all segments are set")
+    );
+    Ok(())
 }
 
 fn delaunay() -> Result<(), StrError> {
