@@ -80,3 +80,6 @@ pub(crate) const DARK_COLORS: [&'static str; 12] = [
     "#2e3d7c", "#282528", "#ba292e", "#e15d3a", "#ffa73c", "#780000", "#540d4d", "#214b14",
     "#a36032", "#0f4539", "#2f3b22", "#152d32",
 ];
+
+pub(crate) const VTK_TETRA: i32 = 10;
+pub(crate) const VTK_QUADRATIC_TETRA: i32 = 24;
