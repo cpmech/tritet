@@ -17,7 +17,7 @@ class TetgenData {
     tetgenio output;
 };
 
-typedef std::map<int, TetgenData *> AllTetgenData_t;
+typedef std::map<HANDLE, TetgenData *> AllTetgenData_t;
 
 AllTetgenData_t ALL_TETGEN_DATA;
 
@@ -32,7 +32,7 @@ void drop_tetgen(HANDLE handle) {
     }
 }
 
-int new_tetgen(HANDLE handle, int npoint, int nfacet, int32_t const *facet_npoint, int nregion, int nhole) {
+int32_t new_tetgen(HANDLE handle, int32_t npoint, int32_t nfacet, int32_t const *facet_npoint, int32_t nregion, int32_t nhole) {
     TetgenData *tg;
     try {
         tg = new TetgenData;
@@ -70,8 +70,8 @@ int new_tetgen(HANDLE handle, int npoint, int nfacet, int32_t const *facet_npoin
             return TRITET_ERROR_ALLOC_FACET_LIST_FAILED;
         }
         try {
-            const int NUM_POLY = 1;
-            for (size_t index = 0; index < nfacet; index++) {
+            const int32_t NUM_POLY = 1;
+            for (int32_t index = 0; index < nfacet; index++) {
                 // facet polygon
                 tetgenio::facet *fac = &tg->input.facetlist[index];
                 fac->polygonlist = new tetgenio::polygon[NUM_POLY];
@@ -84,7 +84,7 @@ int new_tetgen(HANDLE handle, int npoint, int nfacet, int32_t const *facet_npoin
                 // face polygon vertices
                 size_t nvertex = facet_npoint[index];
                 tetgenio::polygon *gon = &fac->polygonlist[0];
-                gon->vertexlist = new int[nvertex];
+                gon->vertexlist = new int32_t[nvertex];
                 if (gon->vertexlist == NULL) {
                     return TRITET_ERROR_ALLOC_FACET_DATA_FAILED;
                 }
@@ -124,7 +124,7 @@ int new_tetgen(HANDLE handle, int npoint, int nfacet, int32_t const *facet_npoin
     return TRITET_SUCCESS;
 }
 
-int tet_set_point(HANDLE handle, int index, double x, double y, double z) {
+int32_t tet_set_point(HANDLE handle, int32_t index, double x, double y, double z) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -147,7 +147,7 @@ int tet_set_point(HANDLE handle, int index, double x, double y, double z) {
     return TRITET_SUCCESS;
 }
 
-int tet_set_facet_point(HANDLE handle, int index, int m, int p) {
+int32_t tet_set_facet_point(HANDLE handle, int32_t index, int32_t m, int32_t p) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -182,7 +182,7 @@ int tet_set_facet_point(HANDLE handle, int index, int m, int p) {
     return TRITET_SUCCESS;
 }
 
-int tet_set_region(HANDLE handle, int index, double x, double y, double z, int attribute, double max_volume) {
+int32_t tet_set_region(HANDLE handle, int32_t index, double x, double y, double z, int32_t attribute, double max_volume) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -207,7 +207,7 @@ int tet_set_region(HANDLE handle, int index, double x, double y, double z, int a
     return TRITET_SUCCESS;
 }
 
-int tet_set_hole(HANDLE handle, int index, double x, double y, double z) {
+int32_t tet_set_hole(HANDLE handle, int32_t index, double x, double y, double z) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -230,7 +230,7 @@ int tet_set_hole(HANDLE handle, int index, double x, double y, double z) {
     return TRITET_SUCCESS;
 }
 
-int tet_run_delaunay(HANDLE handle, int verbose) {
+int32_t tet_run_delaunay(HANDLE handle, int32_t verbose) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -255,7 +255,7 @@ int tet_run_delaunay(HANDLE handle, int verbose) {
     }
     try {
         tetrahedralize(command, &tg->input, &tg->output, NULL, NULL);
-    } catch (int status) {
+    } catch (int32_t status) {
         printf("status = %d\n", status);  // TODO
     } catch (...) {
         return 1;  // TODO
@@ -264,7 +264,7 @@ int tet_run_delaunay(HANDLE handle, int verbose) {
     return TRITET_SUCCESS;
 }
 
-int tet_run_tetrahedralize(HANDLE handle, int verbose, int o2, double global_max_volume, double global_min_angle) {
+int32_t tet_run_tetrahedralize(HANDLE handle, int32_t verbose, int32_t o2, double global_max_volume, double global_min_angle) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -297,7 +297,7 @@ int tet_run_tetrahedralize(HANDLE handle, int verbose, int o2, double global_max
     }
     if (global_max_volume > 0.0) {
         char buf[32];
-        int n = snprintf(buf, 32, "a%.15f", global_max_volume);
+        int32_t n = snprintf(buf, 32, "a%.15f", global_max_volume);
         if (n >= 32) {
             return TRITET_ERROR_STRING_CONCAT;
         }
@@ -305,7 +305,7 @@ int tet_run_tetrahedralize(HANDLE handle, int verbose, int o2, double global_max
     }
     if (global_min_angle > 0.0) {
         char buf[32];
-        int n = snprintf(buf, 32, "q%.15f", global_min_angle);
+        int32_t n = snprintf(buf, 32, "q%.15f", global_min_angle);
         if (n >= 32) {
             return TRITET_ERROR_STRING_CONCAT;
         }
@@ -315,7 +315,7 @@ int tet_run_tetrahedralize(HANDLE handle, int verbose, int o2, double global_max
     }
     try {
         tetrahedralize(command, &tg->input, &tg->output, NULL, NULL);
-    } catch (int status) {
+    } catch (int32_t status) {
         printf("status = %d\n", status);  // TODO
     } catch (...) {
         return 1;  // TODO
@@ -324,7 +324,7 @@ int tet_run_tetrahedralize(HANDLE handle, int verbose, int o2, double global_max
     return TRITET_SUCCESS;
 }
 
-int tet_get_npoint(HANDLE handle) {
+int32_t tet_get_npoint(HANDLE handle) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -338,7 +338,7 @@ int tet_get_npoint(HANDLE handle) {
     return tg->output.numberofpoints;
 }
 
-int tet_get_ntetrahedron(HANDLE handle) {
+int32_t tet_get_ntetrahedron(HANDLE handle) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -352,7 +352,7 @@ int tet_get_ntetrahedron(HANDLE handle) {
     return tg->output.numberoftetrahedra;
 }
 
-int tet_get_ncorner(HANDLE handle) {
+int32_t tet_get_ncorner(HANDLE handle) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -366,7 +366,7 @@ int tet_get_ncorner(HANDLE handle) {
     return tg->output.numberofcorners;
 }
 
-double tet_get_point(HANDLE handle, int index, int dim) {
+double tet_get_point(HANDLE handle, int32_t index, int32_t dim) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -384,7 +384,7 @@ double tet_get_point(HANDLE handle, int index, int dim) {
     }
 }
 
-int tet_get_tetrahedron_corner(HANDLE handle, int index, int corner) {
+int32_t tet_get_tetrahedron_corner(HANDLE handle, int32_t index, int32_t corner) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {
@@ -402,7 +402,7 @@ int tet_get_tetrahedron_corner(HANDLE handle, int index, int corner) {
     }
 }
 
-int tet_get_tetgen_attribute(HANDLE handle, int index) {
+int32_t tet_get_tetgen_attribute(HANDLE handle, int32_t index) {
     TetgenData *tg = NULL;
     try {
         if (ALL_TETGEN_DATA.count(handle) > 0) {

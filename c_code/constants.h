@@ -1,7 +1,9 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define HANDLE unsigned long long int
+#include <inttypes.h>
+
+#define HANDLE int32_t
 
 const int TRITET_TRUE = 1;
 const int TRITET_FALSE = 0;

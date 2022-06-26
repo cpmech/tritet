@@ -1,25 +1,22 @@
-#![allow(unused)]
-
 use crate::constants;
-use crate::conversion::{to_i32, to_u64};
+use crate::conversion::to_i32;
 use crate::global;
 use crate::StrError;
 
 extern "C" {
     fn new_tetgen(
-        handle: u64,
+        handle: i32,
         npoint: i32,
         nfacet: i32,
         facet_npoint: *const i32,
         nregion: i32,
         nhole: i32,
     ) -> i32;
-    fn drop_tetgen(handle: u64);
-    fn tet_set_point(handle: u64, index: i32, x: f64, y: f64, z: f64) -> i32;
-    fn tet_set_facet_npoint(handle: u64, index: i32, npoint: i32) -> i32;
-    fn tet_set_facet_point(handle: u64, index: i32, m: i32, p: i32) -> i32;
+    fn drop_tetgen(handle: i32);
+    fn tet_set_point(handle: i32, index: i32, x: f64, y: f64, z: f64) -> i32;
+    fn tet_set_facet_point(handle: i32, index: i32, m: i32, p: i32) -> i32;
     fn tet_set_region(
-        handle: u64,
+        handle: i32,
         index: i32,
         x: f64,
         y: f64,
@@ -27,28 +24,28 @@ extern "C" {
         attribute: i32,
         max_volume: f64,
     ) -> i32;
-    fn tet_set_hole(handle: u64, index: i32, x: f64, y: f64, z: f64) -> i32;
-    fn tet_run_delaunay(handle: u64, verbose: i32) -> i32;
+    fn tet_set_hole(handle: i32, index: i32, x: f64, y: f64, z: f64) -> i32;
+    fn tet_run_delaunay(handle: i32, verbose: i32) -> i32;
     fn tet_run_tetrahedralize(
-        handle: u64,
+        handle: i32,
         verbose: i32,
         o2: i32,
         global_max_volume: f64,
         global_min_angle: f64,
     ) -> i32;
-    fn tet_get_npoint(handle: u64) -> i32;
-    fn tet_get_ntetrahedron(handle: u64) -> i32;
-    fn tet_get_ncorner(handle: u64) -> i32;
-    fn tet_get_point(handle: u64, index: i32, dim: i32) -> f64;
-    fn tet_get_tetrahedron_corner(handle: u64, index: i32, corner: i32) -> i32;
-    fn tet_get_tetrahedron_attribute(handle: u64, index: i32) -> i32;
+    fn tet_get_npoint(handle: i32) -> i32;
+    fn tet_get_ntetrahedron(handle: i32) -> i32;
+    fn tet_get_ncorner(handle: i32) -> i32;
+    fn tet_get_point(handle: i32, index: i32, dim: i32) -> f64;
+    fn tet_get_tetrahedron_corner(handle: i32, index: i32, corner: i32) -> i32;
+    fn tet_get_tetrahedron_attribute(handle: i32, index: i32) -> i32;
 }
 
 /// Implements high-level functions to call Si's Tetgen Cpp-Code
 ///
 /// **Note:** All indices are are zero-based.
 pub struct Tetgen {
-    handle: u64,                      // handle to c-data
+    handle: i32,                      // handle to c-data
     npoint: usize,                    // number of points
     facet_npoint: Option<Vec<usize>>, // number of points on each facet
     nregion: Option<usize>,           // number of regions
@@ -102,7 +99,7 @@ impl Tetgen {
             Some(v) => to_i32(v),
             None => 0,
         };
-        let handle = to_u64(global::generate_handle());
+        let handle = to_i32(global::generate_handle());
         unsafe {
             let _ = global::ACCESS_C_CODE
                 .lock()
