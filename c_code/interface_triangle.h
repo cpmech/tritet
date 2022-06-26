@@ -17,10 +17,6 @@ struct ExtTriangle {
     struct triangulateio voronoi;
 };
 
-void zero_triangle_data(struct triangulateio *data);
-
-void free_triangle_data(struct triangulateio *data);
-
 struct ExtTriangle *new_triangle(int32_t npoint, int32_t nsegment, int32_t nregion, int32_t nhole);
 
 void drop_triangle(struct ExtTriangle *triangle);
