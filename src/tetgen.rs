@@ -1,6 +1,8 @@
 use crate::constants;
 use crate::conversion::to_i32;
 use crate::StrError;
+use plotpy::{Canvas, Plot, Text};
+use std::collections::HashMap;
 
 #[repr(C)]
 pub(crate) struct ExtTetgen {
@@ -404,7 +406,7 @@ impl Tetgen {
     }
 
     /// Returns the number of tetrahedra on the Delaunay triangulation (constrained or not)
-    pub fn ntetrahedron(&self) -> usize {
+    pub fn ntet(&self) -> usize {
         unsafe { tet_get_ntetrahedron(self.ext_tetgen) as usize }
     }
 
@@ -467,7 +469,7 @@ impl Tetgen {
     /// # Warning
     ///
     /// This function will return 0 if either `index` or `m` are out of range.
-    pub fn tetgen_node(&self, index: usize, m: usize) -> usize {
+    pub fn tet_node(&self, index: usize, m: usize) -> usize {
         unsafe {
             let corner = constants::TRITET_TO_TETGEN[m];
             tet_get_tetrahedron_corner(self.ext_tetgen, to_i32(index), to_i32(corner)) as usize
@@ -479,8 +481,145 @@ impl Tetgen {
     /// # Warning
     ///
     /// This function will return 0 if either `index` is out of range.
-    pub fn tetgen_attribute(&self, index: usize) -> usize {
+    pub fn tet_attribute(&self, index: usize) -> usize {
         unsafe { tet_get_tetrahedron_attribute(self.ext_tetgen, to_i32(index)) as usize }
+    }
+
+    /// Draws wireframe representing the edges of tetrahedra
+    pub fn draw_wireframe(
+        &self,
+        plot: &mut Plot,
+        set_range: bool,
+        with_point_ids: bool,
+        with_triangle_ids: bool,
+        with_attribute_ids: bool,
+        fontsize_point_ids: Option<f64>,
+        fontsize_triangle_ids: Option<f64>,
+        fontsize_attribute_ids: Option<f64>,
+    ) {
+        let ntet = self.ntet();
+        if ntet < 1 {
+            return;
+        }
+        let mut canvas = Canvas::new();
+        let mut point_ids = Text::new();
+        let mut tetrahedron_ids = Text::new();
+        let mut attribute_ids = Text::new();
+        if with_point_ids {
+            point_ids
+                .set_color("red")
+                .set_align_horizontal("center")
+                .set_align_vertical("center")
+                .set_bbox(true)
+                .set_bbox_facecolor("white")
+                .set_bbox_alpha(0.8)
+                .set_bbox_style("circle");
+            if let Some(fsz) = fontsize_point_ids {
+                point_ids.set_fontsize(fsz);
+            }
+        }
+        if with_triangle_ids {
+            tetrahedron_ids
+                .set_color("blue")
+                .set_align_horizontal("center")
+                .set_align_vertical("center");
+            if let Some(fsz) = fontsize_triangle_ids {
+                tetrahedron_ids.set_fontsize(fsz);
+            }
+        }
+        if with_attribute_ids {
+            attribute_ids
+                .set_color("black")
+                .set_align_horizontal("center")
+                .set_align_vertical("center");
+            if let Some(fsz) = fontsize_attribute_ids {
+                attribute_ids.set_fontsize(fsz);
+            }
+        }
+        const EDGES: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
+        let mut x = vec![0.0; 3];
+        let mut xa = vec![0.0; 3];
+        let mut xb = vec![0.0; 3];
+        let mut xcen = vec![0.0; 3];
+        let mut xatt = vec![0.0; 3];
+        let mut min = vec![f64::MAX; 3];
+        let mut max = vec![f64::MIN; 3];
+        let mut colors: HashMap<usize, &'static str> = HashMap::new();
+        let mut index_color = 0;
+        let clr = constants::DARK_COLORS;
+        for tet in 0..ntet {
+            let attribute = self.tet_attribute(tet);
+            let color = match colors.get(&attribute) {
+                Some(c) => c,
+                None => {
+                    let c = clr[index_color % clr.len()];
+                    colors.insert(attribute, c);
+                    index_color += 1;
+                    c
+                }
+            };
+            canvas.set_edge_color(color);
+            for dim in 0..3 {
+                xcen[dim] = 0.0;
+            }
+            for m in 0..4 {
+                let p = self.tet_node(tet, m);
+                for dim in 0..3 {
+                    x[dim] = self.point(p, dim);
+                    min[dim] = f64::min(min[dim], x[dim]);
+                    max[dim] = f64::max(max[dim], x[dim]);
+                    xcen[dim] += x[dim] / 4.0;
+                }
+            }
+            for (ma, mb) in &EDGES {
+                let a = self.tet_node(tet, *ma);
+                let b = self.tet_node(tet, *mb);
+                for dim in 0..3 {
+                    xa[dim] = self.point(a, dim);
+                    xb[dim] = self.point(b, dim);
+                }
+                canvas.polyline_3d_begin();
+                canvas.polyline_3d_add(xa[0], xa[1], xa[2]);
+                canvas.polyline_3d_add(xb[0], xb[1], xb[2]);
+                canvas.polyline_3d_end();
+            }
+            if with_triangle_ids {
+                tetrahedron_ids.draw_3d(xcen[0], xcen[1], xcen[2], format!("{}", tet).as_str());
+            }
+            if with_attribute_ids {
+                for dim in 0..3 {
+                    x[dim] = self.point(self.tet_node(tet, 0), dim);
+                    xatt[dim] = (x[dim] + xcen[dim]) / 2.0;
+                }
+                attribute_ids.draw_3d(
+                    xatt[0],
+                    xatt[1],
+                    xatt[2],
+                    format!("[{}]", attribute).as_str(),
+                );
+            }
+        }
+        if with_point_ids {
+            for p in 0..self.npoint() {
+                let x = self.point(p, 0);
+                let y = self.point(p, 1);
+                let z = self.point(p, 2);
+                point_ids.draw_3d(x, y, z, format!("{}", p).as_str());
+            }
+        }
+        plot.add(&canvas);
+        if with_triangle_ids {
+            plot.add(&tetrahedron_ids);
+        }
+        if with_point_ids {
+            plot.add(&point_ids);
+        }
+        if with_attribute_ids {
+            plot.add(&attribute_ids);
+        }
+        if set_range {
+            plot.set_range_3d(min[0], max[0], min[1], max[1], min[2], max[2]);
+        }
     }
 }
 
@@ -490,6 +629,7 @@ impl Tetgen {
 mod tests {
     use super::Tetgen;
     use crate::StrError;
+    use plotpy::Plot;
 
     #[test]
     fn new_captures_some_errors() {
@@ -601,6 +741,39 @@ mod tests {
             tetgen.generate_mesh(false, false, None, None).err(),
             Some("cannot generate mesh of tetrahedra because not all facets are set")
         );
+        Ok(())
+    }
+
+    #[test]
+    fn generate_delaunay_works() -> Result<(), StrError> {
+        let mut tetgen = Tetgen::new(4, None, None, None)?;
+        tetgen.set_point(0, 0.0, 0.0, 0.0)?;
+        tetgen.set_point(1, 1.0, 0.0, 0.0)?;
+        tetgen.set_point(2, 0.0, 1.0, 0.0)?;
+        tetgen.set_point(3, 0.0, 0.0, 1.0)?;
+        tetgen.generate_delaunay(false)?;
+        assert_eq!(tetgen.ntet(), 1);
+        assert_eq!(tetgen.npoint(), 4);
+        Ok(())
+    }
+
+    #[test]
+    fn draw_wireframe_works() -> Result<(), StrError> {
+        let mut tetgen = Tetgen::new(4, None, None, None)?;
+        tetgen.set_point(0, 0.0, 0.0, 0.0)?;
+        tetgen.set_point(1, 1.0, 0.0, 0.0)?;
+        tetgen.set_point(2, 0.0, 1.0, 0.0)?;
+        tetgen.set_point(3, 0.0, 0.0, 1.0)?;
+        tetgen.generate_delaunay(false)?;
+        assert_eq!(tetgen.ntet(), 1);
+        assert_eq!(tetgen.npoint(), 4);
+        let mut plot = Plot::new();
+        tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+        if false {
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/tetgen_draw_wireframe_works.svg")?;
+        }
         Ok(())
     }
 }

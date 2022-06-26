@@ -317,7 +317,7 @@ int32_t tet_get_tetrahedron_corner(struct ExtTetgen *tetgen, int32_t index, int3
     return 0;
 }
 
-int32_t tet_get_tetgen_attribute(struct ExtTetgen *tetgen, int32_t index) {
+int32_t tet_get_tetrahedron_attribute(struct ExtTetgen *tetgen, int32_t index) {
     if (tetgen == NULL) {
         return 0;
     }

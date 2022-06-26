@@ -13,6 +13,7 @@
     "neighborlist",
     "nfacet",
     "normlist",
+    "ntet",
     "ntetrahedron",
     "ntriangle",
     "numberofcorners",
@@ -52,7 +53,8 @@
     "TRICALL",
     "vertexlist",
     "Woolsey",
-    "xatt"
+    "xatt",
+    "xcen"
   ],
   "files.associations": {
     "*.C": "cpp",

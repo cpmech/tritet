@@ -28,6 +28,7 @@ fn run_all() -> Result<(), StrError> {
     set_region_captures_some_errors()?;
     set_hole_captures_some_errors()?;
     generate_methods_capture_some_errors()?;
+    generate_delaunay_works()?;
     Ok(())
 }
 
@@ -120,5 +121,17 @@ fn generate_methods_capture_some_errors() -> Result<(), StrError> {
         tetgen.generate_mesh(false, false, None, None).err(),
         Some("cannot generate mesh of tetrahedra because not all facets are set")
     );
+    Ok(())
+}
+
+fn generate_delaunay_works() -> Result<(), StrError> {
+    let mut tetgen = Tetgen::new(4, None, None, None)?;
+    tetgen.set_point(0, 0.0, 0.0, 0.0)?;
+    tetgen.set_point(1, 1.0, 0.0, 0.0)?;
+    tetgen.set_point(2, 0.0, 1.0, 0.0)?;
+    tetgen.set_point(3, 0.0, 0.0, 1.0)?;
+    tetgen.generate_delaunay(false)?;
+    assert_eq!(tetgen.ntet(), 1);
+    assert_eq!(tetgen.npoint(), 4);
     Ok(())
 }
