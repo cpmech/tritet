@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use crate::constants;
 use crate::conversion::to_i32;
 use crate::global;
