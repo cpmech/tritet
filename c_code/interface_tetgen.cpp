@@ -22,82 +22,102 @@ typedef std::map<int, ExtTetgenClass *> Database_t;
 Database_t DATABASE;
 
 void drop_tetgen(HANDLE handle) {
-    // try {
-    //     if (DATABASE.count(handle) > 0) {
-    //         printf("handle = %lld\n", handle);
-    //         // delete DATABASE.at(handle);
-    //         // DATABASE.erase(handle);
-    //     }
-    // } catch (...) {
-    // }
-    ExtTetgenClass *tg = DATABASE[handle];
-    delete tg;
-    tg = NULL;
+    try {
+        if (DATABASE.count(handle) > 0) {
+            ExtTetgenClass *tg = DATABASE[handle];
+            delete tg;
+            DATABASE.erase(handle);
+        }
+    } catch (...) {
+    }
 }
 
 int new_tetgen(HANDLE handle, int npoint, int nfacet, int32_t const *facet_npoint, int nregion, int nhole) {
-    ExtTetgenClass *tg = new ExtTetgenClass;
-    DATABASE[handle] = tg;
-    // if (tg == NULL) {
-    //     return TRITET_ERROR_NULL_DATA;
-    // }
-    // try {
-    tg->input.initialize();
-    tg->output.initialize();
-    //     DATABASE[handle] = tg;
-    // } catch (...) {
-    //     return TRITET_ERROR_INITIALIZE_FAILED;
-    // }
+    ExtTetgenClass *tg;
+    try {
+        tg = new ExtTetgenClass;
+        if (tg == NULL) {
+            return TRITET_ERROR_NULL_DATA;
+        }
+        DATABASE[handle] = tg;
+        tg->input.initialize();
+        tg->output.initialize();
+    } catch (...) {
+        return TRITET_ERROR_INITIALIZE_FAILED;
+    }
 
     // points
-    tg->input.firstnumber = 0;
-    tg->input.numberofpoints = npoint;
-    tg->input.pointlist = new double[npoint * 3];
-    if (tg->input.pointlist == NULL) {
-        return TRITET_ERROR_INITIALIZE_FAILED;
+    try {
+        tg->input.firstnumber = 0;
+        tg->input.numberofpoints = npoint;
+        tg->input.pointlist = new double[npoint * 3];
+        if (tg->input.pointlist == NULL) {
+            return TRITET_ERROR_ALLOC_POINT_LIST_FAILED;
+        }
+    } catch (...) {
+        return TRITET_ERROR_ALLOC_POINT_LIST_FAILED;
     }
 
     // facets
     if (nfacet > 0) {
-        tg->input.numberoffacets = nfacet;
-        tg->input.facetlist = new tetgenio::facet[nfacet];
-        if (tg->input.facetlist == NULL) {
-            return TRITET_ERROR_INITIALIZE_FAILED;
-        }
-        const int NUM_POLY = 1;
         try {
+            tg->input.numberoffacets = nfacet;
+            tg->input.facetlist = new tetgenio::facet[nfacet];
+            if (tg->input.facetlist == NULL) {
+                return TRITET_ERROR_ALLOC_FACET_LIST_FAILED;
+            }
+        } catch (...) {
+            return TRITET_ERROR_ALLOC_FACET_LIST_FAILED;
+        }
+        try {
+            const int NUM_POLY = 1;
             for (size_t index = 0; index < nfacet; index++) {
+                // facet polygon
                 tetgenio::facet *fac = &tg->input.facetlist[index];
                 fac->polygonlist = new tetgenio::polygon[NUM_POLY];
+                if (fac->polygonlist == NULL) {
+                    return TRITET_ERROR_ALLOC_FACET_DATA_FAILED;
+                }
                 fac->numberofpolygons = NUM_POLY;
                 fac->numberofholes = 0;
                 fac->holelist = NULL;
-                size_t fnp = facet_npoint[index];
+                // face polygon vertices
+                size_t nvertex = facet_npoint[index];
                 tetgenio::polygon *gon = &fac->polygonlist[0];
-                gon->vertexlist = new int[fnp];
-                gon->numberofvertices = fnp;
+                gon->vertexlist = new int[nvertex];
+                if (gon->vertexlist == NULL) {
+                    return TRITET_ERROR_ALLOC_FACET_DATA_FAILED;
+                }
+                gon->numberofvertices = nvertex;
             }
         } catch (...) {
-            printf("bug\n");
-            return TRITET_ERROR_INITIALIZE_FAILED;
+            return TRITET_ERROR_ALLOC_FACET_DATA_FAILED;
         }
     }
 
     // regions
     if (nregion > 0) {
-        tg->input.numberofregions = nregion;
-        tg->input.regionlist = new double[nregion * 5];
-        if (tg->input.regionlist == NULL) {
-            return TRITET_ERROR_INITIALIZE_FAILED;
+        try {
+            tg->input.numberofregions = nregion;
+            tg->input.regionlist = new double[nregion * 5];
+            if (tg->input.regionlist == NULL) {
+                return TRITET_ERROR_ALLOC_REGION_LIST_FAILED;
+            }
+        } catch (...) {
+            return TRITET_ERROR_ALLOC_REGION_LIST_FAILED;
         }
     }
 
     // holes
     if (nhole > 0) {
-        tg->input.numberofholes = nhole;
-        tg->input.holelist = new double[nhole * 3];
-        if (tg->input.holelist == NULL) {
-            return TRITET_ERROR_INITIALIZE_FAILED;
+        try {
+            tg->input.numberofholes = nhole;
+            tg->input.holelist = new double[nhole * 3];
+            if (tg->input.holelist == NULL) {
+                return TRITET_ERROR_ALLOC_HOLE_LIST_FAILED;
+            }
+        } catch (...) {
+            return TRITET_ERROR_ALLOC_HOLE_LIST_FAILED;
         }
     }
 

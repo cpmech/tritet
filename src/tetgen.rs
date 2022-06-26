@@ -122,6 +122,21 @@ impl Tetgen {
                 if status == constants::TRITET_ERROR_INITIALIZE_FAILED {
                     return Err("INTERNAL ERROR: cannot initialize c-data");
                 }
+                if status == constants::TRITET_ERROR_ALLOC_POINT_LIST_FAILED {
+                    return Err("INTERNAL ERROR: cannot allocate point list");
+                }
+                if status == constants::TRITET_ERROR_ALLOC_FACET_LIST_FAILED {
+                    return Err("INTERNAL ERROR: cannot allocate facet list");
+                }
+                if status == constants::TRITET_ERROR_ALLOC_FACET_DATA_FAILED {
+                    return Err("INTERNAL ERROR: cannot allocate facet data");
+                }
+                if status == constants::TRITET_ERROR_ALLOC_REGION_LIST_FAILED {
+                    return Err("INTERNAL ERROR: cannot allocate region list");
+                }
+                if status == constants::TRITET_ERROR_ALLOC_HOLE_LIST_FAILED {
+                    return Err("INTERNAL ERROR: cannot allocate hole list");
+                }
             }
         };
         Ok(Tetgen {

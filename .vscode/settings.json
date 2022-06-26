@@ -29,6 +29,7 @@
     "numberoftriangleattributes",
     "numberoftriangles",
     "numberofvertices",
+    "nvertex",
     "pointattributelist",
     "pointlist",
     "pointmarkerlist",
