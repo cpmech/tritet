@@ -34,10 +34,7 @@ fn run_all() -> Result<(), StrError> {
 }
 
 fn new_captures_some_errors() {
-    assert_eq!(
-        Tetgen::new(3, None, None, None).err(),
-        Some("npoint must be ≥ 4")
-    );
+    assert_eq!(Tetgen::new(3, None, None, None).err(), Some("npoint must be ≥ 4"));
     assert_eq!(
         Tetgen::new(4, Some(vec![3, 3, 3]), None, None).err(),
         Some("nfacet must be ≥ 4")

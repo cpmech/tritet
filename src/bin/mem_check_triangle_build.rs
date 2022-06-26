@@ -31,10 +31,7 @@ fn main() {
 }
 
 fn new_captures_some_errors() {
-    assert_eq!(
-        Triangle::new(2, None, None, None).err(),
-        Some("npoint must be ≥ 3")
-    );
+    assert_eq!(Triangle::new(2, None, None, None).err(), Some("npoint must be ≥ 3"));
     assert_eq!(
         Triangle::new(3, Some(2), None, None).err(),
         Some("nsegment must be ≥ 3")

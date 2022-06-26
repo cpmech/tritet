@@ -65,16 +65,7 @@ fn test_triangle_mesh_1() -> Result<(), StrError> {
     assert_eq!(triangle.triangle_attribute(11), 7);
 
     let mut plot = Plot::new();
-    triangle.draw_triangles(
-        &mut plot,
-        true,
-        true,
-        true,
-        true,
-        Some(12.0),
-        Some(24.0),
-        Some(14.0),
-    );
+    triangle.draw_triangles(&mut plot, true, true, true, true, Some(12.0), Some(24.0), Some(14.0));
     if false {
         plot.set_equal_axes(true)
             .set_figure_size_points(600.0, 600.0)

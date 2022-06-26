@@ -70,15 +70,14 @@ pub(crate) const TRITET_TO_TETGEN: [usize; 10] = [0, 1, 2, 3, 6, 7, 9, 5, 8, 4];
 
 /// Defines a set of "light" colors
 pub(crate) const LIGHT_COLORS: [&'static str; 17] = [
-    "#cbe4f9", "#cdf5f6", "#eff9da", "#f9ebdf", "#f9d8d6", "#d6cdea", "#acddde", "#caf1de",
-    "#e1f8dc", "#fef8dd", "#ffe7c7", "#f7d8ba", "#d0fffe", "#fffddb", "#e4ffde", "#ffd3fd",
-    "#ffe7d3",
+    "#cbe4f9", "#cdf5f6", "#eff9da", "#f9ebdf", "#f9d8d6", "#d6cdea", "#acddde", "#caf1de", "#e1f8dc", "#fef8dd",
+    "#ffe7c7", "#f7d8ba", "#d0fffe", "#fffddb", "#e4ffde", "#ffd3fd", "#ffe7d3",
 ];
 
 /// Defines a set of "dark" colors
 pub(crate) const DARK_COLORS: [&'static str; 12] = [
-    "#2e3d7c", "#282528", "#ba292e", "#e15d3a", "#ffa73c", "#780000", "#540d4d", "#214b14",
-    "#a36032", "#0f4539", "#2f3b22", "#152d32",
+    "#2e3d7c", "#282528", "#ba292e", "#e15d3a", "#ffa73c", "#780000", "#540d4d", "#214b14", "#a36032", "#0f4539",
+    "#2f3b22", "#152d32",
 ];
 
 pub(crate) const VTK_TETRA: i32 = 10;

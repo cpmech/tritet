@@ -15,14 +15,7 @@ extern "C" {
     fn drop_triangle(triangle: *mut ExtTriangle);
     fn set_point(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
     fn set_segment(triangle: *mut ExtTriangle, index: i32, a: i32, b: i32) -> i32;
-    fn set_region(
-        triangle: *mut ExtTriangle,
-        index: i32,
-        x: f64,
-        y: f64,
-        attribute: i32,
-        max_area: f64,
-    ) -> i32;
+    fn set_region(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64, attribute: i32, max_area: f64) -> i32;
     fn set_hole(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
     fn run_delaunay(triangle: *mut ExtTriangle, verbose: i32) -> i32;
     fn run_voronoi(triangle: *mut ExtTriangle, verbose: i32) -> i32;
@@ -892,10 +885,7 @@ mod tests {
 
     #[test]
     fn new_captures_some_errors() {
-        assert_eq!(
-            Triangle::new(2, None, None, None).err(),
-            Some("npoint must be ≥ 3")
-        );
+        assert_eq!(Triangle::new(2, None, None, None).err(), Some("npoint must be ≥ 3"));
         assert_eq!(
             Triangle::new(3, Some(2), None, None).err(),
             Some("nsegment must be ≥ 3")
@@ -1057,10 +1047,7 @@ mod tests {
             "Direction(0.0, -1.0)"
         );
         assert_eq!(triangle.voronoi_edge_point_a(1), 0);
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point_b(1)),
-            "Direction(1.0, 1.0)"
-        );
+        assert_eq!(format!("{:?}", triangle.voronoi_edge_point_b(1)), "Direction(1.0, 1.0)");
         assert_eq!(triangle.voronoi_edge_point_a(2), 0);
         assert_eq!(
             format!("{:?}", triangle.voronoi_edge_point_b(2)),
@@ -1128,10 +1115,7 @@ mod tests {
         assert_eq!(triangle.voronoi_point(100, 0), 0.0);
         assert_eq!(triangle.voronoi_point(0, 100), 0.0);
         assert_eq!(triangle.voronoi_edge_point_a(100), 0,);
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point_b(100)),
-            "Index(0)"
-        );
+        assert_eq!(format!("{:?}", triangle.voronoi_edge_point_b(100)), "Index(0)");
         Ok(())
     }
 
@@ -1240,16 +1224,7 @@ mod tests {
         assert_eq!(triangle.triangle_attribute(0), 1);
         assert_eq!(triangle.triangle_attribute(12), 2);
         let mut plot = Plot::new();
-        triangle.draw_triangles(
-            &mut plot,
-            true,
-            true,
-            true,
-            true,
-            Some(12.0),
-            Some(20.0),
-            None,
-        );
+        triangle.draw_triangles(&mut plot, true, true, true, true, Some(12.0), Some(20.0), None);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
