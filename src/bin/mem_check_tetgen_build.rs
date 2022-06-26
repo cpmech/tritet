@@ -1,16 +1,12 @@
-#![allow(unused)]
-
 use std::thread;
-use std::time::Duration;
 use tritet::{StrError, Tetgen};
 
 fn main() {
     println!("Running Mem Check on Tetgen\n");
     let mut handles = Vec::new();
 
-    for i in 0..10 {
+    for i in 0..20 {
         let handle = thread::spawn(move || {
-            // thread::sleep(Duration::from_millis(10 * 250 - i * 250));
             println!("..{}..", i);
             run_all().unwrap();
         });
@@ -21,19 +17,17 @@ fn main() {
         handle.join().unwrap();
     }
 
-    thread::sleep(Duration::from_millis(250));
     println!("\nDone\n");
 }
 
 fn run_all() -> Result<(), StrError> {
-    // println!("run tests on tetgen");
     let _tet = Tetgen::new(4, Some(vec![3, 3, 3, 3]), Some(1), Some(1))?;
-    // new_captures_some_errors();
-    // set_point_captures_some_errors()?;
-    // set_facet_point_captures_some_errors()?;
-    // set_region_captures_some_errors()?;
-    // set_hole_captures_some_errors()?;
-    // generate_methods_capture_some_errors()?;
+    new_captures_some_errors();
+    set_point_captures_some_errors()?;
+    set_facet_point_captures_some_errors()?;
+    set_region_captures_some_errors()?;
+    set_hole_captures_some_errors()?;
+    generate_methods_capture_some_errors()?;
     Ok(())
 }
 
@@ -42,10 +36,10 @@ fn new_captures_some_errors() {
         Tetgen::new(3, None, None, None).err(),
         Some("npoint must be ≥ 4")
     );
-    // assert_eq!(
-    //     Tetgen::new(4, Some(vec![3, 3, 3]), None, None).err(),
-    //     Some("nfacet must be ≥ 4")
-    // );
+    assert_eq!(
+        Tetgen::new(4, Some(vec![3, 3, 3]), None, None).err(),
+        Some("nfacet must be ≥ 4")
+    );
 }
 
 fn set_point_captures_some_errors() -> Result<(), StrError> {
