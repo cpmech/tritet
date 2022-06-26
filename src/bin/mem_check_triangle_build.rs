@@ -1,12 +1,27 @@
+use std::thread;
+use std::time::Duration;
 use tritet::{StrError, Triangle};
 
-fn main() -> Result<(), StrError> {
+fn main() {
     println!("Running Mem Check on Triangle\n");
-    delaunay()?;
-    voronoi()?;
-    mesh()?;
+    let mut handles = Vec::new();
+
+    for i in 0..10 {
+        let handle = thread::spawn(move || {
+            println!("..{}..", i);
+            delaunay().unwrap();
+            voronoi().unwrap();
+            mesh().unwrap();
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    thread::sleep(Duration::from_millis(250));
     println!("Done\n");
-    Ok(())
 }
 
 fn delaunay() -> Result<(), StrError> {

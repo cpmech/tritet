@@ -6,19 +6,21 @@ use tritet::{StrError, Tetgen};
 
 fn main() {
     println!("Running Mem Check on Tetgen\n");
-    let handles: Vec<_> = (0..10)
-        .into_iter()
-        .map(|i| {
-            thread::spawn(move || {
-                // thread::sleep(Duration::from_millis(10 * 250 - i * 250));
-                println!("..{}..", i);
-                run_all().unwrap();
-            })
-        })
-        .collect();
-    handles.into_iter().for_each(|h| {
-        let _ = h.join().unwrap();
-    });
+    let mut handles = Vec::new();
+
+    for i in 0..10 {
+        let handle = thread::spawn(move || {
+            // thread::sleep(Duration::from_millis(10 * 250 - i * 250));
+            println!("..{}..", i);
+            run_all().unwrap();
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
     thread::sleep(Duration::from_millis(250));
     println!("\nDone\n");
 }
