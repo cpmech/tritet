@@ -776,4 +776,28 @@ mod tests {
         }
         Ok(())
     }
+
+    #[test]
+    fn generate_delaunay_works_1() -> Result<(), StrError> {
+        let mut tetgen = Tetgen::new(8, None, None, None)?;
+        tetgen.set_point(0, 0.0, 0.0, 0.0)?;
+        tetgen.set_point(1, 1.0, 0.0, 0.0)?;
+        tetgen.set_point(2, 1.0, 1.0, 0.0)?;
+        tetgen.set_point(3, 0.0, 1.0, 0.0)?;
+        tetgen.set_point(4, 0.0, 0.0, 1.0)?;
+        tetgen.set_point(5, 1.0, 0.0, 1.0)?;
+        tetgen.set_point(6, 1.0, 1.0, 1.0)?;
+        tetgen.set_point(7, 0.0, 1.0, 1.0)?;
+        tetgen.generate_delaunay(false)?;
+        assert_eq!(tetgen.ntet(), 6);
+        assert_eq!(tetgen.npoint(), 8);
+        let mut plot = Plot::new();
+        tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+        if false {
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/tetgen_test_delaunay_1.svg")?;
+        }
+        Ok(())
+    }
 }
