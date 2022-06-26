@@ -11,35 +11,35 @@ extern "C" {
 #include "interface_tetgen.h"
 }
 
-class ExtTetgenClass {
+class TetgenData {
    public:
     tetgenio input;
     tetgenio output;
 };
 
-typedef std::map<int, ExtTetgenClass *> Database_t;
+typedef std::map<int, TetgenData *> AllTetgenData_t;
 
-Database_t DATABASE;
+AllTetgenData_t ALL_TETGEN_DATA;
 
 void drop_tetgen(HANDLE handle) {
     try {
-        if (DATABASE.count(handle) > 0) {
-            ExtTetgenClass *tg = DATABASE[handle];
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            TetgenData *tg = ALL_TETGEN_DATA[handle];
             delete tg;
-            DATABASE.erase(handle);
+            ALL_TETGEN_DATA.erase(handle);
         }
     } catch (...) {
     }
 }
 
 int new_tetgen(HANDLE handle, int npoint, int nfacet, int32_t const *facet_npoint, int nregion, int nhole) {
-    ExtTetgenClass *tg;
+    TetgenData *tg;
     try {
-        tg = new ExtTetgenClass;
+        tg = new TetgenData;
         if (tg == NULL) {
             return TRITET_ERROR_NULL_DATA;
         }
-        DATABASE[handle] = tg;
+        ALL_TETGEN_DATA[handle] = tg;
         tg->input.initialize();
         tg->output.initialize();
     } catch (...) {
@@ -125,10 +125,10 @@ int new_tetgen(HANDLE handle, int npoint, int nfacet, int32_t const *facet_npoin
 }
 
 int tet_set_point(HANDLE handle, int index, double x, double y, double z) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -148,10 +148,10 @@ int tet_set_point(HANDLE handle, int index, double x, double y, double z) {
 }
 
 int tet_set_facet_point(HANDLE handle, int index, int m, int p) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -183,10 +183,10 @@ int tet_set_facet_point(HANDLE handle, int index, int m, int p) {
 }
 
 int tet_set_region(HANDLE handle, int index, double x, double y, double z, int attribute, double max_volume) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -208,10 +208,10 @@ int tet_set_region(HANDLE handle, int index, double x, double y, double z, int a
 }
 
 int tet_set_hole(HANDLE handle, int index, double x, double y, double z) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -231,10 +231,10 @@ int tet_set_hole(HANDLE handle, int index, double x, double y, double z) {
 }
 
 int tet_run_delaunay(HANDLE handle, int verbose) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -265,10 +265,10 @@ int tet_run_delaunay(HANDLE handle, int verbose) {
 }
 
 int tet_run_tetrahedralize(HANDLE handle, int verbose, int o2, double global_max_volume, double global_min_angle) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -325,10 +325,10 @@ int tet_run_tetrahedralize(HANDLE handle, int verbose, int o2, double global_max
 }
 
 int tet_get_npoint(HANDLE handle) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -339,10 +339,10 @@ int tet_get_npoint(HANDLE handle) {
 }
 
 int tet_get_ntetrahedron(HANDLE handle) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -353,10 +353,10 @@ int tet_get_ntetrahedron(HANDLE handle) {
 }
 
 int tet_get_ncorner(HANDLE handle) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -367,10 +367,10 @@ int tet_get_ncorner(HANDLE handle) {
 }
 
 double tet_get_point(HANDLE handle, int index, int dim) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -385,10 +385,10 @@ double tet_get_point(HANDLE handle, int index, int dim) {
 }
 
 int tet_get_tetrahedron_corner(HANDLE handle, int index, int corner) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
@@ -403,10 +403,10 @@ int tet_get_tetrahedron_corner(HANDLE handle, int index, int corner) {
 }
 
 int tet_get_tetgen_attribute(HANDLE handle, int index) {
-    ExtTetgenClass *tg = NULL;
+    TetgenData *tg = NULL;
     try {
-        if (DATABASE.count(handle) > 0) {
-            tg = DATABASE.at(handle);
+        if (ALL_TETGEN_DATA.count(handle) > 0) {
+            tg = ALL_TETGEN_DATA.at(handle);
         }
     } catch (...) {
     }
