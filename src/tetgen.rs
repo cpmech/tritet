@@ -94,6 +94,9 @@ impl Tetgen {
                 return Err("nfacet must be ≥ 4");
             }
             for npoint in facets {
+                if *npoint < 3 {
+                    return Err("facet npoint must be ≥ 3");
+                }
                 total_facet_npoint += npoint;
                 facet_npoint_i32.push(to_i32(*npoint));
             }
@@ -640,6 +643,10 @@ mod tests {
         assert_eq!(
             Tetgen::new(4, Some(vec![]), None, None).err(),
             Some("nfacet must be ≥ 4")
+        );
+        assert_eq!(
+            Tetgen::new(4, Some(vec![3, 3, 3, 2]), None, None).err(),
+            Some("facet npoint must be ≥ 3")
         );
     }
 

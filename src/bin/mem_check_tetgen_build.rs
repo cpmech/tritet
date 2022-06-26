@@ -41,6 +41,10 @@ fn new_captures_some_errors() {
         Tetgen::new(4, Some(vec![3, 3, 3]), None, None).err(),
         Some("nfacet must be ≥ 4")
     );
+    assert_eq!(
+        Tetgen::new(4, Some(vec![3, 3, 3, 2]), None, None).err(),
+        Some("facet npoint must be ≥ 3")
+    );
 }
 
 fn set_point_captures_some_errors() -> Result<(), StrError> {
