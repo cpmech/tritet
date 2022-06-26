@@ -27,13 +27,13 @@ fn main() {
 
 fn run_all() -> Result<(), StrError> {
     // println!("run tests on tetgen");
-    let _tet = Tetgen::new(4, Some(vec![3]), Some(1), Some(1))?;
-    new_captures_some_errors();
-    set_point_captures_some_errors()?;
-    set_facet_point_captures_some_errors()?;
-    set_region_captures_some_errors()?;
-    set_hole_captures_some_errors()?;
-    generate_methods_capture_some_errors()?;
+    let _tet = Tetgen::new(4, Some(vec![3, 3, 3, 3]), Some(1), Some(1))?;
+    // new_captures_some_errors();
+    // set_point_captures_some_errors()?;
+    // set_facet_point_captures_some_errors()?;
+    // set_region_captures_some_errors()?;
+    // set_hole_captures_some_errors()?;
+    // generate_methods_capture_some_errors()?;
     Ok(())
 }
 

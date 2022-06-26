@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <map>
+#include <new>
 
 #include "constants.h"
 #include "tetgen.h"
@@ -11,237 +11,184 @@ extern "C" {
 #include "interface_tetgen.h"
 }
 
-class TetgenData {
-   public:
-    tetgenio input;
-    tetgenio output;
-};
-
-typedef std::map<HANDLE, TetgenData *> AllTetgenData_t;
-
-AllTetgenData_t ALL_TETGEN_DATA;
-
-void drop_tetgen(HANDLE handle) {
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            TetgenData *tg = ALL_TETGEN_DATA[handle];
-            delete tg;
-            ALL_TETGEN_DATA.erase(handle);
-        }
-    } catch (...) {
+void drop_tetgen(struct ExtTetgen *tetgen) {
+    if (tetgen == NULL) {
+        return;
     }
+    delete tetgen;
 }
 
-int32_t new_tetgen(HANDLE handle, int32_t npoint, int32_t nfacet, int32_t const *facet_npoint, int32_t nregion, int32_t nhole) {
-    TetgenData *tg;
+struct ExtTetgen *new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *facet_npoint, int32_t nregion, int32_t nhole) {
+    if (npoint < 4) {
+        return NULL;
+    }
+
+    // tetgen
+    struct ExtTetgen *tetgen = new (std::nothrow) ExtTetgen;
+    if (tetgen == NULL) {
+        return NULL;
+    }
     try {
-        tg = new TetgenData;
-        if (tg == NULL) {
-            return TRITET_ERROR_NULL_DATA;
-        }
-        ALL_TETGEN_DATA[handle] = tg;
-        tg->input.initialize();
-        tg->output.initialize();
+        tetgen->input.initialize();
+        tetgen->output.initialize();
     } catch (...) {
-        return TRITET_ERROR_INITIALIZE_FAILED;
+        drop_tetgen(tetgen);
+        return NULL;
     }
 
     // points
-    try {
-        tg->input.firstnumber = 0;
-        tg->input.numberofpoints = npoint;
-        tg->input.pointlist = new double[npoint * 3];
-        if (tg->input.pointlist == NULL) {
-            return TRITET_ERROR_ALLOC_POINT_LIST_FAILED;
-        }
-    } catch (...) {
-        return TRITET_ERROR_ALLOC_POINT_LIST_FAILED;
+    tetgen->input.firstnumber = 0;
+    tetgen->input.numberofpoints = npoint;
+    tetgen->input.pointlist = new (std::nothrow) double[npoint * 3];
+    if (tetgen->input.pointlist == NULL) {
+        drop_tetgen(tetgen);
+        return NULL;
     }
 
     // facets
     if (nfacet > 0) {
-        try {
-            tg->input.numberoffacets = nfacet;
-            tg->input.facetlist = new tetgenio::facet[nfacet];
-            if (tg->input.facetlist == NULL) {
-                return TRITET_ERROR_ALLOC_FACET_LIST_FAILED;
-            }
-        } catch (...) {
-            return TRITET_ERROR_ALLOC_FACET_LIST_FAILED;
+        tetgen->input.numberoffacets = nfacet;
+        tetgen->input.facetlist = new (std::nothrow) tetgenio::facet[nfacet];
+        if (tetgen->input.facetlist == NULL) {
+            drop_tetgen(tetgen);
+            return NULL;
         }
-        try {
-            const int32_t NUM_POLY = 1;
-            for (int32_t index = 0; index < nfacet; index++) {
-                // facet polygon
-                tetgenio::facet *fac = &tg->input.facetlist[index];
-                fac->polygonlist = new tetgenio::polygon[NUM_POLY];
-                if (fac->polygonlist == NULL) {
-                    return TRITET_ERROR_ALLOC_FACET_DATA_FAILED;
-                }
-                fac->numberofpolygons = NUM_POLY;
-                fac->numberofholes = 0;
-                fac->holelist = NULL;
-                // face polygon vertices
-                size_t nvertex = facet_npoint[index];
-                tetgenio::polygon *gon = &fac->polygonlist[0];
-                gon->vertexlist = new int32_t[nvertex];
-                if (gon->vertexlist == NULL) {
-                    return TRITET_ERROR_ALLOC_FACET_DATA_FAILED;
-                }
-                gon->numberofvertices = nvertex;
+        const int32_t NUM_POLY = 1;
+        for (int32_t index = 0; index < nfacet; index++) {
+            // facet polygon
+            tetgenio::facet *fac = &tetgen->input.facetlist[index];
+            fac->polygonlist = new (std::nothrow) tetgenio::polygon[NUM_POLY];
+            if (fac->polygonlist == NULL) {
+                drop_tetgen(tetgen);
+                return NULL;
             }
-        } catch (...) {
-            return TRITET_ERROR_ALLOC_FACET_DATA_FAILED;
+            fac->numberofpolygons = NUM_POLY;
+            fac->numberofholes = 0;
+            fac->holelist = NULL;
+            // face polygon vertices
+            size_t nvertex = facet_npoint[index];
+            tetgenio::polygon *gon = &fac->polygonlist[0];
+            gon->vertexlist = new (std::nothrow) int32_t[nvertex];
+            if (gon->vertexlist == NULL) {
+                drop_tetgen(tetgen);
+                return NULL;
+            }
+            gon->numberofvertices = nvertex;
         }
     }
 
     // regions
     if (nregion > 0) {
-        try {
-            tg->input.numberofregions = nregion;
-            tg->input.regionlist = new double[nregion * 5];
-            if (tg->input.regionlist == NULL) {
-                return TRITET_ERROR_ALLOC_REGION_LIST_FAILED;
-            }
-        } catch (...) {
-            return TRITET_ERROR_ALLOC_REGION_LIST_FAILED;
+        tetgen->input.numberofregions = nregion;
+        tetgen->input.regionlist = new (std::nothrow) double[nregion * 5];
+        if (tetgen->input.regionlist == NULL) {
+            drop_tetgen(tetgen);
+            return NULL;
         }
     }
 
     // holes
     if (nhole > 0) {
-        try {
-            tg->input.numberofholes = nhole;
-            tg->input.holelist = new double[nhole * 3];
-            if (tg->input.holelist == NULL) {
-                return TRITET_ERROR_ALLOC_HOLE_LIST_FAILED;
-            }
-        } catch (...) {
-            return TRITET_ERROR_ALLOC_HOLE_LIST_FAILED;
+        tetgen->input.numberofholes = nhole;
+        tetgen->input.holelist = new (std::nothrow) double[nhole * 3];
+        if (tetgen->input.holelist == NULL) {
+            drop_tetgen(tetgen);
+            return NULL;
         }
     }
 
-    return TRITET_SUCCESS;
+    return tetgen;
 }
 
-int32_t tet_set_point(HANDLE handle, int32_t index, double x, double y, double z) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_set_point(struct ExtTetgen *tetgen, int32_t index, double x, double y, double z) {
+    if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
-    if (tg->input.pointlist == NULL) {
+    if (tetgen->input.pointlist == NULL) {
         return TRITET_ERROR_NULL_POINT_LIST;
     }
-    if (index >= tg->input.numberofpoints) {
+    if (index >= tetgen->input.numberofpoints) {
         return TRITET_ERROR_INVALID_POINT_INDEX;
     }
-    tg->input.pointlist[index * 3] = x;
-    tg->input.pointlist[index * 3 + 1] = y;
-    tg->input.pointlist[index * 3 + 2] = z;
+    tetgen->input.pointlist[index * 3] = x;
+    tetgen->input.pointlist[index * 3 + 1] = y;
+    tetgen->input.pointlist[index * 3 + 2] = z;
+
     return TRITET_SUCCESS;
 }
 
-int32_t tet_set_facet_point(HANDLE handle, int32_t index, int32_t m, int32_t p) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_set_facet_point(struct ExtTetgen *tetgen, int32_t index, int32_t m, int32_t p) {
+    if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
-    if (tg->input.facetlist == NULL) {
+    if (tetgen->input.facetlist == NULL) {
         return TRITET_ERROR_NULL_FACET_LIST;
     }
-    if (index >= tg->input.numberoffacets) {
+    if (index >= tetgen->input.numberoffacets) {
         return TRITET_ERROR_INVALID_FACET_INDEX;
     }
-    tetgenio::facet *fac = &tg->input.facetlist[index];
+
+    tetgenio::facet *fac = &tetgen->input.facetlist[index];
     if (fac->polygonlist == NULL) {
         return TRITET_ERROR_NULL_FACET_POLYGON_LIST;
     }
     if (fac->numberofpolygons != 1) {
         return TRITET_ERROR_INVALID_FACET_NUM_POLYGON;
     }
+
     tetgenio::polygon *gon = &fac->polygonlist[0];
     if (m >= gon->numberofvertices) {
         return TRITET_ERROR_INVALID_FACET_POINT_INDEX;
     }
-    if (p >= tg->input.numberofpoints) {
+    if (p >= tetgen->input.numberofpoints) {
         return TRITET_ERROR_INVALID_FACET_POINT_ID;
     }
     gon->vertexlist[m] = p;
+
     return TRITET_SUCCESS;
 }
 
-int32_t tet_set_region(HANDLE handle, int32_t index, double x, double y, double z, int32_t attribute, double max_volume) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, double x, double y, double z, int32_t attribute, double max_volume) {
+    if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
-    if (tg->input.regionlist == NULL) {
+    if (tetgen->input.regionlist == NULL) {
         return TRITET_ERROR_NULL_REGION_LIST;
     }
-    if (index >= tg->input.numberofregions) {
+    if (index >= tetgen->input.numberofregions) {
         return TRITET_ERROR_INVALID_REGION_INDEX;
     }
-    tg->input.regionlist[index * 5] = x;
-    tg->input.regionlist[index * 5 + 1] = y;
-    tg->input.regionlist[index * 5 + 2] = z;
-    tg->input.regionlist[index * 5 + 3] = attribute;
-    tg->input.regionlist[index * 5 + 4] = max_volume;
+    tetgen->input.regionlist[index * 5] = x;
+    tetgen->input.regionlist[index * 5 + 1] = y;
+    tetgen->input.regionlist[index * 5 + 2] = z;
+    tetgen->input.regionlist[index * 5 + 3] = attribute;
+    tetgen->input.regionlist[index * 5 + 4] = max_volume;
+
     return TRITET_SUCCESS;
 }
 
-int32_t tet_set_hole(HANDLE handle, int32_t index, double x, double y, double z) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_set_hole(struct ExtTetgen *tetgen, int32_t index, double x, double y, double z) {
+    if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
-    if (tg->input.holelist == NULL) {
+    if (tetgen->input.holelist == NULL) {
         return TRITET_ERROR_NULL_HOLE_LIST;
     }
-    if (index >= tg->input.numberofholes) {
+    if (index >= tetgen->input.numberofholes) {
         return TRITET_ERROR_INVALID_HOLE_INDEX;
     }
-    tg->input.holelist[index * 3] = x;
-    tg->input.holelist[index * 3 + 1] = y;
-    tg->input.holelist[index * 3 + 2] = z;
+    tetgen->input.holelist[index * 3] = x;
+    tetgen->input.holelist[index * 3 + 1] = y;
+    tetgen->input.holelist[index * 3 + 2] = z;
+
     return TRITET_SUCCESS;
 }
 
-int32_t tet_run_delaunay(HANDLE handle, int32_t verbose) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_run_delaunay(struct ExtTetgen *tetgen, int32_t verbose) {
+    if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
-    if (tg->input.pointlist == NULL) {
+    if (tetgen->input.pointlist == NULL) {
         return TRITET_ERROR_NULL_POINT_LIST;
     }
 
@@ -254,7 +201,7 @@ int32_t tet_run_delaunay(HANDLE handle, int32_t verbose) {
         strcat(command, "Q");
     }
     try {
-        tetrahedralize(command, &tg->input, &tg->output, NULL, NULL);
+        tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
     } catch (int32_t status) {
         printf("status = %d\n", status);  // TODO
     } catch (...) {
@@ -264,21 +211,14 @@ int32_t tet_run_delaunay(HANDLE handle, int32_t verbose) {
     return TRITET_SUCCESS;
 }
 
-int32_t tet_run_tetrahedralize(HANDLE handle, int32_t verbose, int32_t o2, double global_max_volume, double global_min_angle) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_t o2, double global_max_volume, double global_min_angle) {
+    if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
-    if (tg->input.pointlist == NULL) {
+    if (tetgen->input.pointlist == NULL) {
         return TRITET_ERROR_NULL_POINT_LIST;
     }
-    if (tg->input.facetlist == NULL) {
+    if (tetgen->input.facetlist == NULL) {
         return TRITET_ERROR_NULL_FACET_LIST;
     }
 
@@ -314,7 +254,7 @@ int32_t tet_run_tetrahedralize(HANDLE handle, int32_t verbose, int32_t o2, doubl
         strcat(command, "q");
     }
     try {
-        tetrahedralize(command, &tg->input, &tg->output, NULL, NULL);
+        tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
     } catch (int32_t status) {
         printf("status = %d\n", status);  // TODO
     } catch (...) {
@@ -324,98 +264,68 @@ int32_t tet_run_tetrahedralize(HANDLE handle, int32_t verbose, int32_t o2, doubl
     return TRITET_SUCCESS;
 }
 
-int32_t tet_get_npoint(HANDLE handle) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_get_npoint(struct ExtTetgen *tetgen) {
+    if (tetgen == NULL) {
         return 0;
     }
-    return tg->output.numberofpoints;
+    return tetgen->output.numberofpoints;
+
+    return 0;
 }
 
-int32_t tet_get_ntetrahedron(HANDLE handle) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_get_ntetrahedron(struct ExtTetgen *tetgen) {
+    if (tetgen == NULL) {
         return 0;
     }
-    return tg->output.numberoftetrahedra;
+    return tetgen->output.numberoftetrahedra;
+
+    return 0;
 }
 
-int32_t tet_get_ncorner(HANDLE handle) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_get_ncorner(struct ExtTetgen *tetgen) {
+    if (tetgen == NULL) {
         return 0;
     }
-    return tg->output.numberofcorners;
+    return tetgen->output.numberofcorners;
+
+    return 0;
 }
 
-double tet_get_point(HANDLE handle, int32_t index, int32_t dim) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+double tet_get_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim) {
+    if (tetgen == NULL) {
         return 0.0;
     }
-    if (index < tg->output.numberofpoints && (dim == 0 || dim == 1 || dim == 2)) {
-        return tg->output.pointlist[index * 3 + dim];
+    if (index < tetgen->output.numberofpoints && (dim == 0 || dim == 1 || dim == 2)) {
+        return tetgen->output.pointlist[index * 3 + dim];
     } else {
         return 0.0;
     }
+
+    return 0.0;
 }
 
-int32_t tet_get_tetrahedron_corner(HANDLE handle, int32_t index, int32_t corner) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_get_tetrahedron_corner(struct ExtTetgen *tetgen, int32_t index, int32_t corner) {
+    if (tetgen == NULL) {
         return 0;
     }
-    if (index < tg->output.numberoftetrahedra && corner < tg->output.numberofcorners) {
-        return tg->output.tetrahedronlist[index * tg->output.numberofcorners + corner];
+    if (index < tetgen->output.numberoftetrahedra && corner < tetgen->output.numberofcorners) {
+        return tetgen->output.tetrahedronlist[index * tetgen->output.numberofcorners + corner];
     } else {
         return 0;
     }
+
+    return 0;
 }
 
-int32_t tet_get_tetgen_attribute(HANDLE handle, int32_t index) {
-    TetgenData *tg = NULL;
-    try {
-        if (ALL_TETGEN_DATA.count(handle) > 0) {
-            tg = ALL_TETGEN_DATA.at(handle);
-        }
-    } catch (...) {
-    }
-    if (tg == NULL) {
+int32_t tet_get_tetgen_attribute(struct ExtTetgen *tetgen, int32_t index) {
+    if (tetgen == NULL) {
         return 0;
     }
-    if (index < tg->output.numberoftetrahedra && tg->output.numberoftetrahedronattributes > 0) {
-        return tg->output.tetrahedronattributelist[index * tg->output.numberoftetrahedronattributes];
+    if (index < tetgen->output.numberoftetrahedra && tetgen->output.numberoftetrahedronattributes > 0) {
+        return tetgen->output.tetrahedronattributelist[index * tetgen->output.numberoftetrahedronattributes];
     } else {
         return 0;
     }
+
+    return 0;
 }

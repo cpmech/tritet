@@ -5,7 +5,6 @@ pub type StrError = &'static str;
 
 mod constants;
 mod conversion;
-mod global;
 mod tetgen;
 mod triangle;
 pub use crate::tetgen::*;
