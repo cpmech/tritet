@@ -6,7 +6,7 @@ fn main() {
     println!("Running Mem Check on Triangle\n");
     let mut handles = Vec::new();
 
-    for i in 0..10 {
+    for i in 0..20 {
         let handle = thread::spawn(move || {
             println!("..{}..", i);
             delaunay().unwrap();
