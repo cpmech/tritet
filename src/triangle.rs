@@ -11,7 +11,6 @@ pub(crate) struct ExtTriangle {
 }
 
 extern "C" {
-    // Triangle
     fn new_triangle(npoint: i32, nsegment: i32, nregion: i32, nhole: i32) -> *mut ExtTriangle;
     fn drop_triangle(triangle: *mut ExtTriangle);
     fn set_point(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
