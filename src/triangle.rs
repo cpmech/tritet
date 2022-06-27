@@ -1,5 +1,5 @@
 use crate::constants;
-use crate::to_i32::to_i32;
+use crate::conversion::to_i32;
 use crate::StrError;
 use plotpy::{Canvas, Curve, Plot, PolyCode, Text};
 use std::collections::HashMap;
@@ -11,19 +11,11 @@ pub(crate) struct ExtTriangle {
 }
 
 extern "C" {
-    // Triangle
     fn new_triangle(npoint: i32, nsegment: i32, nregion: i32, nhole: i32) -> *mut ExtTriangle;
     fn drop_triangle(triangle: *mut ExtTriangle);
     fn set_point(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
     fn set_segment(triangle: *mut ExtTriangle, index: i32, a: i32, b: i32) -> i32;
-    fn set_region(
-        triangle: *mut ExtTriangle,
-        index: i32,
-        x: f64,
-        y: f64,
-        attribute: i32,
-        max_area: f64,
-    ) -> i32;
+    fn set_region(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64, attribute: i32, max_area: f64) -> i32;
     fn set_hole(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
     fn run_delaunay(triangle: *mut ExtTriangle, verbose: i32) -> i32;
     fn run_voronoi(triangle: *mut ExtTriangle, verbose: i32) -> i32;
@@ -57,29 +49,9 @@ pub enum VoronoiEdgePoint {
     Direction(f64, f64),
 }
 
-/// Maps indices used in this library (tritet) to indices used in Triangle
-///
-/// ```text
-/// This library (tritet)      Triangle
-///         NODES               CORNERS
-///           2                    2
-///          / \                  / \
-///         /   \                /   \
-///        5     4              4     3
-///       /       \            /       \
-///      /         \          /         \
-///     0-----3-----1        0-----5-----1
-/// ```
-const TRITET_TO_TRIANGLE: [usize; 6] = [0, 1, 2, 5, 3, 4];
-
-/// Defines a set of "light" colors
-const LIGHT_COLORS: [&'static str; 17] = [
-    "#cbe4f9", "#cdf5f6", "#eff9da", "#f9ebdf", "#f9d8d6", "#d6cdea", "#acddde", "#caf1de",
-    "#e1f8dc", "#fef8dd", "#ffe7c7", "#f7d8ba", "#d0fffe", "#fffddb", "#e4ffde", "#ffd3fd",
-    "#ffe7d3",
-];
-
 /// Implements high-level functions to call Shewchuk's Triangle C-Code
+///
+/// **Note:** All indices are are zero-based.
 ///
 /// # Examples
 ///
@@ -111,7 +83,7 @@ const LIGHT_COLORS: [&'static str; 17] = [
 ///
 ///     // draw triangles
 ///     let mut plot = Plot::new();
-///     triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///     // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
 ///     //     .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
@@ -149,7 +121,7 @@ const LIGHT_COLORS: [&'static str; 17] = [
 ///
 ///     // draw Voronoi diagram
 ///     let mut plot = Plot::new();
-///     triangle.draw_voronoi(&mut plot);
+///     // triangle.draw_voronoi(&mut plot);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
 ///     //     .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
@@ -211,7 +183,7 @@ const LIGHT_COLORS: [&'static str; 17] = [
 ///
 ///     // draw mesh
 ///     let mut plot = Plot::new();
-///     triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///     // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
 ///     //     .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
@@ -251,6 +223,15 @@ pub struct Triangle {
     all_segments_set: bool,         // indicates that all segments have been set
     all_regions_set: bool,          // indicates that all regions have been set
     all_holes_set: bool,            // indicates that all holes have been set
+}
+
+impl Drop for Triangle {
+    /// Tells the c-code to release memory
+    fn drop(&mut self) {
+        unsafe {
+            drop_triangle(self.ext_triangle);
+        }
+    }
 }
 
 impl Triangle {
@@ -350,6 +331,9 @@ impl Triangle {
                 if status == constants::TRITET_ERROR_INVALID_SEGMENT_INDEX {
                     return Err("index of segment is out of bounds");
                 }
+                if status == constants::TRITET_ERROR_INVALID_SEGMENT_POINT_ID {
+                    return Err("id of segment point is out of bounds");
+                }
                 return Err("INTERNAL ERROR: some error occurred");
             }
         }
@@ -366,8 +350,8 @@ impl Triangle {
     /// # Input
     ///
     /// * `index` -- is the index of the region and goes from 0 to `nregion` (passed down to `new`)
-    /// * `x` -- is the x-coordinate of the hole
-    /// * `y` -- is the x-coordinate of the hole
+    /// * `x` -- is the x-coordinate of the region
+    /// * `y` -- is the y-coordinate of the region
     /// * `attribute` -- is the attribute ID to group the triangles belonging to this region
     /// * `max_area` -- is the maximum area constraint for the triangles belonging to this region
     pub fn set_region(
@@ -422,7 +406,7 @@ impl Triangle {
     ///
     /// * `index` -- is the index of the hole and goes from 0 to `nhole` (passed down to `new`)
     /// * `x` -- is the x-coordinate of the hole
-    /// * `y` -- is the x-coordinate of the hole
+    /// * `y` -- is the y-coordinate of the hole
     pub fn set_hole(&mut self, index: usize, x: f64, y: f64) -> Result<&mut Self, StrError> {
         let nhole = match self.nhole {
             Some(n) => n,
@@ -566,17 +550,6 @@ impl Triangle {
     }
 
     /// Returns the number of nodes on a triangle (e.g., 3 or 6)
-    ///
-    /// ```text
-    ///     NODES
-    ///       2
-    ///      / \     The middle nodes are
-    ///     /   \    only generated if the
-    ///    5     4   quadratic flag is true
-    ///   /       \
-    ///  /         \
-    /// 0-----3-----1
-    /// ```
     pub fn nnode(&self) -> usize {
         unsafe { get_ncorner(self.ext_triangle) as usize }
     }
@@ -595,7 +568,7 @@ impl Triangle {
         unsafe { get_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
-    /// Returns the ID of a Triangle's node
+    /// Returns the ID of a triangle's node
     ///
     /// ```text
     ///     NODES
@@ -618,7 +591,7 @@ impl Triangle {
     /// This function will return 0 if either `index` or `m` are out of range.
     pub fn triangle_node(&self, index: usize, m: usize) -> usize {
         unsafe {
-            let corner = TRITET_TO_TRIANGLE[m];
+            let corner = constants::TRITET_TO_TRIANGLE[m];
             get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize
         }
     }
@@ -751,12 +724,13 @@ impl Triangle {
         let mut max = vec![f64::MIN; 2];
         let mut colors: HashMap<usize, &'static str> = HashMap::new();
         let mut index_color = 0;
+        let clr = constants::LIGHT_COLORS;
         for tri in 0..n_triangle {
             let attribute = self.triangle_attribute(tri);
             let color = match colors.get(&attribute) {
                 Some(c) => c,
                 None => {
-                    let c = LIGHT_COLORS[index_color % LIGHT_COLORS.len()];
+                    let c = clr[index_color % clr.len()];
                     colors.insert(attribute, c);
                     index_color += 1;
                     c
@@ -893,15 +867,6 @@ impl Triangle {
     }
 }
 
-impl Drop for Triangle {
-    /// Tells the c-code to release memory
-    fn drop(&mut self) {
-        unsafe {
-            drop_triangle(self.ext_triangle);
-        }
-    }
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #[cfg(test)]
@@ -920,10 +885,7 @@ mod tests {
 
     #[test]
     fn new_captures_some_errors() {
-        assert_eq!(
-            Triangle::new(2, None, None, None).err(),
-            Some("npoint must be ≥ 3")
-        );
+        assert_eq!(Triangle::new(2, None, None, None).err(), Some("npoint must be ≥ 3"));
         assert_eq!(
             Triangle::new(3, Some(2), None, None).err(),
             Some("nsegment must be ≥ 3")
@@ -966,6 +928,10 @@ mod tests {
         assert_eq!(
             triangle.set_segment(4, 0, 1).err(),
             Some("index of segment is out of bounds")
+        );
+        assert_eq!(
+            triangle.set_segment(0, 0, 4).err(),
+            Some("id of segment point is out of bounds")
         );
         Ok(())
     }
@@ -1081,10 +1047,7 @@ mod tests {
             "Direction(0.0, -1.0)"
         );
         assert_eq!(triangle.voronoi_edge_point_a(1), 0);
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point_b(1)),
-            "Direction(1.0, 1.0)"
-        );
+        assert_eq!(format!("{:?}", triangle.voronoi_edge_point_b(1)), "Direction(1.0, 1.0)");
         assert_eq!(triangle.voronoi_edge_point_a(2), 0);
         assert_eq!(
             format!("{:?}", triangle.voronoi_edge_point_b(2)),
@@ -1152,10 +1115,7 @@ mod tests {
         assert_eq!(triangle.voronoi_point(100, 0), 0.0);
         assert_eq!(triangle.voronoi_point(0, 100), 0.0);
         assert_eq!(triangle.voronoi_edge_point_a(100), 0,);
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point_b(100)),
-            "Index(0)"
-        );
+        assert_eq!(format!("{:?}", triangle.voronoi_edge_point_b(100)), "Index(0)");
         Ok(())
     }
 
@@ -1264,16 +1224,7 @@ mod tests {
         assert_eq!(triangle.triangle_attribute(0), 1);
         assert_eq!(triangle.triangle_attribute(12), 2);
         let mut plot = Plot::new();
-        triangle.draw_triangles(
-            &mut plot,
-            true,
-            true,
-            true,
-            true,
-            Some(12.0),
-            Some(20.0),
-            None,
-        );
+        triangle.draw_triangles(&mut plot, true, true, true, true, Some(12.0), Some(20.0), None);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)

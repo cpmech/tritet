@@ -1,20 +1,15 @@
 #ifndef INTERFACE_TRIANGLE_H
 #define INTERFACE_TRIANGLE_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <inttypes.h>
 
 #define REAL double
 #define ANSI_DECLARATORS
-#define VOID int
+#define VOID int32_t
 #include "triangle.h"
 #undef REAL
 #undef ANSI_DECLARATORS
 #undef VOID
-
-#include "constants.h"
-#include "tricall_report.h"
 
 struct ExtTriangle {
     struct triangulateio input;
@@ -22,428 +17,44 @@ struct ExtTriangle {
     struct triangulateio voronoi;
 };
 
-void zero_triangle_data(struct triangulateio *data) {
-    if (data == NULL) {
-        return;
-    }
+struct ExtTriangle *new_triangle(int32_t npoint, int32_t nsegment, int32_t nregion, int32_t nhole);
 
-    // points
-    data->pointlist = NULL;
-    data->pointattributelist = NULL;
-    data->pointmarkerlist = NULL;
-    data->numberofpoints = 0;
-    data->numberofpointattributes = 0;
+void drop_triangle(struct ExtTriangle *triangle);
 
-    // triangles
-    data->trianglelist = NULL;
-    data->triangleattributelist = NULL;
-    data->trianglearealist = NULL;
-    data->neighborlist = NULL;
-    data->numberoftriangles = 0;
-    data->numberofcorners = 0;
-    data->numberoftriangleattributes = 0;
+int32_t set_point(struct ExtTriangle *triangle, int32_t index, double x, double y);
 
-    // segments
-    data->segmentlist = NULL;
-    data->segmentmarkerlist = NULL;
-    data->numberofsegments = 0;
+int32_t set_segment(struct ExtTriangle *triangle, int32_t index, int32_t a, int32_t b);
 
-    // holes
-    data->holelist = NULL;
-    data->numberofholes = 0;
+int32_t set_region(struct ExtTriangle *triangle, int32_t index, double x, double y, int32_t attribute, double max_area);
 
-    // regions
-    data->regionlist = NULL;
-    data->numberofregions = 0;
+int32_t set_hole(struct ExtTriangle *triangle, int32_t index, double x, double y);
 
-    // edges
-    data->edgelist = NULL;
-    data->edgemarkerlist = NULL;
-    data->normlist = NULL;
-    data->numberofedges = 0;
-}
+int32_t run_delaunay(struct ExtTriangle *triangle, int32_t verbose);
 
-void free_triangle_data(struct triangulateio *data) {
-    if (data == NULL) {
-        return;
-    }
+int32_t run_voronoi(struct ExtTriangle *triangle, int32_t verbose);
 
-    // Points
-    if (data->pointlist != NULL) {
-        free(data->pointlist);
-    }
-    if (data->pointattributelist != NULL) {
-        free(data->pointattributelist);
-    }
-    if (data->pointmarkerlist != NULL) {
-        free(data->pointmarkerlist);
-    }
+int32_t run_triangulate(struct ExtTriangle *triangle, int32_t verbose, int32_t quadratic, double global_max_area, double global_min_angle);
 
-    // Triangles
-    if (data->trianglelist != NULL) {
-        free(data->trianglelist);
-    }
-    if (data->triangleattributelist != NULL) {
-        free(data->triangleattributelist);
-    }
-    if (data->trianglearealist != NULL) {
-        free(data->trianglearealist);
-    }
-    if (data->neighborlist != NULL) {
-        free(data->neighborlist);
-    }
+int32_t get_npoint(struct ExtTriangle *triangle);
 
-    // Segments
-    if (data->segmentlist != NULL) {
-        free(data->segmentlist);
-    }
-    if (data->segmentmarkerlist != NULL) {
-        free(data->segmentmarkerlist);
-    }
+int32_t get_ntriangle(struct ExtTriangle *triangle);
 
-    // Holes
-    if (data->holelist != NULL) {
-        free(data->holelist);
-    }
+int32_t get_ncorner(struct ExtTriangle *triangle);
 
-    // Regions
-    if (data->regionlist != NULL) {
-        free(data->regionlist);
-    }
+double get_point(struct ExtTriangle *triangle, int32_t index, int32_t dim);
 
-    // Edges
-    if (data->edgelist != NULL) {
-        free(data->edgelist);
-    }
-    if (data->edgemarkerlist != NULL) {
-        free(data->edgemarkerlist);
-    }
-    if (data->normlist != NULL) {
-        free(data->normlist);
-    }
+int32_t get_triangle_corner(struct ExtTriangle *triangle, int32_t index, int32_t corner);
 
-    zero_triangle_data(data);
-}
+int32_t get_triangle_attribute(struct ExtTriangle *triangle, int32_t index);
 
-struct ExtTriangle *new_triangle(int npoint, int nsegment, int nregion, int nhole) {
-    if (npoint < 3) {
-        return NULL;
-    }
+int32_t get_voronoi_npoint(struct ExtTriangle *triangle);
 
-    // triangle
-    struct ExtTriangle *triangle = (struct ExtTriangle *)malloc(sizeof(struct ExtTriangle));
-    if (triangle == NULL) {
-        return NULL;
-    }
-    zero_triangle_data(&triangle->input);
-    zero_triangle_data(&triangle->output);
-    zero_triangle_data(&triangle->voronoi);
+int32_t get_voronoi_point(struct ExtTriangle *triangle, int32_t index, int32_t dim);
 
-    // points
-    triangle->input.pointlist = (double *)malloc(npoint * 2 * sizeof(double));
-    if (triangle->input.pointlist == NULL) {
-        free(triangle);
-        return NULL;
-    }
-    triangle->input.numberofpoints = npoint;
+int32_t get_voronoi_nedge(struct ExtTriangle *triangle);
 
-    // segments
-    if (nsegment > 0) {
-        triangle->input.segmentlist = (int *)malloc(nsegment * 2 * sizeof(int));
-        if (triangle->input.segmentlist == NULL) {
-            free_triangle_data(&triangle->input);
-            free(triangle);
-            return NULL;
-        }
-        triangle->input.numberofsegments = nsegment;
-    }
+int32_t get_voronoi_edge_point(struct ExtTriangle *triangle, int32_t index, int32_t side);
 
-    // regions
-    if (nregion > 0) {
-        triangle->input.regionlist = (double *)malloc(nregion * 4 * sizeof(double));
-        if (triangle->input.regionlist == NULL) {
-            free_triangle_data(&triangle->input);
-            free(triangle);
-            return NULL;
-        }
-        triangle->input.numberofregions = nregion;
-    }
-
-    // holes
-    if (nhole > 0) {
-        triangle->input.holelist = (double *)malloc(nhole * 2 * sizeof(double));
-        if (triangle->input.holelist == NULL) {
-            free_triangle_data(&triangle->input);
-            free(triangle);
-            return NULL;
-        }
-        triangle->input.numberofholes = nhole;
-    }
-
-    return triangle;
-}
-
-void drop_triangle(struct ExtTriangle *triangle) {
-    if (triangle == NULL) {
-        return;
-    }
-    free_triangle_data(&triangle->input);
-    free_triangle_data(&triangle->output);
-    free_triangle_data(&triangle->voronoi);
-    free(triangle);
-}
-
-int set_point(struct ExtTriangle *triangle, int index, double x, double y) {
-    if (triangle == NULL) {
-        return TRITET_ERROR_NULL_DATA;
-    }
-    if (triangle->input.pointlist == NULL) {
-        return TRITET_ERROR_NULL_POINT_LIST;
-    }
-    if (index >= triangle->input.numberofpoints) {
-        return TRITET_ERROR_INVALID_POINT_INDEX;
-    }
-    triangle->input.pointlist[index * 2] = x;
-    triangle->input.pointlist[index * 2 + 1] = y;
-    return TRITET_SUCCESS;
-}
-
-int set_segment(struct ExtTriangle *triangle, int index, int a, int b) {
-    if (triangle == NULL) {
-        return TRITET_ERROR_NULL_DATA;
-    }
-    if (triangle->input.segmentlist == NULL) {
-        return TRITET_ERROR_NULL_SEGMENT_LIST;
-    }
-    if (index >= triangle->input.numberofsegments) {
-        return TRITET_ERROR_INVALID_SEGMENT_INDEX;
-    }
-    triangle->input.segmentlist[index * 2] = a;
-    triangle->input.segmentlist[index * 2 + 1] = b;
-    return TRITET_SUCCESS;
-}
-
-int set_region(struct ExtTriangle *triangle, int index, double x, double y, int attribute, double max_area) {
-    // Shewchuk: If you are using the -A and -a switches simultaneously and wish to assign an attribute
-    // to some region without imposing an area constraint, use a negative maximum area.
-    if (triangle == NULL) {
-        return TRITET_ERROR_NULL_DATA;
-    }
-    if (triangle->input.regionlist == NULL) {
-        return TRITET_ERROR_NULL_REGION_LIST;
-    }
-    if (index >= triangle->input.numberofregions) {
-        return TRITET_ERROR_INVALID_REGION_INDEX;
-    }
-    triangle->input.regionlist[index * 4] = x;
-    triangle->input.regionlist[index * 4 + 1] = y;
-    triangle->input.regionlist[index * 4 + 2] = attribute;
-    triangle->input.regionlist[index * 4 + 3] = max_area;
-    return TRITET_SUCCESS;
-}
-
-int set_hole(struct ExtTriangle *triangle, int index, double x, double y) {
-    if (triangle == NULL) {
-        return TRITET_ERROR_NULL_DATA;
-    }
-    if (triangle->input.holelist == NULL) {
-        return TRITET_ERROR_NULL_HOLE_LIST;
-    }
-    if (index >= triangle->input.numberofholes) {
-        return TRITET_ERROR_INVALID_HOLE_INDEX;
-    }
-    triangle->input.holelist[index * 2] = x;
-    triangle->input.holelist[index * 2 + 1] = y;
-    return TRITET_SUCCESS;
-}
-
-int run_delaunay(struct ExtTriangle *triangle, int verbose) {
-    if (triangle == NULL) {
-        return TRITET_ERROR_NULL_DATA;
-    }
-    if (triangle->input.pointlist == NULL) {
-        return TRITET_ERROR_NULL_POINT_LIST;
-    }
-
-    // Triangulate the points
-    // Switches:
-    // * `z` -- number everything from zero (z)
-    char command[10];
-    strcpy(command, "z");
-    if (verbose == TRITET_FALSE) {
-        strcat(command, "Q");
-    }
-    triangulate(command, &triangle->input, &triangle->output, NULL);
-
-    // After triangulate (with -p switch), output.regionlist gets the content of input.regionlist and
-    // output.holelist gets the content of input.holelist. Thus, these output variables must be set
-    // to NULL in order to tell free_data to ignore them and avoid a double-free memory issue.
-    triangle->output.regionlist = NULL;
-    triangle->output.holelist = NULL;
-
-    if (verbose == TRITET_TRUE) {
-        report(&triangle->output, 1, 1, 0, 0, 0, 0);
-    }
-    return TRITET_SUCCESS;
-}
-
-int run_voronoi(struct ExtTriangle *triangle, int verbose) {
-    if (triangle == NULL) {
-        return TRITET_ERROR_NULL_DATA;
-    }
-    if (triangle->input.pointlist == NULL) {
-        return TRITET_ERROR_NULL_POINT_LIST;
-    }
-
-    // Triangulate the points
-    // Switches:
-    // * `z` -- number everything from zero (z)
-    // * `v` -- Voronoi diagram
-    char command[10];
-    strcpy(command, "zv");
-    if (verbose == TRITET_FALSE) {
-        strcat(command, "Q");
-    }
-    triangulate(command, &triangle->input, &triangle->output, &triangle->voronoi);
-
-    // After triangulate (with -p switch), output.regionlist gets the content of input.regionlist and
-    // output.holelist gets the content of input.holelist. Thus, these output variables must be set
-    // to NULL in order to tell free_data to ignore them and avoid a double-free memory issue.
-    triangle->output.regionlist = NULL;
-    triangle->output.holelist = NULL;
-
-    if (verbose == TRITET_TRUE) {
-        report(&triangle->voronoi, 0, 0, 0, 0, 1, 1);
-    }
-    return TRITET_SUCCESS;
-}
-
-int run_triangulate(struct ExtTriangle *triangle, int verbose, int quadratic, double global_max_area, double global_min_angle) {
-    if (triangle == NULL) {
-        return TRITET_ERROR_NULL_DATA;
-    }
-    if (triangle->input.pointlist == NULL) {
-        return TRITET_ERROR_NULL_POINT_LIST;
-    }
-    if (triangle->input.segmentlist == NULL) {
-        return TRITET_ERROR_NULL_SEGMENT_LIST;
-    }
-
-    // Generate mesh
-    // Switches:
-    // * `p` -- write a PSLG (p)
-    // * `z` -- number everything from zero (z)
-    // * `A` -- assign a regional attribute to each element (A)
-    char command[128];
-    strcpy(command, "pzA");
-    if (verbose == TRITET_FALSE) {
-        strcat(command, "Q");
-    }
-    if (quadratic == TRITET_TRUE) {
-        strcat(command, "o2");
-    }
-    if (global_max_area > 0.0) {
-        char buf[32];
-        int n = snprintf(buf, 32, "a%.15f", global_max_area);
-        if (n >= 32) {
-            return TRITET_ERROR_STRING_CONCAT;
-        }
-        strcat(command, buf);
-    }
-    if (global_min_angle > 0.0) {
-        char buf[32];
-        int n = snprintf(buf, 32, "q%.15f", global_min_angle);
-        if (n >= 32) {
-            return TRITET_ERROR_STRING_CONCAT;
-        }
-        strcat(command, buf);
-    } else {
-        strcat(command, "q");
-    }
-    triangulate(command, &triangle->input, &triangle->output, NULL);
-
-    // After triangulate (with -p switch), output.regionlist gets the content of input.regionlist and
-    // output.holelist gets the content of input.holelist. Thus, these output variables must be set
-    // to NULL in order to tell free_data to ignore them and avoid a double-free memory issue.
-    triangle->output.regionlist = NULL;
-    triangle->output.holelist = NULL;
-
-    if (verbose == TRITET_TRUE) {
-        report(&triangle->output, 1, 1, 0, 0, 0, 0);
-    }
-    return TRITET_SUCCESS;
-}
-
-int get_npoint(struct ExtTriangle *triangle) {
-    return triangle->output.numberofpoints;
-}
-
-int get_ntriangle(struct ExtTriangle *triangle) {
-    return triangle->output.numberoftriangles;
-}
-
-int get_ncorner(struct ExtTriangle *triangle) {
-    return triangle->output.numberofcorners;
-}
-
-double get_point(struct ExtTriangle *triangle, int index, int dim) {
-    if (index < triangle->output.numberofpoints && (dim == 0 || dim == 1)) {
-        return triangle->output.pointlist[index * 2 + dim];
-    } else {
-        return 0.0;
-    }
-}
-
-int get_triangle_corner(struct ExtTriangle *triangle, int index, int corner) {
-    if (index < triangle->output.numberoftriangles && corner < triangle->output.numberofcorners) {
-        return triangle->output.trianglelist[index * triangle->output.numberofcorners + corner];
-    } else {
-        return 0;
-    }
-}
-
-int get_triangle_attribute(struct ExtTriangle *triangle, int index) {
-    if (index < triangle->output.numberoftriangles && triangle->output.numberoftriangleattributes > 0) {
-        return triangle->output.triangleattributelist[index * triangle->output.numberoftriangleattributes];
-    } else {
-        return 0;
-    }
-}
-
-int get_voronoi_npoint(struct ExtTriangle *triangle) {
-    return triangle->voronoi.numberofpoints;
-}
-
-int get_voronoi_point(struct ExtTriangle *triangle, int index, int dim) {
-    if (index < triangle->voronoi.numberofpoints && (dim == 0 || dim == 1)) {
-        return triangle->voronoi.pointlist[index * 2 + dim];
-    } else {
-        return 0.0;
-    }
-}
-
-int get_voronoi_nedge(struct ExtTriangle *triangle) {
-    return triangle->voronoi.numberofedges;
-}
-
-int get_voronoi_edge_point(struct ExtTriangle *triangle, int index, int side) {
-    if (index < triangle->voronoi.numberofedges && (side == 0 || side == 1)) {
-        return triangle->voronoi.edgelist[index * 2 + side];
-    } else {
-        return 0;
-    }
-}
-
-double get_voronoi_edge_point_b_direction(struct ExtTriangle *triangle, int index, int dim) {
-    if (index < triangle->voronoi.numberofedges && (dim == 0 || dim == 1)) {
-        if (triangle->voronoi.edgelist[index * 2 + 1] == -1) {
-            return triangle->voronoi.normlist[index * 2 + dim];
-        } else {
-            return 0.0;
-        }
-    } else {
-        return 0.0;
-    }
-}
+double get_voronoi_edge_point_b_direction(struct ExtTriangle *triangle, int32_t index, int32_t dim);
 
 #endif  // INTERFACE_TRIANGLE_H
