@@ -44,6 +44,98 @@ extern "C" {
 /// Implements high-level functions to call Si's Tetgen Cpp-Code
 ///
 /// **Note:** All indices are are zero-based.
+///
+/// # Examples
+///
+/// ## Delaunay triangulation
+///
+/// ```
+/// use plotpy::Plot;
+/// use tritet::{StrError, Tetgen};
+///
+/// fn main() -> Result<(), StrError> {
+///     // allocate data for 4 points
+///     let mut tetgen = Tetgen::new(5, None, None, None)?;
+///
+///     // set points
+///     tetgen
+///         .set_point(0, 0.0, 1.0, 0.0)?
+///         .set_point(1, 0.0, 0.0, 0.0)?
+///         .set_point(2, 1.0, 1.0, 0.0)?
+///         .set_point(3, 0.0, 1.0, 1.0)?
+///         .set_point(4, 1.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0)?;
+///
+///     // generate Delaunay triangulation
+///     tetgen.generate_delaunay(false)?;
+///     assert_eq!(tetgen.ntet(), 3);
+///     assert_eq!(tetgen.npoint(), 5);
+///
+///     // draw edges of tetrahedra
+///     let mut plot = Plot::new();
+///     // tetgen.draw_wireframe(&mut plot, true, true, true, false, None, None, None);
+///     // plot.set_equal_axes(true)
+///     //    .set_figure_size_points(600.0, 600.0)
+///     //    .save("/tmp/tritet/doc_tetgen_delaunay_1.svg")?;
+///     Ok(())
+/// }
+/// ```
+///
+/// ![doc_tetgen_delaunay_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_tetgen_delaunay_1.svg)
+///
+/// ## Mesh generation
+///
+/// ```
+/// use plotpy::Plot;
+/// use tritet::{StrError, Tetgen};
+///
+/// fn main() -> Result<(), StrError> {
+///     // allocate data for 4 points
+///     let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), Some(1), None)?;
+///
+///     // set points
+///     tetgen
+///         .set_point(0, 0.0, 1.0, 0.0)?
+///         .set_point(1, 0.0, 0.0, 0.0)?
+///         .set_point(2, 1.0, 1.0, 0.0)?
+///         .set_point(3, 0.0, 1.0, 1.0)?;
+///
+///     // set facets
+///     tetgen
+///         .set_facet_point(0, 0, 0)?
+///         .set_facet_point(0, 1, 2)?
+///         .set_facet_point(0, 2, 1)?;
+///     tetgen
+///         .set_facet_point(1, 0, 0)?
+///         .set_facet_point(1, 1, 1)?
+///         .set_facet_point(1, 2, 3)?;
+///     tetgen
+///         .set_facet_point(2, 0, 0)?
+///         .set_facet_point(2, 1, 3)?
+///         .set_facet_point(2, 2, 2)?;
+///     tetgen
+///         .set_facet_point(3, 0, 1)?
+///         .set_facet_point(3, 1, 2)?
+///         .set_facet_point(3, 2, 3)?;
+///
+///     // set region
+///     tetgen.set_region(0, 0.1, 0.9, 0.1, 1, None)?;
+///
+///     // generate mesh
+///     tetgen.generate_mesh(false, false, Some(0.01), None)?;
+///     assert_eq!(tetgen.ntet(), 12);
+///     assert_eq!(tetgen.npoint(), 11);
+///
+///     // draw edges of tetrahedra
+///     let mut plot = Plot::new();
+///     // tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+///     // plot.set_equal_axes(true)
+///     //     .set_figure_size_points(600.0, 600.0)
+///     //     .save("/tmp/tritet/doc_tetgen_mesh_1.svg")?;
+///     Ok(())
+/// }
+/// ```
+///
+/// ![doc_tetgen_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_tetgen_mesh_1.svg)
 pub struct Tetgen {
     ext_tetgen: *mut ExtTetgen,       // data allocate by the c-code
     npoint: usize,                    // number of points
