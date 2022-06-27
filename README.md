@@ -3,18 +3,21 @@
 This project presents a Rust code to generate triangle and tetrahedron meshes by calling
 [Triangle](https://www.cs.cmu.edu/~quake/triangle.html) and
 [Tetgen (1.4)](http://tetgen.org/).
-However, the code here does not create a one-to-one interface to these great libraries.
-Also, this create tries to keep it as simple as possible.
 
-One important aspect of this crate is that all the data structures accessed by the C-code
-are allocated on the "C-side", by (carefully) using "malloc." 😅
-Therefore, there are no "pointers" going forth and back from Rust to C.
+A critical aspect of this crate is that all the data structures accessed by the C-code
+are allocated on the "C-side" by (carefully) using "malloc/new." 😅
 We then make use of [Valgrind](https://valgrind.org/) and tests to make sure that all is (hopefully) well.
 
-The resulting Rust interface to Triangle and Tetgen is a lightweight and low-level set of functions
-that can be used by other more "high-level" projects.
+The code should work fine in multithreaded applications (not exhaustively verified, though!).
+See, for example, the comprehensive tests in 
+[mem_check_triangle_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_triangle_build.rs)
+and
+[mem_check_tetgen_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_tetgen_build.rs)
 
-This crate is used by [Gemlab: Geometry, meshes, and numerical integration for finite element analyses](https://github.com/cpmech/gemlab).
+The resulting Rust interface to Triangle and Tetgen is a lightweight, low-level set of functions.
+However, other projects could use this interface to make higher-level functions.
+
+For example, this crate is used by [Gemlab: Geometry, meshes, and numerical integration for finite element analyses](https://github.com/cpmech/gemlab).
 
 ## Installation
 
@@ -33,7 +36,7 @@ tritet = "0.1"
 
 ## Examples
 
-### Delaunay triangulation
+### 2D Delaunay triangulation
 
 ```rust
 use plotpy::Plot;
@@ -61,7 +64,7 @@ fn main() -> Result<(), StrError> {
 
     // draw triangles
     let mut plot = Plot::new();
-    triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+    // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
     // plot.set_equal_axes(true)
     //     .set_figure_size_points(600.0, 600.0)
     //     .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
@@ -71,7 +74,7 @@ fn main() -> Result<(), StrError> {
 
 ![doc_triangle_delaunay_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_delaunay_1.svg)
 
-### Voronoi tessellation
+### 2D Voronoi tessellation
 
 ```rust
 use plotpy::Plot;
@@ -99,7 +102,7 @@ fn main() -> Result<(), StrError> {
 
     // draw Voronoi diagram
     let mut plot = Plot::new();
-    triangle.draw_voronoi(&mut plot);
+    // triangle.draw_voronoi(&mut plot);
     // plot.set_equal_axes(true)
     //     .set_figure_size_points(600.0, 600.0)
     //     .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
@@ -109,7 +112,7 @@ fn main() -> Result<(), StrError> {
 
 ![doc_triangle_voronoi_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_voronoi_1.svg)
 
-### Mesh generation
+### 2D mesh generation
 
 ```rust
 use plotpy::Plot;
@@ -161,7 +164,7 @@ fn main() -> Result<(), StrError> {
 
     // draw mesh
     let mut plot = Plot::new();
-    triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+    // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
     // plot.set_equal_axes(true)
     //     .set_figure_size_points(600.0, 600.0)
     //     .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
@@ -170,3 +173,166 @@ fn main() -> Result<(), StrError> {
 ```
 
 ![doc_triangle_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_mesh_1.svg)
+
+## 3D Delaunay triangulation
+
+```rust
+use plotpy::Plot;
+use tritet::{StrError, Tetgen};
+
+fn main() -> Result<(), StrError> {
+    // allocate data for 8 points
+    let mut tetgen = Tetgen::new(8, None, None, None)?;
+
+    // set points
+    tetgen
+        .set_point(0, 0.0, 0.0, 0.0)?
+        .set_point(1, 1.0, 0.0, 0.0)?
+        .set_point(2, 1.0, 1.0, 0.0)?
+        .set_point(3, 0.0, 1.0, 0.0)?
+        .set_point(4, 0.0, 0.0, 1.0)?
+        .set_point(5, 1.0, 0.0, 1.0)?
+        .set_point(6, 1.0, 1.0, 1.0)?
+        .set_point(7, 0.0, 1.0, 1.0)?;
+
+    // generate Delaunay triangulation
+    tetgen.generate_delaunay(false)?;
+
+    // draw edges of tetrahedra
+    let mut plot = Plot::new();
+    // tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+    // plot.set_equal_axes(true)
+    //     .set_figure_size_points(600.0, 600.0)
+    //     .save("/tmp/tritet/example_tetgen_delaunay_1.svg")?;
+    Ok(())
+}
+```
+
+![example_tetgen_delaunay_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_delaunay_1.svg)
+
+## 3D mesh generation
+
+```rust
+use plotpy::Plot;
+use tritet::{write_tet_vtu, StrError, Tetgen};
+
+fn main() -> Result<(), StrError> {
+    // allocate data for 16 points and 12 facets
+    // (one cube/hole inside another cube)
+    let mut tetgen = Tetgen::new(
+        16,
+        Some(vec![
+            4, 4, 4, 4, 4, 4, // inner cube
+            4, 4, 4, 4, 4, 4, // outer cube
+        ]),
+        Some(1),
+        Some(1),
+    )?;
+
+    // inner cube
+    tetgen
+        .set_point(0, 0.0, 0.0, 0.0)?
+        .set_point(1, 1.0, 0.0, 0.0)?
+        .set_point(2, 1.0, 1.0, 0.0)?
+        .set_point(3, 0.0, 1.0, 0.0)?
+        .set_point(4, 0.0, 0.0, 1.0)?
+        .set_point(5, 1.0, 0.0, 1.0)?
+        .set_point(6, 1.0, 1.0, 1.0)?
+        .set_point(7, 0.0, 1.0, 1.0)?;
+
+    // outer cube
+    tetgen
+        .set_point(8, -1.0, -1.0, -1.0)?
+        .set_point(9, 2.0, -1.0, -1.0)?
+        .set_point(10, 2.0, 2.0, -1.0)?
+        .set_point(11, -1.0, 2.0, -1.0)?
+        .set_point(12, -1.0, -1.0, 2.0)?
+        .set_point(13, 2.0, -1.0, 2.0)?
+        .set_point(14, 2.0, 2.0, 2.0)?
+        .set_point(15, -1.0, 2.0, 2.0)?;
+
+    // inner cube
+    tetgen
+        .set_facet_point(0, 0, 0)?
+        .set_facet_point(0, 1, 4)?
+        .set_facet_point(0, 2, 7)?
+        .set_facet_point(0, 3, 3)?;
+    tetgen
+        .set_facet_point(1, 0, 1)?
+        .set_facet_point(1, 1, 2)?
+        .set_facet_point(1, 2, 6)?
+        .set_facet_point(1, 3, 5)?;
+    tetgen
+        .set_facet_point(2, 0, 0)?
+        .set_facet_point(2, 1, 1)?
+        .set_facet_point(2, 2, 5)?
+        .set_facet_point(2, 3, 4)?;
+    tetgen
+        .set_facet_point(3, 0, 2)?
+        .set_facet_point(3, 1, 3)?
+        .set_facet_point(3, 2, 7)?
+        .set_facet_point(3, 3, 6)?;
+    tetgen
+        .set_facet_point(4, 0, 0)?
+        .set_facet_point(4, 1, 3)?
+        .set_facet_point(4, 2, 2)?
+        .set_facet_point(4, 3, 1)?;
+    tetgen
+        .set_facet_point(5, 0, 4)?
+        .set_facet_point(5, 1, 5)?
+        .set_facet_point(5, 2, 6)?
+        .set_facet_point(5, 3, 7)?;
+
+    // outer cube
+    tetgen
+        .set_facet_point(6, 0, 8 + 0)?
+        .set_facet_point(6, 1, 8 + 4)?
+        .set_facet_point(6, 2, 8 + 7)?
+        .set_facet_point(6, 3, 8 + 3)?;
+    tetgen
+        .set_facet_point(7, 0, 8 + 1)?
+        .set_facet_point(7, 1, 8 + 2)?
+        .set_facet_point(7, 2, 8 + 6)?
+        .set_facet_point(7, 3, 8 + 5)?;
+    tetgen
+        .set_facet_point(8, 0, 8 + 0)?
+        .set_facet_point(8, 1, 8 + 1)?
+        .set_facet_point(8, 2, 8 + 5)?
+        .set_facet_point(8, 3, 8 + 4)?;
+    tetgen
+        .set_facet_point(9, 0, 8 + 2)?
+        .set_facet_point(9, 1, 8 + 3)?
+        .set_facet_point(9, 2, 8 + 7)?
+        .set_facet_point(9, 3, 8 + 6)?;
+    tetgen
+        .set_facet_point(10, 0, 8 + 0)?
+        .set_facet_point(10, 1, 8 + 3)?
+        .set_facet_point(10, 2, 8 + 2)?
+        .set_facet_point(10, 3, 8 + 1)?;
+    tetgen
+        .set_facet_point(11, 0, 8 + 4)?
+        .set_facet_point(11, 1, 8 + 5)?
+        .set_facet_point(11, 2, 8 + 6)?
+        .set_facet_point(11, 3, 8 + 7)?;
+
+    // set region and hole
+    tetgen.set_region(0, -0.9, -0.9, -0.9, 1, None)?;
+    tetgen.set_hole(0, 0.5, 0.5, 0.5)?;
+
+    // generate mesh
+    tetgen.generate_mesh(false, false, None, None)?;
+
+    // generate file for Paraview
+    // write_tet_vtu(&tetgen, "/tmp/tritet/example_tetgen_mesh_1.vtu")?;
+
+    // draw edges of tetrahedra
+    let mut plot = Plot::new();
+    // tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+    // plot.set_equal_axes(true)
+    //     .set_figure_size_points(600.0, 600.0)
+    //     .save("/tmp/tritet/example_tetgen_mesh_1.svg")?;
+    Ok(())
+}
+```
+
+![example_tetgen_mesh_1.png](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_mesh_1.png)

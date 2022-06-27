@@ -83,7 +83,7 @@ pub enum VoronoiEdgePoint {
 ///
 ///     // draw triangles
 ///     let mut plot = Plot::new();
-///     triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///     // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
 ///     //     .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
@@ -121,7 +121,7 @@ pub enum VoronoiEdgePoint {
 ///
 ///     // draw Voronoi diagram
 ///     let mut plot = Plot::new();
-///     triangle.draw_voronoi(&mut plot);
+///     // triangle.draw_voronoi(&mut plot);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
 ///     //     .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
@@ -183,7 +183,7 @@ pub enum VoronoiEdgePoint {
 ///
 ///     // draw mesh
 ///     let mut plot = Plot::new();
-///     triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///     // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
 ///     //     .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
