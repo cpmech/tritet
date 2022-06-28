@@ -1,6 +1,6 @@
 # Triangle and tetrahedron mesh generators
 
-[![codecov](https://codecov.io/gh/cpmech/tritet/branch/main/graph/badge.svg?token=12345678)](https://codecov.io/gh/cpmech/tritet)
+[![codecov](https://codecov.io/gh/cpmech/tritet/branch/main/graph/badge.svg?token=2ALVRVWJ5W)](https://codecov.io/gh/cpmech/tritet)
 
 This project presents a Rust code to generate triangle and tetrahedron meshes by calling
 [Triangle](https://www.cs.cmu.edu/~quake/triangle.html) and
