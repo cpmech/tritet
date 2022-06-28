@@ -1,5 +1,7 @@
 # Triangle and tetrahedron mesh generators
 
+[![codecov](https://codecov.io/gh/cpmech/tritet/branch/main/graph/badge.svg?token=12345678)](https://codecov.io/gh/cpmech/tritet)
+
 This project presents a Rust code to generate triangle and tetrahedron meshes by calling
 [Triangle](https://www.cs.cmu.edu/~quake/triangle.html) and
 [Tetgen (1.4)](http://tetgen.org/).
@@ -18,6 +20,10 @@ The resulting Rust interface to Triangle and Tetgen is a lightweight, low-level 
 However, other projects could use this interface to make higher-level functions.
 
 For example, this crate is used by [Gemlab: Geometry, meshes, and numerical integration for finite element analyses](https://github.com/cpmech/gemlab).
+
+## Documentation
+
+[Tritet documentation on docs.rs](https://docs.rs/tritet)
 
 ## Installation
 
