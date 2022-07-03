@@ -44,11 +44,15 @@ tritet = "*"
 
 ## Examples
 
+Note: set `SAVE_FIGURE` to true to generate the figures.
+
 ### 2D Delaunay triangulation
 
 ```rust
 use plotpy::Plot;
 use tritet::{StrError, Triangle};
+
+const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 10 points
@@ -71,11 +75,13 @@ fn main() -> Result<(), StrError> {
     triangle.generate_delaunay(false)?;
 
     // draw triangles
-    let mut plot = Plot::new();
-    // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
-    // plot.set_equal_axes(true)
-    //     .set_figure_size_points(600.0, 600.0)
-    //     .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
+    if SAVE_FIGURE {
+        let mut plot = Plot::new();
+        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        plot.set_equal_axes(true)
+            .set_figure_size_points(600.0, 600.0)
+            .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
+    }
     Ok(())
 }
 ```
@@ -84,9 +90,12 @@ fn main() -> Result<(), StrError> {
 
 ### 2D Voronoi tessellation
 
+
 ```rust
 use plotpy::Plot;
 use tritet::{StrError, Triangle};
+
+const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 10 points
@@ -109,11 +118,13 @@ fn main() -> Result<(), StrError> {
     triangle.generate_voronoi(false)?;
 
     // draw Voronoi diagram
-    let mut plot = Plot::new();
-    // triangle.draw_voronoi(&mut plot);
-    // plot.set_equal_axes(true)
-    //     .set_figure_size_points(600.0, 600.0)
-    //     .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
+    if SAVE_FIGURE {
+        let mut plot = Plot::new();
+        triangle.draw_voronoi(&mut plot);
+        plot.set_equal_axes(true)
+            .set_figure_size_points(600.0, 600.0)
+            .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
+    }
     Ok(())
 }
 ```
@@ -125,6 +136,8 @@ fn main() -> Result<(), StrError> {
 ```rust
 use plotpy::Plot;
 use tritet::{StrError, Triangle};
+
+const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 12 points, 10 segments, 2 regions, and 1 hole
@@ -171,11 +184,13 @@ fn main() -> Result<(), StrError> {
     assert_eq!(triangle.ntriangle(), 14);
 
     // draw mesh
-    let mut plot = Plot::new();
-    // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
-    // plot.set_equal_axes(true)
-    //     .set_figure_size_points(600.0, 600.0)
-    //     .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
+    if SAVE_FIGURE {
+        let mut plot = Plot::new();
+        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        plot.set_equal_axes(true)
+            .set_figure_size_points(600.0, 600.0)
+            .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
+    }
     Ok(())
 }
 ```
@@ -187,6 +202,8 @@ fn main() -> Result<(), StrError> {
 ```rust
 use plotpy::Plot;
 use tritet::{StrError, Tetgen};
+
+const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 8 points
@@ -207,11 +224,13 @@ fn main() -> Result<(), StrError> {
     tetgen.generate_delaunay(false)?;
 
     // draw edges of tetrahedra
-    let mut plot = Plot::new();
-    // tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
-    // plot.set_equal_axes(true)
-    //     .set_figure_size_points(600.0, 600.0)
-    //     .save("/tmp/tritet/example_tetgen_delaunay_1.svg")?;
+    if SAVE_FIGURE {
+        let mut plot = Plot::new();
+        tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+        plot.set_equal_axes(true)
+            .set_figure_size_points(600.0, 600.0)
+            .save("/tmp/tritet/example_tetgen_delaunay_1.svg")?;
+    }
     Ok(())
 }
 ```
@@ -220,9 +239,14 @@ fn main() -> Result<(), StrError> {
 
 ## 3D mesh generation
 
+Note: set `SAVE_VTU_FILE` to true to generate Paraview file.
+
 ```rust
 use plotpy::Plot;
 use tritet::{write_tet_vtu, StrError, Tetgen};
+
+const SAVE_VTU_FILE: bool = false;
+const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 16 points and 12 facets
@@ -331,14 +355,18 @@ fn main() -> Result<(), StrError> {
     tetgen.generate_mesh(false, false, None, None)?;
 
     // generate file for Paraview
-    // write_tet_vtu(&tetgen, "/tmp/tritet/example_tetgen_mesh_1.vtu")?;
+    if SAVE_VTU_FILE {
+        write_tet_vtu(&tetgen, "/tmp/tritet/example_tetgen_mesh_1.vtu")?;
+    }
 
     // draw edges of tetrahedra
-    let mut plot = Plot::new();
-    // tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
-    // plot.set_equal_axes(true)
-    //     .set_figure_size_points(600.0, 600.0)
-    //     .save("/tmp/tritet/example_tetgen_mesh_1.svg")?;
+    if SAVE_FIGURE {
+        let mut plot = Plot::new();
+        tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+        plot.set_equal_axes(true)
+            .set_figure_size_points(600.0, 600.0)
+            .save("/tmp/tritet/example_tetgen_mesh_1.svg")?;
+    }
     Ok(())
 }
 ```
