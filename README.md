@@ -34,7 +34,9 @@ Install some libraries:
 sudo apt install build-essential
 ```
 
-<div style="text-align:center">Check the crate version ([![Crates.io](https://img.shields.io/crates/v/tritet.svg)](https://crates.io/crates/tritet)) and update your Cargo.toml accordingly:</div>
+[![Crates.io](https://img.shields.io/crates/v/tritet.svg)](https://crates.io/crates/tritet)
+
+Check the crate version 👆 and update your Cargo.toml accordingly:
 
 ```toml
 [dependencies]
