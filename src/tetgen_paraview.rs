@@ -8,7 +8,7 @@ use std::io::Write as IoWrite;
 use std::path::Path;
 
 impl Tetgen {
-    /// Writes tetrahedra as a Paraview's VTU file
+    /// Writes a VTU file to visualize the mesh with Paraview
     ///
     /// # Input
     ///
