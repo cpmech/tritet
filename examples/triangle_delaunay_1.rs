@@ -1,12 +1,12 @@
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 fn main() -> Result<(), StrError> {
     // allocate data for 5 points
-    let mut triangle = Triangle::new(15, None, None, None)?;
+    let mut trigen = Trigen::new(15, None, None, None)?;
 
     // set points
-    triangle
+    trigen
         .set_point(0, 0.0, 0.0)?
         .set_point(1, -0.416, 0.909)?
         .set_point(2, -1.35, 0.436)?
@@ -24,11 +24,11 @@ fn main() -> Result<(), StrError> {
         .set_point(14, 1.36, 3.49)?;
 
     // generate Delaunay triangulation
-    triangle.generate_delaunay(true)?;
+    trigen.generate_delaunay(true)?;
 
     // draw triangles
     let mut plot = Plot::new();
-    triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+    trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
     plot.set_equal_axes(true)
         .set_figure_size_points(600.0, 600.0)
         .save("/tmp/tritet/example_triangle_delaunay_1.svg")?;

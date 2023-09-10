@@ -50,16 +50,16 @@ Note: set `SAVE_FIGURE` to true to generate the figures.
 
 ```rust
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 10 points
-    let mut triangle = Triangle::new(10, None, None, None)?;
+    let mut trigen = Trigen::new(10, None, None, None)?;
 
     // set points
-    triangle
+    trigen
         .set_point(0, 0.478554, 0.00869692)?
         .set_point(1, 0.13928, 0.180603)?
         .set_point(2, 0.578587, 0.760349)?
@@ -72,12 +72,12 @@ fn main() -> Result<(), StrError> {
         .set_point(9, 0.540745, 0.331184)?;
 
     // generate Delaunay triangulation
-    triangle.generate_delaunay(false)?;
+    trigen.generate_delaunay(false)?;
 
     // draw triangles
     if SAVE_FIGURE {
         let mut plot = Plot::new();
-        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         plot.set_equal_axes(true)
             .set_figure_size_points(600.0, 600.0)
             .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
@@ -90,19 +90,18 @@ fn main() -> Result<(), StrError> {
 
 ### 2D Voronoi tessellation
 
-
 ```rust
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 10 points
-    let mut triangle = Triangle::new(10, None, None, None)?;
+    let mut trigen = Trigen::new(10, None, None, None)?;
 
     // set points
-    triangle
+    trigen
         .set_point(0, 0.478554, 0.00869692)?
         .set_point(1, 0.13928, 0.180603)?
         .set_point(2, 0.578587, 0.760349)?
@@ -115,12 +114,12 @@ fn main() -> Result<(), StrError> {
         .set_point(9, 0.540745, 0.331184)?;
 
     // generate Voronoi tessellation
-    triangle.generate_voronoi(false)?;
+    trigen.generate_voronoi(false)?;
 
     // draw Voronoi diagram
     if SAVE_FIGURE {
         let mut plot = Plot::new();
-        triangle.draw_voronoi(&mut plot);
+        trigen.draw_voronoi(&mut plot);
         plot.set_equal_axes(true)
             .set_figure_size_points(600.0, 600.0)
             .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
@@ -135,16 +134,16 @@ fn main() -> Result<(), StrError> {
 
 ```rust
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 12 points, 10 segments, 2 regions, and 1 hole
-    let mut triangle = Triangle::new(12, Some(10), Some(2), Some(1))?;
+    let mut trigen = Trigen::new(12, Some(10), Some(2), Some(1))?;
 
     // set points
-    triangle
+    trigen
         .set_point(0, 0.0, 0.0)?
         .set_point(1, 1.0, 0.0)?
         .set_point(2, 1.0, 1.0)?
@@ -159,7 +158,7 @@ fn main() -> Result<(), StrError> {
         .set_point(11, 1.0, 0.5)?;
 
     // set segments
-    triangle
+    trigen
         .set_segment(0, 0, 1)?
         .set_segment(1, 1, 2)?
         .set_segment(2, 2, 3)?
@@ -172,21 +171,21 @@ fn main() -> Result<(), StrError> {
         .set_segment(9, 10, 11)?;
 
     // set regions
-    triangle
+    trigen
         .set_region(0, 0.1, 0.1, 1, None)?
         .set_region(1, 0.1, 0.9, 2, None)?;
 
     // set holes
-    triangle.set_hole(0, 0.5, 0.5)?;
+    trigen.set_hole(0, 0.5, 0.5)?;
 
     // generate o2 mesh without constraints
-    triangle.generate_mesh(false, true, None, None)?;
-    assert_eq!(triangle.ntriangle(), 14);
+    trigen.generate_mesh(false, true, None, None)?;
+    assert_eq!(trigen.ntriangle(), 14);
 
     // draw mesh
     if SAVE_FIGURE {
         let mut plot = Plot::new();
-        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         plot.set_equal_axes(true)
             .set_figure_size_points(600.0, 600.0)
             .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
@@ -372,3 +371,9 @@ fn main() -> Result<(), StrError> {
 ```
 
 ![example_tetgen_mesh_1.png](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_mesh_1.png)
+
+## Dev Tools
+
+```bash
+cargo install cargo-valgrind
+```

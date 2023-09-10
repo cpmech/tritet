@@ -5,38 +5,38 @@ use plotpy::{Canvas, Curve, Plot, PolyCode, Text};
 use std::collections::HashMap;
 
 #[repr(C)]
-pub(crate) struct ExtTriangle {
+pub(crate) struct ExtTrigen {
     data: [u8; 0],
     marker: core::marker::PhantomData<(*mut u8, core::marker::PhantomPinned)>,
 }
 
 extern "C" {
-    fn new_triangle(npoint: i32, nsegment: i32, nregion: i32, nhole: i32) -> *mut ExtTriangle;
-    fn drop_triangle(triangle: *mut ExtTriangle);
-    fn set_point(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
-    fn set_segment(triangle: *mut ExtTriangle, index: i32, a: i32, b: i32) -> i32;
-    fn set_region(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64, attribute: i32, max_area: f64) -> i32;
-    fn set_hole(triangle: *mut ExtTriangle, index: i32, x: f64, y: f64) -> i32;
-    fn run_delaunay(triangle: *mut ExtTriangle, verbose: i32) -> i32;
-    fn run_voronoi(triangle: *mut ExtTriangle, verbose: i32) -> i32;
+    fn new_trigen(npoint: i32, nsegment: i32, nregion: i32, nhole: i32) -> *mut ExtTrigen;
+    fn drop_trigen(trigen: *mut ExtTrigen);
+    fn set_point(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
+    fn set_segment(trigen: *mut ExtTrigen, index: i32, a: i32, b: i32) -> i32;
+    fn set_region(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64, attribute: i32, max_area: f64) -> i32;
+    fn set_hole(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
+    fn run_delaunay(trigen: *mut ExtTrigen, verbose: i32) -> i32;
+    fn run_voronoi(trigen: *mut ExtTrigen, verbose: i32) -> i32;
     fn run_triangulate(
-        triangle: *mut ExtTriangle,
+        trigen: *mut ExtTrigen,
         verbose: i32,
         quadratic: i32,
         global_max_area: f64,
         global_min_angle: f64,
     ) -> i32;
-    fn get_npoint(triangle: *mut ExtTriangle) -> i32;
-    fn get_ntriangle(triangle: *mut ExtTriangle) -> i32;
-    fn get_ncorner(triangle: *mut ExtTriangle) -> i32;
-    fn get_point(triangle: *mut ExtTriangle, index: i32, dim: i32) -> f64;
-    fn get_triangle_corner(triangle: *mut ExtTriangle, index: i32, corner: i32) -> i32;
-    fn get_triangle_attribute(triangle: *mut ExtTriangle, index: i32) -> i32;
-    fn get_voronoi_npoint(triangle: *mut ExtTriangle) -> i32;
-    fn get_voronoi_point(triangle: *mut ExtTriangle, index: i32, dim: i32) -> f64;
-    fn get_voronoi_nedge(triangle: *mut ExtTriangle) -> i32;
-    fn get_voronoi_edge_point(triangle: *mut ExtTriangle, index: i32, side: i32) -> i32;
-    fn get_voronoi_edge_point_b_direction(triangle: *mut ExtTriangle, index: i32, dim: i32) -> f64;
+    fn get_npoint(trigen: *mut ExtTrigen) -> i32;
+    fn get_ntriangle(trigen: *mut ExtTrigen) -> i32;
+    fn get_ncorner(trigen: *mut ExtTrigen) -> i32;
+    fn get_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn get_triangle_corner(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
+    fn get_triangle_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
+    fn get_voronoi_npoint(trigen: *mut ExtTrigen) -> i32;
+    fn get_voronoi_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn get_voronoi_nedge(trigen: *mut ExtTrigen) -> i32;
+    fn get_voronoi_edge_point(trigen: *mut ExtTrigen, index: i32, side: i32) -> i32;
+    fn get_voronoi_edge_point_b_direction(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
 }
 
 /// Holds the index of an endpoint on a Voronoi edge or the direction of the Voronoi edge
@@ -59,14 +59,14 @@ pub enum VoronoiEdgePoint {
 ///
 /// ```
 /// use plotpy::Plot;
-/// use tritet::{StrError, Triangle};
+/// use tritet::{StrError, Trigen};
 ///
 /// fn main() -> Result<(), StrError> {
 ///     // allocate data for 10 points
-///     let mut triangle = Triangle::new(10, None, None, None)?;
+///     let mut trigen = Trigen::new(10, None, None, None)?;
 ///
 ///     // set points
-///     triangle
+///     trigen
 ///         .set_point(0, 0.478554, 0.00869692)?
 ///         .set_point(1, 0.13928, 0.180603)?
 ///         .set_point(2, 0.578587, 0.760349)?
@@ -79,11 +79,11 @@ pub enum VoronoiEdgePoint {
 ///         .set_point(9, 0.540745, 0.331184)?;
 ///
 ///     // generate Delaunay triangulation
-///     triangle.generate_delaunay(false)?;
+///     trigen.generate_delaunay(false)?;
 ///
 ///     // draw triangles
 ///     let mut plot = Plot::new();
-///     // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///     // trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
 ///     //     .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
@@ -97,14 +97,14 @@ pub enum VoronoiEdgePoint {
 ///
 /// ```
 /// use plotpy::Plot;
-/// use tritet::{StrError, Triangle};
+/// use tritet::{StrError, Trigen};
 ///
 /// fn main() -> Result<(), StrError> {
 ///     // allocate data for 10 points
-///     let mut triangle = Triangle::new(10, None, None, None)?;
+///     let mut trigen = Trigen::new(10, None, None, None)?;
 ///
 ///     // set points
-///     triangle
+///     trigen
 ///         .set_point(0, 0.478554, 0.00869692)?
 ///         .set_point(1, 0.13928, 0.180603)?
 ///         .set_point(2, 0.578587, 0.760349)?
@@ -117,11 +117,11 @@ pub enum VoronoiEdgePoint {
 ///         .set_point(9, 0.540745, 0.331184)?;
 ///
 ///     // generate Voronoi tessellation
-///     triangle.generate_voronoi(false)?;
+///     trigen.generate_voronoi(false)?;
 ///
 ///     // draw Voronoi diagram
 ///     let mut plot = Plot::new();
-///     // triangle.draw_voronoi(&mut plot);
+///     // trigen.draw_voronoi(&mut plot);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
 ///     //     .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
@@ -135,14 +135,14 @@ pub enum VoronoiEdgePoint {
 ///
 /// ```
 /// use plotpy::Plot;
-/// use tritet::{StrError, Triangle};
+/// use tritet::{StrError, Trigen};
 ///
 /// fn main() -> Result<(), StrError> {
 ///     // allocate data for 12 points, 10 segments, 2 regions, and 1 hole
-///     let mut triangle = Triangle::new(12, Some(10), Some(2), Some(1))?;
+///     let mut trigen = Trigen::new(12, Some(10), Some(2), Some(1))?;
 ///
 ///     // set points
-///     triangle
+///     trigen
 ///         .set_point(0, 0.0, 0.0)?
 ///         .set_point(1, 1.0, 0.0)?
 ///         .set_point(2, 1.0, 1.0)?
@@ -157,7 +157,7 @@ pub enum VoronoiEdgePoint {
 ///         .set_point(11, 1.0, 0.5)?;
 ///
 ///     // set segments
-///     triangle
+///     trigen
 ///         .set_segment(0, 0, 1)?
 ///         .set_segment(1, 1, 2)?
 ///         .set_segment(2, 2, 3)?
@@ -170,20 +170,20 @@ pub enum VoronoiEdgePoint {
 ///         .set_segment(9, 10, 11)?;
 ///
 ///     // set regions
-///     triangle
+///     trigen
 ///         .set_region(0, 0.1, 0.1, 1, None)?
 ///         .set_region(1, 0.1, 0.9, 2, None)?;
 ///
 ///     // set holes
-///     triangle.set_hole(0, 0.5, 0.5)?;
+///     trigen.set_hole(0, 0.5, 0.5)?;
 ///
 ///     // generate o2 mesh without constraints
-///     triangle.generate_mesh(false, true, None, None)?;
-///     assert_eq!(triangle.ntriangle(), 14);
+///     trigen.generate_mesh(false, true, None, None)?;
+///     assert_eq!(trigen.ntriangle(), 14);
 ///
 ///     // draw mesh
 ///     let mut plot = Plot::new();
-///     // triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///     // trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
 ///     // plot.set_equal_axes(true)
 ///     //     .set_figure_size_points(600.0, 600.0)
 ///     //     .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
@@ -213,28 +213,28 @@ pub enum VoronoiEdgePoint {
 ///
 /// * **Jonathan Richard Shewchuk**, Triangle: Engineering a 2D Quality Mesh Generator and Delaunay Triangulator, in Applied Computational Geometry: Towards Geometric Engineering (Ming C. Lin and Dinesh Manocha, editors), volume 1148 of Lecture Notes in Computer Science, pages 203-222, Springer-Verlag, Berlin, May 1996.
 /// * **Jonathan Richard Shewchuk**, Delaunay Refinement Algorithms for Triangular Mesh Generation, Computational Geometry: Theory and Applications 22(1-3):21-74, May 2002.
-pub struct Triangle {
-    ext_triangle: *mut ExtTriangle, // data allocated by the c-code
-    npoint: usize,                  // number of points
-    nsegment: Option<usize>,        // number of segments
-    nregion: Option<usize>,         // number of regions
-    nhole: Option<usize>,           // number of holes
-    all_points_set: bool,           // indicates that all points have been set
-    all_segments_set: bool,         // indicates that all segments have been set
-    all_regions_set: bool,          // indicates that all regions have been set
-    all_holes_set: bool,            // indicates that all holes have been set
+pub struct Trigen {
+    ext_triangle: *mut ExtTrigen, // data allocated by the c-code
+    npoint: usize,                // number of points
+    nsegment: Option<usize>,      // number of segments
+    nregion: Option<usize>,       // number of regions
+    nhole: Option<usize>,         // number of holes
+    all_points_set: bool,         // indicates that all points have been set
+    all_segments_set: bool,       // indicates that all segments have been set
+    all_regions_set: bool,        // indicates that all regions have been set
+    all_holes_set: bool,          // indicates that all holes have been set
 }
 
-impl Drop for Triangle {
+impl Drop for Trigen {
     /// Tells the c-code to release memory
     fn drop(&mut self) {
         unsafe {
-            drop_triangle(self.ext_triangle);
+            drop_trigen(self.ext_triangle);
         }
     }
 }
 
-impl Triangle {
+impl Trigen {
     /// Allocates a new instance
     pub fn new(
         npoint: usize,
@@ -264,11 +264,11 @@ impl Triangle {
             None => 0,
         };
         unsafe {
-            let ext_triangle = new_triangle(npoint_i32, nsegment_i32, nregion_i32, nhole_i32);
+            let ext_triangle = new_trigen(npoint_i32, nsegment_i32, nregion_i32, nhole_i32);
             if ext_triangle.is_null() {
                 return Err("INTERNAL ERROR: cannot allocate ExtTriangle");
             }
-            Ok(Triangle {
+            Ok(Trigen {
                 ext_triangle,
                 npoint,
                 nsegment,
@@ -871,7 +871,7 @@ impl Triangle {
 
 #[cfg(test)]
 mod tests {
-    use super::Triangle;
+    use super::Trigen;
     use crate::{StrError, VoronoiEdgePoint};
     use plotpy::Plot;
 
@@ -885,33 +885,30 @@ mod tests {
 
     #[test]
     fn new_captures_some_errors() {
-        assert_eq!(Triangle::new(2, None, None, None).err(), Some("npoint must be ≥ 3"));
-        assert_eq!(
-            Triangle::new(3, Some(2), None, None).err(),
-            Some("nsegment must be ≥ 3")
-        );
+        assert_eq!(Trigen::new(2, None, None, None).err(), Some("npoint must be ≥ 3"));
+        assert_eq!(Trigen::new(3, Some(2), None, None).err(), Some("nsegment must be ≥ 3"));
     }
 
     #[test]
     fn new_works() -> Result<(), StrError> {
-        let triangle = Triangle::new(3, Some(3), None, None)?;
-        assert_eq!(triangle.ext_triangle.is_null(), false);
-        assert_eq!(triangle.npoint, 3);
-        assert_eq!(triangle.nsegment, Some(3));
-        assert_eq!(triangle.nregion, None);
-        assert_eq!(triangle.nhole, None);
-        assert_eq!(triangle.all_points_set, false);
-        assert_eq!(triangle.all_segments_set, false);
-        assert_eq!(triangle.all_regions_set, false);
-        assert_eq!(triangle.all_holes_set, false);
+        let trigen = Trigen::new(3, Some(3), None, None)?;
+        assert_eq!(trigen.ext_triangle.is_null(), false);
+        assert_eq!(trigen.npoint, 3);
+        assert_eq!(trigen.nsegment, Some(3));
+        assert_eq!(trigen.nregion, None);
+        assert_eq!(trigen.nhole, None);
+        assert_eq!(trigen.all_points_set, false);
+        assert_eq!(trigen.all_segments_set, false);
+        assert_eq!(trigen.all_regions_set, false);
+        assert_eq!(trigen.all_holes_set, false);
         Ok(())
     }
 
     #[test]
     fn set_point_captures_some_errors() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, None, None, None)?;
+        let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
-            triangle.set_point(4, 0.0, 0.0).err(),
+            trigen.set_point(4, 0.0, 0.0).err(),
             Some("index of point is out of bounds")
         );
         Ok(())
@@ -919,18 +916,18 @@ mod tests {
 
     #[test]
     fn set_segment_captures_some_errors() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, None, None, None)?;
+        let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
-            triangle.set_segment(0, 0, 1).err(),
+            trigen.set_segment(0, 0, 1).err(),
             Some("cannot set segment because the number of segments is None")
         );
-        let mut triangle = Triangle::new(3, Some(3), None, None)?;
+        let mut trigen = Trigen::new(3, Some(3), None, None)?;
         assert_eq!(
-            triangle.set_segment(4, 0, 1).err(),
+            trigen.set_segment(4, 0, 1).err(),
             Some("index of segment is out of bounds")
         );
         assert_eq!(
-            triangle.set_segment(0, 0, 4).err(),
+            trigen.set_segment(0, 0, 4).err(),
             Some("id of segment point is out of bounds")
         );
         Ok(())
@@ -938,14 +935,14 @@ mod tests {
 
     #[test]
     fn set_region_captures_some_errors() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, None, None, None)?;
+        let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
-            triangle.set_region(0, 0.33, 0.33, 1, Some(0.1)).err(),
+            trigen.set_region(0, 0.33, 0.33, 1, Some(0.1)).err(),
             Some("cannot set region because the number of regions is None")
         );
-        let mut triangle = Triangle::new(3, Some(3), Some(1), None)?;
+        let mut trigen = Trigen::new(3, Some(3), Some(1), None)?;
         assert_eq!(
-            triangle.set_region(1, 0.33, 0.33, 1, Some(0.1)).err(),
+            trigen.set_region(1, 0.33, 0.33, 1, Some(0.1)).err(),
             Some("index of region is out of bounds")
         );
         Ok(())
@@ -953,14 +950,14 @@ mod tests {
 
     #[test]
     fn set_hole_captures_some_errors() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, None, None, None)?;
+        let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
-            triangle.set_hole(0, 0.33, 0.33).err(),
+            trigen.set_hole(0, 0.33, 0.33).err(),
             Some("cannot set hole because the number of holes is None")
         );
-        let mut triangle = Triangle::new(3, Some(3), Some(1), Some(1))?;
+        let mut trigen = Trigen::new(3, Some(3), Some(1), Some(1))?;
         assert_eq!(
-            triangle.set_hole(1, 0.33, 0.33).err(),
+            trigen.set_hole(1, 0.33, 0.33).err(),
             Some("index of hole is out of bounds")
         );
         Ok(())
@@ -968,25 +965,25 @@ mod tests {
 
     #[test]
     fn generate_methods_capture_some_errors() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, Some(3), None, None)?;
+        let mut trigen = Trigen::new(3, Some(3), None, None)?;
         assert_eq!(
-            triangle.generate_delaunay(false).err(),
+            trigen.generate_delaunay(false).err(),
             Some("cannot generate Delaunay triangulation because not all points are set")
         );
         assert_eq!(
-            triangle.generate_voronoi(false).err(),
+            trigen.generate_voronoi(false).err(),
             Some("cannot generate Voronoi tessellation because not all points are set")
         );
         assert_eq!(
-            triangle.generate_mesh(false, false, None, None).err(),
+            trigen.generate_mesh(false, false, None, None).err(),
             Some("cannot generate mesh of triangles because not all points are set")
         );
-        triangle
+        trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
         assert_eq!(
-            triangle.generate_mesh(false, false, None, None).err(),
+            trigen.generate_mesh(false, false, None, None).err(),
             Some("cannot generate mesh of triangles because not all segments are set")
         );
         Ok(())
@@ -994,145 +991,139 @@ mod tests {
 
     #[test]
     fn delaunay_1_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, None, None, None)?;
-        triangle
+        let mut trigen = Trigen::new(3, None, None, None)?;
+        trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
-        triangle.generate_delaunay(false)?;
-        assert_eq!(triangle.npoint(), 3);
-        assert_eq!(triangle.ntriangle(), 1);
-        assert_eq!(triangle.nnode(), 3);
-        assert_eq!(triangle.point(0, 0), 0.0);
-        assert_eq!(triangle.point(0, 1), 0.0);
-        assert_eq!(triangle.point(1, 0), 1.0);
-        assert_eq!(triangle.point(1, 1), 0.0);
-        assert_eq!(triangle.point(2, 0), 0.0);
-        assert_eq!(triangle.point(2, 1), 1.0);
-        assert_eq!(triangle.triangle_node(0, 0), 0);
-        assert_eq!(triangle.triangle_node(0, 1), 1);
-        assert_eq!(triangle.triangle_node(0, 2), 2);
-        assert_eq!(triangle.voronoi_npoint(), 0);
-        assert_eq!(triangle.voronoi_nedge(), 0);
+        trigen.generate_delaunay(false)?;
+        assert_eq!(trigen.npoint(), 3);
+        assert_eq!(trigen.ntriangle(), 1);
+        assert_eq!(trigen.nnode(), 3);
+        assert_eq!(trigen.point(0, 0), 0.0);
+        assert_eq!(trigen.point(0, 1), 0.0);
+        assert_eq!(trigen.point(1, 0), 1.0);
+        assert_eq!(trigen.point(1, 1), 0.0);
+        assert_eq!(trigen.point(2, 0), 0.0);
+        assert_eq!(trigen.point(2, 1), 1.0);
+        assert_eq!(trigen.triangle_node(0, 0), 0);
+        assert_eq!(trigen.triangle_node(0, 1), 1);
+        assert_eq!(trigen.triangle_node(0, 2), 2);
+        assert_eq!(trigen.voronoi_npoint(), 0);
+        assert_eq!(trigen.voronoi_nedge(), 0);
         Ok(())
     }
 
     #[test]
     fn voronoi_1_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, None, None, None)?;
-        triangle
+        let mut trigen = Trigen::new(3, None, None, None)?;
+        trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
-        triangle.generate_voronoi(false)?;
-        assert_eq!(triangle.npoint(), 3);
-        assert_eq!(triangle.ntriangle(), 1);
-        assert_eq!(triangle.nnode(), 3);
-        assert_eq!(triangle.point(0, 0), 0.0);
-        assert_eq!(triangle.point(0, 1), 0.0);
-        assert_eq!(triangle.point(1, 0), 1.0);
-        assert_eq!(triangle.point(1, 1), 0.0);
-        assert_eq!(triangle.point(2, 0), 0.0);
-        assert_eq!(triangle.point(2, 1), 1.0);
-        assert_eq!(triangle.triangle_node(0, 0), 0);
-        assert_eq!(triangle.triangle_node(0, 1), 1);
-        assert_eq!(triangle.triangle_node(0, 2), 2);
-        assert_eq!(triangle.voronoi_npoint(), 1);
-        assert_eq!(triangle.voronoi_point(0, 0), 0.5);
-        assert_eq!(triangle.voronoi_point(0, 1), 0.5);
-        assert_eq!(triangle.voronoi_nedge(), 3);
-        assert_eq!(triangle.voronoi_edge_point_a(0), 0);
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point_b(0)),
-            "Direction(0.0, -1.0)"
-        );
-        assert_eq!(triangle.voronoi_edge_point_a(1), 0);
-        assert_eq!(format!("{:?}", triangle.voronoi_edge_point_b(1)), "Direction(1.0, 1.0)");
-        assert_eq!(triangle.voronoi_edge_point_a(2), 0);
-        assert_eq!(
-            format!("{:?}", triangle.voronoi_edge_point_b(2)),
-            "Direction(-1.0, 0.0)"
-        );
+        trigen.generate_voronoi(false)?;
+        assert_eq!(trigen.npoint(), 3);
+        assert_eq!(trigen.ntriangle(), 1);
+        assert_eq!(trigen.nnode(), 3);
+        assert_eq!(trigen.point(0, 0), 0.0);
+        assert_eq!(trigen.point(0, 1), 0.0);
+        assert_eq!(trigen.point(1, 0), 1.0);
+        assert_eq!(trigen.point(1, 1), 0.0);
+        assert_eq!(trigen.point(2, 0), 0.0);
+        assert_eq!(trigen.point(2, 1), 1.0);
+        assert_eq!(trigen.triangle_node(0, 0), 0);
+        assert_eq!(trigen.triangle_node(0, 1), 1);
+        assert_eq!(trigen.triangle_node(0, 2), 2);
+        assert_eq!(trigen.voronoi_npoint(), 1);
+        assert_eq!(trigen.voronoi_point(0, 0), 0.5);
+        assert_eq!(trigen.voronoi_point(0, 1), 0.5);
+        assert_eq!(trigen.voronoi_nedge(), 3);
+        assert_eq!(trigen.voronoi_edge_point_a(0), 0);
+        assert_eq!(format!("{:?}", trigen.voronoi_edge_point_b(0)), "Direction(0.0, -1.0)");
+        assert_eq!(trigen.voronoi_edge_point_a(1), 0);
+        assert_eq!(format!("{:?}", trigen.voronoi_edge_point_b(1)), "Direction(1.0, 1.0)");
+        assert_eq!(trigen.voronoi_edge_point_a(2), 0);
+        assert_eq!(format!("{:?}", trigen.voronoi_edge_point_b(2)), "Direction(-1.0, 0.0)");
         Ok(())
     }
 
     #[test]
     fn mesh_1_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, Some(3), None, None)?;
-        triangle
+        let mut trigen = Trigen::new(3, Some(3), None, None)?;
+        trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
-        triangle
+        trigen
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        triangle.generate_mesh(false, false, None, None)?;
-        assert_eq!(triangle.npoint(), 3);
-        assert_eq!(triangle.ntriangle(), 1);
-        assert_eq!(triangle.nnode(), 3);
-        assert_eq!(triangle.point(0, 0), 0.0);
-        assert_eq!(triangle.point(0, 1), 0.0);
-        assert_eq!(triangle.point(1, 0), 1.0);
-        assert_eq!(triangle.point(1, 1), 0.0);
-        assert_eq!(triangle.point(2, 0), 0.0);
-        assert_eq!(triangle.point(2, 1), 1.0);
-        assert_eq!(triangle.triangle_node(0, 0), 0);
-        assert_eq!(triangle.triangle_node(0, 1), 1);
-        assert_eq!(triangle.triangle_node(0, 2), 2);
-        assert_eq!(triangle.triangle_attribute(0), 0);
-        assert_eq!(triangle.triangle_attribute(1), 0);
-        assert_eq!(triangle.triangle_attribute(2), 0);
-        assert_eq!(triangle.voronoi_npoint(), 0);
-        assert_eq!(triangle.voronoi_nedge(), 0);
+        trigen.generate_mesh(false, false, None, None)?;
+        assert_eq!(trigen.npoint(), 3);
+        assert_eq!(trigen.ntriangle(), 1);
+        assert_eq!(trigen.nnode(), 3);
+        assert_eq!(trigen.point(0, 0), 0.0);
+        assert_eq!(trigen.point(0, 1), 0.0);
+        assert_eq!(trigen.point(1, 0), 1.0);
+        assert_eq!(trigen.point(1, 1), 0.0);
+        assert_eq!(trigen.point(2, 0), 0.0);
+        assert_eq!(trigen.point(2, 1), 1.0);
+        assert_eq!(trigen.triangle_node(0, 0), 0);
+        assert_eq!(trigen.triangle_node(0, 1), 1);
+        assert_eq!(trigen.triangle_node(0, 2), 2);
+        assert_eq!(trigen.triangle_attribute(0), 0);
+        assert_eq!(trigen.triangle_attribute(1), 0);
+        assert_eq!(trigen.triangle_attribute(2), 0);
+        assert_eq!(trigen.voronoi_npoint(), 0);
+        assert_eq!(trigen.voronoi_nedge(), 0);
         Ok(())
     }
 
     #[test]
     fn mesh_2_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, Some(3), None, None)?;
-        triangle
+        let mut trigen = Trigen::new(3, Some(3), None, None)?;
+        trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
-        triangle
+        trigen
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        triangle.generate_mesh(false, true, Some(0.1), Some(20.0))?;
-        assert_eq!(triangle.npoint(), 22);
-        assert_eq!(triangle.ntriangle(), 7);
-        assert_eq!(triangle.nnode(), 6);
+        trigen.generate_mesh(false, true, Some(0.1), Some(20.0))?;
+        assert_eq!(trigen.npoint(), 22);
+        assert_eq!(trigen.ntriangle(), 7);
+        assert_eq!(trigen.nnode(), 6);
         Ok(())
     }
 
     #[test]
     fn get_methods_work_with_wrong_indices() -> Result<(), StrError> {
-        let triangle = Triangle::new(3, None, None, None)?;
-        assert_eq!(triangle.point(100, 0), 0.0);
-        assert_eq!(triangle.point(0, 100), 0.0);
-        assert_eq!(triangle.triangle_attribute(100), 0);
-        assert_eq!(triangle.voronoi_point(100, 0), 0.0);
-        assert_eq!(triangle.voronoi_point(0, 100), 0.0);
-        assert_eq!(triangle.voronoi_edge_point_a(100), 0,);
-        assert_eq!(format!("{:?}", triangle.voronoi_edge_point_b(100)), "Index(0)");
+        let trigen = Trigen::new(3, None, None, None)?;
+        assert_eq!(trigen.point(100, 0), 0.0);
+        assert_eq!(trigen.point(0, 100), 0.0);
+        assert_eq!(trigen.triangle_attribute(100), 0);
+        assert_eq!(trigen.voronoi_point(100, 0), 0.0);
+        assert_eq!(trigen.voronoi_point(0, 100), 0.0);
+        assert_eq!(trigen.voronoi_edge_point_a(100), 0,);
+        assert_eq!(format!("{:?}", trigen.voronoi_edge_point_b(100)), "Index(0)");
         Ok(())
     }
 
     #[test]
     fn draw_triangles_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(3, Some(3), None, None)?;
-        triangle
+        let mut trigen = Trigen::new(3, Some(3), None, None)?;
+        trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
-        triangle
+        trigen
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        triangle.generate_mesh(false, true, Some(0.25), None)?;
+        trigen.generate_mesh(false, true, Some(0.25), None)?;
         let mut plot = Plot::new();
-        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
@@ -1143,17 +1134,17 @@ mod tests {
 
     #[test]
     fn draw_voronoi_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(5, None, None, None)?;
-        triangle
+        let mut trigen = Trigen::new(5, None, None, None)?;
+        trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 1.0, 1.0)?
             .set_point(3, 0.0, 1.0)?
             .set_point(4, 0.5, 0.5)?;
-        triangle.generate_voronoi(false)?;
-        assert_eq!(triangle.voronoi_npoint(), 4);
+        trigen.generate_voronoi(false)?;
+        assert_eq!(trigen.voronoi_npoint(), 4);
         let mut plot = Plot::new();
-        triangle.draw_voronoi(&mut plot);
+        trigen.draw_voronoi(&mut plot);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
@@ -1164,23 +1155,23 @@ mod tests {
 
     #[test]
     fn mesh_3_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(4, Some(3), Some(1), None)?;
-        triangle
+        let mut trigen = Trigen::new(4, Some(3), Some(1), None)?;
+        trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?
             .set_point(3, 0.5, 0.5)?
             .set_region(0, 0.5, 0.2, 1, None)?;
-        triangle
+        trigen
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        triangle.generate_mesh(false, true, Some(0.25), None)?;
-        assert_eq!(triangle.ntriangle(), 2);
-        assert_eq!(triangle.triangle_attribute(0), 1);
-        assert_eq!(triangle.triangle_attribute(1), 1);
+        trigen.generate_mesh(false, true, Some(0.25), None)?;
+        assert_eq!(trigen.ntriangle(), 2);
+        assert_eq!(trigen.triangle_attribute(0), 1);
+        assert_eq!(trigen.triangle_attribute(1), 1);
         let mut plot = Plot::new();
-        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
@@ -1191,8 +1182,8 @@ mod tests {
 
     #[test]
     fn mesh_4_works() -> Result<(), StrError> {
-        let mut triangle = Triangle::new(12, Some(10), Some(2), Some(1))?;
-        triangle
+        let mut trigen = Trigen::new(12, Some(10), Some(2), Some(1))?;
+        trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 1.0, 1.0)?
@@ -1208,7 +1199,7 @@ mod tests {
             .set_region(0, 0.1, 0.1, 1, None)?
             .set_region(1, 0.1, 0.9, 2, None)?
             .set_hole(0, 0.5, 0.5)?;
-        triangle
+        trigen
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 3)?
@@ -1219,12 +1210,12 @@ mod tests {
             .set_segment(7, 7, 4)?
             .set_segment(8, 8, 9)?
             .set_segment(9, 10, 11)?;
-        triangle.generate_mesh(false, true, None, None)?;
-        assert_eq!(triangle.ntriangle(), 14);
-        assert_eq!(triangle.triangle_attribute(0), 1);
-        assert_eq!(triangle.triangle_attribute(12), 2);
+        trigen.generate_mesh(false, true, None, None)?;
+        assert_eq!(trigen.ntriangle(), 14);
+        assert_eq!(trigen.triangle_attribute(0), 1);
+        assert_eq!(trigen.triangle_attribute(12), 2);
         let mut plot = Plot::new();
-        triangle.draw_triangles(&mut plot, true, true, true, true, Some(12.0), Some(20.0), None);
+        trigen.draw_triangles(&mut plot, true, true, true, true, Some(12.0), Some(20.0), None);
         if false {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)

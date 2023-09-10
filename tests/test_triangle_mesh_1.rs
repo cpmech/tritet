@@ -1,9 +1,9 @@
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 #[test]
 fn test_triangle_mesh_1() -> Result<(), StrError> {
-    let mut triangle = Triangle::new(12, Some(20), Some(7), Some(2))?;
+    let mut triangle = Trigen::new(12, Some(20), Some(7), Some(2))?;
     triangle
         .set_point(0, 0.0, 0.0)?
         .set_point(1, 2.0, 0.0)?

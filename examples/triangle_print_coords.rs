@@ -1,12 +1,12 @@
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 fn main() -> Result<(), StrError> {
     // allocate data for 10 points
-    let mut triangle = Triangle::new(10, None, None, None)?;
+    let mut trigen = Trigen::new(10, None, None, None)?;
 
     // set points
-    triangle
+    trigen
         .set_point(0, 0.478554, 0.00869692)?
         .set_point(1, 0.13928, 0.180603)?
         .set_point(2, 0.578587, 0.760349)?
@@ -19,12 +19,12 @@ fn main() -> Result<(), StrError> {
         .set_point(9, 0.540745, 0.331184)?;
 
     // generate Delaunay triangulation
-    triangle.generate_delaunay(false)?;
+    trigen.generate_delaunay(false)?;
 
     // print coordinates
     let mut x = vec![0.0; 2];
     println!("vector<vector<vector<double>>> triangles = {{");
-    for index in 0..triangle.ntriangle() {
+    for index in 0..trigen.ntriangle() {
         if index != 0 {
             print!(",\n");
         }
@@ -33,9 +33,9 @@ fn main() -> Result<(), StrError> {
             if m != 0 {
                 print!(", ");
             }
-            let p = triangle.triangle_node(index, m);
+            let p = trigen.triangle_node(index, m);
             for dim in 0..2 {
-                x[dim] = triangle.point(p, dim);
+                x[dim] = trigen.point(p, dim);
             }
             print!("{{{},{}}}", x[0], x[1]);
         }
@@ -45,7 +45,7 @@ fn main() -> Result<(), StrError> {
 
     // draw triangles
     let mut plot = Plot::new();
-    triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+    trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
     plot.set_equal_axes(true)
         .set_figure_size_points(600.0, 600.0)
         .save("/tmp/tritet/example_triangles_print_coords.svg")?;

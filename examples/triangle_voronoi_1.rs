@@ -1,12 +1,12 @@
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 fn main() -> Result<(), StrError> {
     // allocate data for 5 points
-    let mut triangle = Triangle::new(100, None, None, None)?;
+    let mut trigen = Trigen::new(100, None, None, None)?;
 
     // set points
-    triangle
+    trigen
         .set_point(0, 0.0476694, 0.809168)?
         .set_point(1, -0.0412985, 0.0934087)?
         .set_point(2, 0.771124, -0.145541)?
@@ -109,11 +109,11 @@ fn main() -> Result<(), StrError> {
         .set_point(99, 0.17173, 0.0431868)?;
 
     // generate Voronoi tessellation
-    triangle.generate_voronoi(true)?;
+    trigen.generate_voronoi(true)?;
 
     // draw Voronoi diagram
     let mut plot = Plot::new();
-    triangle.draw_voronoi(&mut plot);
+    trigen.draw_voronoi(&mut plot);
     plot.set_equal_axes(true)
         .set_range(-1.0, 1.0, -1.0, 1.0)
         .set_figure_size_points(600.0, 600.0)
