@@ -693,7 +693,7 @@ impl Tetgen {
 #[cfg(test)]
 mod tests {
     use super::Tetgen;
-    use crate::{write_tet_vtu, StrError};
+    use crate::StrError;
     use plotpy::Plot;
 
     #[test]
@@ -971,7 +971,7 @@ mod tests {
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
         if false {
-            write_tet_vtu(&tetgen, "/tmp/tritet/tetgen_test_mesh_1.vtu")?;
+            tetgen.write_vtu("/tmp/tritet/tetgen_test_mesh_1.vtu")?;
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/tetgen_test_mesh_1.svg")?;

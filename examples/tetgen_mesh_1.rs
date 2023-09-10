@@ -1,5 +1,5 @@
 use plotpy::Plot;
-use tritet::{write_tet_vtu, StrError, Tetgen};
+use tritet::{StrError, Tetgen};
 
 fn main() -> Result<(), StrError> {
     // allocate data for 16 points and 12 facets
@@ -108,7 +108,7 @@ fn main() -> Result<(), StrError> {
     tetgen.generate_mesh(false, false, None, None)?;
 
     // generate file for Paraview
-    write_tet_vtu(&tetgen, "/tmp/tritet/example_tetgen_mesh_1.vtu")?;
+    tetgen.write_vtu("/tmp/tritet/example_tetgen_mesh_1.vtu")?;
 
     // draw edges of tetrahedra
     let mut plot = Plot::new();
