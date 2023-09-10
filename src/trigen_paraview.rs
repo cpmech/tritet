@@ -1,13 +1,13 @@
 use crate::constants;
 use crate::StrError;
-use crate::Tetgen;
+use crate::Trigen;
 use std::ffi::OsStr;
 use std::fmt::Write;
 use std::fs::{self, File};
 use std::io::Write as IoWrite;
 use std::path::Path;
 
-impl Tetgen {
+impl Trigen {
     /// Writes a VTU file to visualize the mesh with Paraview
     ///
     /// # Input
@@ -17,17 +17,17 @@ impl Tetgen {
     where
         P: AsRef<OsStr> + ?Sized,
     {
-        let ntet = self.ntet();
-        if ntet < 1 {
-            return Err("there are no tetrahedra to write");
+        let ntriangle = self.ntriangle();
+        if ntriangle < 1 {
+            return Err("there are no triangles to write");
         }
 
         let npoint = self.npoint();
         let nnode = self.nnode();
-        let vtk_type = if nnode == 4 {
-            constants::VTK_TETRA
+        let vtk_type = if nnode == 3 {
+            constants::VTK_TRIANGLE
         } else {
-            constants::VTK_QUADRATIC_TETRA
+            constants::VTK_QUADRATIC_TRIANGLE
         };
 
         let mut buffer = String::new();
@@ -39,7 +39,7 @@ impl Tetgen {
          <VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n\
          <UnstructuredGrid>\n\
          <Piece NumberOfPoints=\"{}\" NumberOfCells=\"{}\">\n",
-            npoint, ntet
+            npoint, ntriangle
         )
         .unwrap();
 
@@ -53,10 +53,9 @@ impl Tetgen {
         for index in 0..npoint {
             write!(
                 &mut buffer,
-                "{:?} {:?} {:?} ",
+                "{:?} {:?} 0.0 ",
                 self.point(index, 0),
-                self.point(index, 1),
-                self.point(index, 2)
+                self.point(index, 1)
             )
             .unwrap();
         }
@@ -74,9 +73,9 @@ impl Tetgen {
          <DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n"
         )
         .unwrap();
-        for index in 0..ntet {
+        for index in 0..ntriangle {
             for m in 0..nnode {
-                write!(&mut buffer, "{} ", self.tet_node(index, m)).unwrap();
+                write!(&mut buffer, "{} ", self.triangle_node(index, m)).unwrap();
             }
         }
 
@@ -88,7 +87,7 @@ impl Tetgen {
         )
         .unwrap();
         let mut offset = 0;
-        for _ in 0..ntet {
+        for _ in 0..ntriangle {
             offset += nnode;
             write!(&mut buffer, "{} ", offset).unwrap();
         }
@@ -100,7 +99,7 @@ impl Tetgen {
          <DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n"
         )
         .unwrap();
-        for _ in 0..ntet {
+        for _ in 0..ntriangle {
             write!(&mut buffer, "{} ", vtk_type).unwrap();
         }
         write!(
@@ -139,41 +138,40 @@ impl Tetgen {
 #[cfg(test)]
 mod tests {
     use crate::StrError;
-    use crate::Tetgen;
+    use crate::Trigen;
     use std::fs;
 
     #[test]
-    fn tetgen_write_vtu() -> Result<(), StrError> {
-        let mut tetgen = Tetgen::new(4, None, None, None)?;
-        tetgen
-            .set_point(0, 0.0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0, 0.0)?
-            .set_point(2, 0.0, 1.0, 0.0)?
-            .set_point(3, 0.0, 0.0, 1.0)?;
-        tetgen.generate_delaunay(false)?;
-        let file_path = "/tmp/tritet/test_tetgen_write_vtu.vtu";
-        tetgen.write_vtu(file_path)?;
+    fn trigen_write_vtu() -> Result<(), StrError> {
+        let mut trigen = Trigen::new(3, None, None, None)?;
+        trigen
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 0.0, 1.0)?;
+        trigen.generate_delaunay(false)?;
+        let file_path = "/tmp/tritet/test_trigen_write_vtu.vtu";
+        trigen.write_vtu(file_path)?;
         let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;
         assert_eq!(
             contents,
             r#"<?xml version="1.0"?>
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
 <UnstructuredGrid>
-<Piece NumberOfPoints="4" NumberOfCells="1">
+<Piece NumberOfPoints="3" NumberOfCells="1">
 <Points>
 <DataArray type="Float64" NumberOfComponents="3" format="ascii">
-0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 
+0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0 
 </DataArray>
 </Points>
 <Cells>
 <DataArray type="Int32" Name="connectivity" format="ascii">
-1 0 3 2 
+0 1 2 
 </DataArray>
 <DataArray type="Int32" Name="offsets" format="ascii">
-4 
+3 
 </DataArray>
 <DataArray type="UInt8" Name="types" format="ascii">
-10 
+5 
 </DataArray>
 </Cells>
 </Piece>

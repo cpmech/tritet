@@ -80,5 +80,14 @@ pub(crate) const DARK_COLORS: [&'static str; 12] = [
     "#2f3b22", "#152d32",
 ];
 
+/// Sets the VTK code corresponding to triangles
+pub(crate) const VTK_TRIANGLE: i32 = 5;
+
+/// Sets the VTK code corresponding to quadratic triangles
+pub(crate) const VTK_QUADRATIC_TRIANGLE: i32 = 22;
+
+/// Sets the VTK code corresponding to tetrahedra
 pub(crate) const VTK_TETRA: i32 = 10;
+
+/// Sets the VTK code corresponding to quadratic tetrahedra
 pub(crate) const VTK_QUADRATIC_TETRA: i32 = 24;
