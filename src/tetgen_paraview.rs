@@ -138,7 +138,7 @@ mod tests {
     use std::fs;
 
     #[test]
-    fn write_tet_vtu_works() -> Result<(), StrError> {
+    fn tetgen_write_vtu() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         tetgen
             .set_point(0, 0.0, 0.0, 0.0)?
@@ -146,7 +146,7 @@ mod tests {
             .set_point(2, 0.0, 1.0, 0.0)?
             .set_point(3, 0.0, 0.0, 1.0)?;
         tetgen.generate_delaunay(false)?;
-        let file_path = "/tmp/tritet/test_write_tet_vtu.vtu";
+        let file_path = "/tmp/tritet/test_tetgen_write_vtu.vtu";
         tetgen.write_vtu(file_path)?;
         let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;
         assert_eq!(
