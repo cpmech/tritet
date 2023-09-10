@@ -23,6 +23,7 @@ extern "C" {
         trigen: *mut ExtTrigen,
         verbose: i32,
         quadratic: i32,
+        allow_new_points_on_bry: i32,
         global_max_area: f64,
         global_min_angle: f64,
     ) -> i32;
@@ -178,15 +179,15 @@ pub enum VoronoiEdgePoint {
 ///     trigen.set_hole(0, 0.5, 0.5)?;
 ///
 ///     // generate o2 mesh without constraints
-///     trigen.generate_mesh(false, true, None, None)?;
-///     assert_eq!(trigen.ntriangle(), 14);
+///     trigen.generate_mesh(false, true, false, None, None)?;
+///     assert_eq!(trigen.ntriangle(), 12);
 ///
 ///     // draw mesh
 ///     let mut plot = Plot::new();
 ///     // trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
 ///     // plot.set_equal_axes(true)
-///     //     .set_figure_size_points(600.0, 600.0)
-///     //     .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
+///     //      .set_figure_size_points(600.0, 600.0)
+///     //      .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
 ///     Ok(())
 /// }
 /// ```
@@ -489,12 +490,14 @@ impl Trigen {
     ///
     /// * `verbose` -- Prints Triangle's messages to the console
     /// * `quadratic` -- Generates the middle nodes; e.g., nnode = 6
+    /// * `allow_new_points_on_bry:bool` -- Allow the insertion of new (Steiner) points on the boundary
     /// * `global_max_area` -- The maximum area constraint for all generated triangles
     /// * `global_min_angle` -- The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
     pub fn generate_mesh(
         &self,
         verbose: bool,
         quadratic: bool,
+        allow_new_points_on_bry: bool,
         global_max_area: Option<f64>,
         global_min_angle: Option<f64>,
     ) -> Result<(), StrError> {
@@ -517,6 +520,7 @@ impl Trigen {
                 self.ext_triangle,
                 if verbose { 1 } else { 0 },
                 if quadratic { 1 } else { 0 },
+                if allow_new_points_on_bry { 1 } else { 0 },
                 max_area,
                 min_angle,
             );
@@ -975,7 +979,7 @@ mod tests {
             Some("cannot generate Voronoi tessellation because not all points are set")
         );
         assert_eq!(
-            trigen.generate_mesh(false, false, None, None).err(),
+            trigen.generate_mesh(false, false, false, None, None).err(),
             Some("cannot generate mesh of triangles because not all points are set")
         );
         trigen
@@ -983,7 +987,7 @@ mod tests {
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
         assert_eq!(
-            trigen.generate_mesh(false, false, None, None).err(),
+            trigen.generate_mesh(false, false, false, None, None).err(),
             Some("cannot generate mesh of triangles because not all segments are set")
         );
         Ok(())
@@ -1058,7 +1062,7 @@ mod tests {
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        trigen.generate_mesh(false, false, None, None)?;
+        trigen.generate_mesh(false, false, false, None, None)?;
         assert_eq!(trigen.npoint(), 3);
         assert_eq!(trigen.ntriangle(), 1);
         assert_eq!(trigen.nnode(), 3);
@@ -1080,20 +1084,56 @@ mod tests {
     }
 
     #[test]
-    fn mesh_2_works() -> Result<(), StrError> {
-        let mut trigen = Trigen::new(3, Some(3), None, None)?;
+    fn mesh_2_no_steiner_works() -> Result<(), StrError> {
+        let mut trigen = Trigen::new(4, Some(4), None, None)?;
         trigen
             .set_point(0, 0.0, 0.0)?
             .set_point(1, 1.0, 0.0)?
-            .set_point(2, 0.0, 1.0)?;
+            .set_point(2, 1.0, 1.0)?
+            .set_point(3, 0.0, 1.0)?;
         trigen
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
-            .set_segment(2, 2, 0)?;
-        trigen.generate_mesh(false, true, Some(0.1), Some(20.0))?;
-        assert_eq!(trigen.npoint(), 22);
-        assert_eq!(trigen.ntriangle(), 7);
-        assert_eq!(trigen.nnode(), 6);
+            .set_segment(2, 2, 3)?
+            .set_segment(3, 3, 0)?;
+        trigen.generate_mesh(false, false, false, Some(0.1), None)?;
+        if false {
+            let mut plot = Plot::new();
+            trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/test_mesh_2_no_steiner.svg")?;
+        }
+        assert_eq!(trigen.npoint(), 5);
+        assert_eq!(trigen.ntriangle(), 4);
+        assert_eq!(trigen.nnode(), 3);
+        Ok(())
+    }
+
+    #[test]
+    fn mesh_2_ok_steiner_works() -> Result<(), StrError> {
+        let mut trigen = Trigen::new(4, Some(4), None, None)?;
+        trigen
+            .set_point(0, 0.0, 0.0)?
+            .set_point(1, 1.0, 0.0)?
+            .set_point(2, 1.0, 1.0)?
+            .set_point(3, 0.0, 1.0)?;
+        trigen
+            .set_segment(0, 0, 1)?
+            .set_segment(1, 1, 2)?
+            .set_segment(2, 2, 3)?
+            .set_segment(3, 3, 0)?;
+        trigen.generate_mesh(false, false, true, Some(0.1), None)?;
+        if false {
+            let mut plot = Plot::new();
+            trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/test_mesh_2_ok_steiner.svg")?;
+        }
+        assert_eq!(trigen.npoint(), 13);
+        assert_eq!(trigen.ntriangle(), 16);
+        assert_eq!(trigen.nnode(), 3);
         Ok(())
     }
 
@@ -1121,7 +1161,7 @@ mod tests {
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        trigen.generate_mesh(false, true, Some(0.25), None)?;
+        trigen.generate_mesh(false, true, false, Some(0.25), None)?;
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         if false {
@@ -1166,7 +1206,7 @@ mod tests {
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        trigen.generate_mesh(false, true, Some(0.25), None)?;
+        trigen.generate_mesh(false, true, false, Some(0.25), None)?;
         assert_eq!(trigen.ntriangle(), 2);
         assert_eq!(trigen.triangle_attribute(0), 1);
         assert_eq!(trigen.triangle_attribute(1), 1);
@@ -1210,10 +1250,7 @@ mod tests {
             .set_segment(7, 7, 4)?
             .set_segment(8, 8, 9)?
             .set_segment(9, 10, 11)?;
-        trigen.generate_mesh(false, true, None, None)?;
-        assert_eq!(trigen.ntriangle(), 14);
-        assert_eq!(trigen.triangle_attribute(0), 1);
-        assert_eq!(trigen.triangle_attribute(12), 2);
+        trigen.generate_mesh(false, true, true, None, None)?;
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, Some(12.0), Some(20.0), None);
         if false {
@@ -1221,6 +1258,9 @@ mod tests {
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_mesh_4_works.svg")?;
         }
+        assert_eq!(trigen.ntriangle(), 14);
+        assert_eq!(trigen.triangle_attribute(0), 1);
+        assert_eq!(trigen.triangle_attribute(12), 2);
         Ok(())
     }
 }

@@ -179,8 +179,8 @@ fn main() -> Result<(), StrError> {
     trigen.set_hole(0, 0.5, 0.5)?;
 
     // generate o2 mesh without constraints
-    trigen.generate_mesh(false, true, None, None)?;
-    assert_eq!(trigen.ntriangle(), 14);
+    trigen.generate_mesh(false, true, false, None, None)?;
+    assert_eq!(trigen.ntriangle(), 12);
 
     // draw mesh
     if SAVE_FIGURE {
@@ -242,7 +242,7 @@ Note: set `SAVE_VTU_FILE` to true to generate Paraview file.
 
 ```rust
 use plotpy::Plot;
-use tritet::{write_tet_vtu, StrError, Tetgen};
+use tritet::{StrError, Tetgen};
 
 const SAVE_VTU_FILE: bool = false;
 const SAVE_FIGURE: bool = false;
@@ -355,7 +355,7 @@ fn main() -> Result<(), StrError> {
 
     // generate file for Paraview
     if SAVE_VTU_FILE {
-        write_tet_vtu(&tetgen, "/tmp/tritet/example_tetgen_mesh_1.vtu")?;
+        tetgen.write_vtu("/tmp/tritet/example_tetgen_mesh_1.vtu")?;
     }
 
     // draw edges of tetrahedra

@@ -101,7 +101,7 @@ fn generate_methods_capture_some_errors() -> Result<(), StrError> {
         Some("cannot generate Voronoi tessellation because not all points are set")
     );
     assert_eq!(
-        trigen.generate_mesh(false, false, None, None).err(),
+        trigen.generate_mesh(false, false, true, None, None).err(),
         Some("cannot generate mesh of triangles because not all points are set")
     );
     trigen
@@ -109,7 +109,7 @@ fn generate_methods_capture_some_errors() -> Result<(), StrError> {
         .set_point(1, 1.0, 0.0)?
         .set_point(2, 0.0, 1.0)?;
     assert_eq!(
-        trigen.generate_mesh(false, false, None, None).err(),
+        trigen.generate_mesh(false, false, true, None, None).err(),
         Some("cannot generate mesh of triangles because not all segments are set")
     );
     Ok(())
@@ -314,5 +314,5 @@ fn mesh() -> Result<(), StrError> {
         .set_hole(2, 50.0, 50.0)?; // right eye
 
     // generate mesh without constraints
-    mesh.generate_mesh(false, true, None, None)
+    mesh.generate_mesh(false, true, true, None, None)
 }

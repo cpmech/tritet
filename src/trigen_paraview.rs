@@ -193,7 +193,7 @@ mod tests {
             .set_segment(0, 0, 1)?
             .set_segment(1, 1, 2)?
             .set_segment(2, 2, 0)?;
-        trigen.generate_mesh(false, true, None, None)?;
+        trigen.generate_mesh(false, true, false, None, None)?;
         let file_path = "/tmp/tritet/test_trigen_write_vtu_o2.vtu";
         trigen.write_vtu(file_path)?;
         let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;

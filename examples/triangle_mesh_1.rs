@@ -80,7 +80,7 @@ fn main() -> Result<(), StrError> {
         .set_hole(2, 50.0, 50.0)?; // right eye
 
     // generate mesh without constraints
-    trigen.generate_mesh(true, true, None, None)?;
+    trigen.generate_mesh(true, true, true, None, None)?;
 
     // draw mesh
     let mut plot = Plot::new();

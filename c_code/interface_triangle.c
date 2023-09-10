@@ -307,7 +307,7 @@ int32_t run_voronoi(struct ExtTrigen *trigen, int32_t verbose) {
     return TRITET_SUCCESS;
 }
 
-int32_t run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t quadratic, double global_max_area, double global_min_angle) {
+int32_t run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t quadratic, int32_t allow_new_points_on_bry, double global_max_area, double global_min_angle) {
     if (trigen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -323,13 +323,20 @@ int32_t run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t quadr
     // * `p` -- write a PSLG (p)
     // * `z` -- number everything from zero (z)
     // * `A` -- assign a regional attribute to each element (A)
+    // * `Q` -- quiet mode
+    // * `o2` -- generates second-order elements with six nodes each
+    // * `Y` -- prohibits the insertion of Steiner points on the mesh boundary
     char command[128];
+    // strcpy(command, "pzAY");
     strcpy(command, "pzA");
     if (verbose == TRITET_FALSE) {
         strcat(command, "Q");
     }
     if (quadratic == TRITET_TRUE) {
         strcat(command, "o2");
+    }
+    if (allow_new_points_on_bry == TRITET_FALSE) {
+        strcat(command, "Y");
     }
     if (global_max_area > 0.0) {
         char buf[32];

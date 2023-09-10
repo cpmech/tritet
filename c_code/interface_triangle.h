@@ -33,7 +33,7 @@ int32_t run_delaunay(struct ExtTrigen *trigen, int32_t verbose);
 
 int32_t run_voronoi(struct ExtTrigen *trigen, int32_t verbose);
 
-int32_t run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t quadratic, double global_max_area, double global_min_angle);
+int32_t run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t quadratic, int32_t allow_new_points_on_bry, double global_max_area, double global_min_angle);
 
 int32_t get_npoint(struct ExtTrigen *trigen);
 

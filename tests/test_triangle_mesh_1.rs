@@ -47,7 +47,7 @@ fn test_triangle_mesh_1() -> Result<(), StrError> {
         .set_region(5, 3.9, 3.9, 6, None)?
         .set_region(6, 2.0, 2.0, 7, None)?;
     triangle.set_hole(0, 0.1, 2.0)?.set_hole(1, 3.9, 2.0)?;
-    triangle.generate_mesh(false, false, None, None)?;
+    triangle.generate_mesh(false, false, false, None, None)?;
 
     assert_eq!(triangle.npoint(), 12);
     assert_eq!(triangle.ntriangle(), 12);
