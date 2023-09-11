@@ -43,7 +43,7 @@ int32_t get_ntriangle(struct ExtTrigen *trigen);
 
 int32_t get_ncorner(struct ExtTrigen *trigen);
 
-void get_point(struct ExtTrigen *trigen, int32_t index, int32_t *marker, double *x, double *y);
+double get_point(struct ExtTrigen *trigen, int32_t index, int32_t dim);
 
 void get_out_segment(struct ExtTrigen *trigen, int32_t index, int32_t *marker, int32_t *a, int32_t *b);
 

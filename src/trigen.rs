@@ -31,7 +31,7 @@ extern "C" {
     fn get_n_out_segment(trigen: *mut ExtTrigen) -> i32;
     fn get_ntriangle(trigen: *mut ExtTrigen) -> i32;
     fn get_ncorner(trigen: *mut ExtTrigen) -> i32;
-    fn get_point(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, x: *mut f64, y: *mut f64);
+    fn get_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
     fn get_out_segment(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, a: *mut i32, b: *mut i32);
     fn get_triangle_corner(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
     fn get_triangle_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
@@ -608,24 +608,17 @@ impl Trigen {
     /// # Input
     ///
     /// * `index` -- is the index of the point and goes from `0` to `npoint`
+    /// * `dim` -- is the space dimension index: 0 or 1
     ///
     /// # Output
     ///
-    /// Returns `(marker, x, y)`, where:
-    ///
-    /// * `marker` -- is the marker assigned to the point
-    /// * `x` -- is the x-coordinate
-    /// * `y` -- is the y-coordinate
+    /// Returns `x` or `z`
     ///
     /// # Warning
     ///
     /// This function will return zero values if either `index` is out of range.
-    pub fn point(&self, index: usize) -> (i32, f64, f64) {
-        let mut marker: i32 = 0;
-        let mut x: f64 = 0.0;
-        let mut y: f64 = 0.0;
-        unsafe { get_point(self.ext_triangle, to_i32(index), &mut marker, &mut x, &mut y) }
-        (marker, x, y)
+    pub fn point(&self, index: usize, dim: usize) -> f64 {
+        unsafe { get_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the (output) generated segment on the PSLG
@@ -843,10 +836,8 @@ impl Trigen {
             }
             for m in 0..3 {
                 let p = self.triangle_node(tri, m);
-                let (_, x_val, y_val) = self.point(p);
-                x[0] = x_val;
-                x[1] = y_val;
                 for dim in 0..2 {
+                    x[dim] = self.point(p, dim);
                     min[dim] = f64::min(min[dim], x[dim]);
                     max[dim] = f64::max(max[dim], x[dim]);
                     xmid[dim] += x[dim] / 3.0;
@@ -863,10 +854,8 @@ impl Trigen {
             }
             if with_attribute_ids {
                 let p = self.triangle_node(tri, 0);
-                let (_, x_val, y_val) = self.point(p);
-                x[0] = x_val;
-                x[1] = y_val;
                 for dim in 0..2 {
+                    x[dim] = self.point(p, dim);
                     xatt[dim] = (x[dim] + xmid[dim]) / 2.0;
                 }
                 attribute_ids.draw(xatt[0], xatt[1], format!("[{}]", attribute).as_str());
@@ -874,7 +863,8 @@ impl Trigen {
         }
         if with_point_ids {
             for p in 0..self.npoint() {
-                let (_, x_val, y_val) = self.point(p);
+                let x_val = self.point(p, 0);
+                let y_val = self.point(p, 1);
                 point_ids.draw(x_val, y_val, format!("{}", p).as_str());
             }
         }
@@ -908,10 +898,8 @@ impl Trigen {
             .set_marker_style("o")
             .set_stop_clip(true);
         for p in 0..self.npoint() {
-            let (_, x_val, y_val) = self.point(p);
-            x[0] = x_val;
-            x[1] = y_val;
             for dim in 0..2 {
+                x[dim] = self.point(p, dim);
                 min[dim] = f64::min(min[dim], x[dim]);
                 max[dim] = f64::max(max[dim], x[dim]);
             }
@@ -1108,9 +1096,12 @@ mod tests {
         assert_eq!(trigen.npoint(), 3);
         assert_eq!(trigen.ntriangle(), 1);
         assert_eq!(trigen.nnode(), 3);
-        assert_eq!(trigen.point(0), (0, 0.0, 0.0));
-        assert_eq!(trigen.point(1), (0, 1.0, 0.0));
-        assert_eq!(trigen.point(2), (0, 0.0, 1.0));
+        assert_eq!(trigen.point(0, 0), 0.0);
+        assert_eq!(trigen.point(0, 1), 0.0);
+        assert_eq!(trigen.point(1, 0), 1.0);
+        assert_eq!(trigen.point(1, 1), 0.0);
+        assert_eq!(trigen.point(2, 0), 0.0);
+        assert_eq!(trigen.point(2, 1), 1.0);
         assert_eq!(trigen.triangle_node(0, 0), 0);
         assert_eq!(trigen.triangle_node(0, 1), 1);
         assert_eq!(trigen.triangle_node(0, 2), 2);
@@ -1130,12 +1121,12 @@ mod tests {
         assert_eq!(trigen.npoint(), 3);
         assert_eq!(trigen.ntriangle(), 1);
         assert_eq!(trigen.nnode(), 3);
-        assert_eq!(trigen.point(0), (0, 0.0, 0.0));
-        assert_eq!(trigen.point(1), (0, 1.0, 0.0));
-        assert_eq!(trigen.point(2), (0, 0.0, 1.0));
-        assert_eq!(trigen.triangle_node(0, 0), 0);
-        assert_eq!(trigen.triangle_node(0, 1), 1);
-        assert_eq!(trigen.triangle_node(0, 2), 2);
+        assert_eq!(trigen.point(0, 0), 0.0);
+        assert_eq!(trigen.point(0, 1), 0.0);
+        assert_eq!(trigen.point(1, 0), 1.0);
+        assert_eq!(trigen.point(1, 1), 0.0);
+        assert_eq!(trigen.point(2, 0), 0.0);
+        assert_eq!(trigen.point(2, 1), 1.0);
         assert_eq!(trigen.voronoi_npoint(), 1);
         assert_eq!(trigen.voronoi_point(0, 0), 0.5);
         assert_eq!(trigen.voronoi_point(0, 1), 0.5);
@@ -1164,9 +1155,12 @@ mod tests {
         assert_eq!(trigen.npoint(), 3);
         assert_eq!(trigen.ntriangle(), 1);
         assert_eq!(trigen.nnode(), 3);
-        assert_eq!(trigen.point(0), (0, 0.0, 0.0));
-        assert_eq!(trigen.point(1), (0, 1.0, 0.0));
-        assert_eq!(trigen.point(2), (0, 0.0, 1.0));
+        assert_eq!(trigen.point(0, 0), 0.0);
+        assert_eq!(trigen.point(0, 1), 0.0);
+        assert_eq!(trigen.point(1, 0), 1.0);
+        assert_eq!(trigen.point(1, 1), 0.0);
+        assert_eq!(trigen.point(2, 0), 0.0);
+        assert_eq!(trigen.point(2, 1), 1.0);
         assert_eq!(trigen.triangle_node(0, 0), 0);
         assert_eq!(trigen.triangle_node(0, 1), 1);
         assert_eq!(trigen.triangle_node(0, 2), 2);
@@ -1269,7 +1263,8 @@ mod tests {
     #[test]
     fn get_methods_work_with_wrong_indices() -> Result<(), StrError> {
         let trigen = Trigen::new(3, None, None, None)?;
-        assert_eq!(trigen.point(100), (0, 0.0, 0.0));
+        assert_eq!(trigen.point(100, 0), 0.0);
+        assert_eq!(trigen.point(0, 100), 0.0);
         assert_eq!(trigen.triangle_attribute(100), 0);
         assert_eq!(trigen.voronoi_point(100, 0), 0.0);
         assert_eq!(trigen.voronoi_point(0, 100), 0.0);

@@ -51,8 +51,13 @@ impl Trigen {
         )
         .unwrap();
         for index in 0..npoint {
-            let (_, x, y) = self.point(index);
-            write!(&mut buffer, "{:?} {:?} 0.0 ", x, y).unwrap();
+            write!(
+                &mut buffer,
+                "{:?} {:?} 0.0 ",
+                self.point(index, 0),
+                self.point(index, 1)
+            )
+            .unwrap();
         }
         write!(
             &mut buffer,

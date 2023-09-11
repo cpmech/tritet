@@ -22,6 +22,7 @@ fn main() -> Result<(), StrError> {
     trigen.generate_delaunay(false)?;
 
     // print coordinates
+    let mut x = vec![0.0; 2];
     println!("vector<vector<vector<double>>> triangles = {{");
     for index in 0..trigen.ntriangle() {
         if index != 0 {
@@ -33,8 +34,10 @@ fn main() -> Result<(), StrError> {
                 print!(", ");
             }
             let p = trigen.triangle_node(index, m);
-            let (_, x, y) = trigen.point(p);
-            print!("{{{},{}}}", x, y);
+            for dim in 0..2 {
+                x[dim] = trigen.point(p, dim);
+            }
+            print!("{{{},{}}}", x[0], x[1]);
         }
         print!("}}");
     }

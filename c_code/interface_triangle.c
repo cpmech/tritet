@@ -405,16 +405,14 @@ int32_t get_ncorner(struct ExtTrigen *trigen) {
     return trigen->output.numberofcorners;
 }
 
-void get_point(struct ExtTrigen *trigen, int32_t index, int32_t *marker, double *x, double *y) {
-    *marker = 0;
-    *x = 0.0;
-    *y = 0.0;
+double get_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
     if (trigen == NULL) {
-        return;
+        return 0.0;
     }
-    if (index < trigen->output.numberofpoints) {
-        *x = trigen->output.pointlist[index * 2];
-        *y = trigen->output.pointlist[index * 2 + 1];
+    if (index < trigen->output.numberofpoints && (dim == 0 || dim == 1)) {
+        return trigen->output.pointlist[index * 2 + dim];
+    } else {
+        return 0.0;
     }
 }
 
