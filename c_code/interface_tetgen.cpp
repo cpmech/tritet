@@ -393,15 +393,28 @@ int32_t tet_out_cell_attribute(struct ExtTetgen *tetgen, int32_t index) {
     }
 }
 
-int32_t tet_out_face_marker(struct ExtTetgen *tetgen, int32_t a, int32_t b, int32_t c) {
+int32_t tet_out_n_marked_face(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return 0;
     }
-    auto face_key = std::tuple<int, int, int>{a, b, c};
-    std::map<tetgenio::face_key_t, int>::const_iterator search = tetgen->output.tetfacemarkers.find(face_key);
-    if (search != tetgen->output.tetfacemarkers.end()) {
-        return search->second;
+    return static_cast<int>(tetgen->output.marked_faces.size());
+}
+
+void tet_out_marked_face(struct ExtTetgen *tetgen, int32_t index, int32_t *a, int32_t *b, int32_t *c, int32_t *marker) {
+    *a = 0;
+    *b = 0;
+    *c = 0;
+    *marker = 0;
+    if (tetgen == NULL) {
+        return;
+    }
+    if (index >= 0 && index < static_cast<int>(tetgen->output.marked_faces.size())) {
+        auto marked_face = tetgen->output.marked_faces[index];
+        *a = marked_face.key[0];
+        *b = marked_face.key[1];
+        *c = marked_face.key[2];
+        *marker = marked_face.marker;
     } else {
-        return 0;
+        return;
     }
 }

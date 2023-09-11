@@ -51,8 +51,7 @@
 #include <time.h>
 #include <assert.h> 
 
-#include <tuple> // dorival
-#include <map> // dorival
+#include <vector> // dorival
 
 // The types 'intptr_t' and 'uintptr_t' are signed and unsigned integer types,
 //   respectively. They are guaranteed to be the same width as a pointer.
@@ -288,8 +287,11 @@ public:
   int *adjtetlist;
   int numberoftrifaces;
 
-  typedef std::tuple<int,int,int> face_key_t;
-  std::map<face_key_t,int> tetfacemarkers; // dorival
+  typedef struct {
+      int key[3];
+      int marker;
+  } marked_face_t;
+  std::vector<marked_face_t> marked_faces; // dorival
 
   // 'edgelist':  An array of edge endpoints.  The first edge's endpoints
   //   are at indices [0] and [1], followed by the remaining edges.

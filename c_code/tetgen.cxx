@@ -29211,8 +29211,12 @@ void tetgenmesh::outfaces(tetgenio* out)
                     int point_b = pointmark(tdest) - shift; // dorival
                     int point_c = pointmark(tapex) - shift; // dorival
                     sort_3(&point_a, &point_b, &point_c); // dorival
-                    auto face_key = std::tuple<int, int, int>{point_a, point_b, point_c}; // dorival
-                    out->tetfacemarkers[face_key] = marker; // dorival
+                    tetgenio::marked_face_t marked_face; // dorival
+                    marked_face.key[0] = point_a; // dorival
+                    marked_face.key[1] = point_b; // dorival
+                    marked_face.key[2] = point_c; // dorival
+                    marked_face.marker = marker; // dorival
+                    out->marked_faces.push_back(marked_face); // dorival
                 } // dorival
 
               } else {
