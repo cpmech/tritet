@@ -13,7 +13,7 @@ pub(crate) struct ExtTetgen {
 extern "C" {
     fn tet_new_tetgen(npoint: i32, nfacet: i32, facet_npoint: *const i32, nregion: i32, nhole: i32) -> *mut ExtTetgen;
     fn tet_drop_tetgen(tetgen: *mut ExtTetgen);
-    fn tet_set_point(tetgen: *mut ExtTetgen, index: i32, x: f64, y: f64, z: f64) -> i32;
+    fn tet_set_point(tetgen: *mut ExtTetgen, index: i32, marker: i32, x: f64, y: f64, z: f64) -> i32;
     fn tet_set_facet_point(tetgen: *mut ExtTetgen, index: i32, m: i32, p: i32) -> i32;
     fn tet_set_region(
         tetgen: *mut ExtTetgen,
@@ -37,6 +37,7 @@ extern "C" {
     fn tet_out_ncell(tetgen: *mut ExtTetgen) -> i32;
     fn tet_out_cell_npoint(tetgen: *mut ExtTetgen) -> i32;
     fn tet_out_point(tetgen: *mut ExtTetgen, index: i32, dim: i32) -> f64;
+    fn tet_out_point_marker(tetgen: *mut ExtTetgen, index: i32) -> i32;
     fn tet_out_cell_point(tetgen: *mut ExtTetgen, index: i32, corner: i32) -> i32;
     fn tet_out_cell_attribute(tetgen: *mut ExtTetgen, index: i32) -> i32;
 }
@@ -59,11 +60,11 @@ extern "C" {
 ///
 ///     // set points
 ///     tetgen
-///         .set_point(0, 0.0, 1.0, 0.0)?
-///         .set_point(1, 0.0, 0.0, 0.0)?
-///         .set_point(2, 1.0, 1.0, 0.0)?
-///         .set_point(3, 0.0, 1.0, 1.0)?
-///         .set_point(4, 1.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0)?;
+///         .set_point(0, 0, 0.0, 1.0, 0.0)?
+///         .set_point(1, 0, 0.0, 0.0, 0.0)?
+///         .set_point(2, 0, 1.0, 1.0, 0.0)?
+///         .set_point(3, 0, 0.0, 1.0, 1.0)?
+///         .set_point(4, 0, 1.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0)?;
 ///
 ///     // generate Delaunay triangulation
 ///     tetgen.generate_delaunay(false)?;
@@ -94,10 +95,10 @@ extern "C" {
 ///
 ///     // set points
 ///     tetgen
-///         .set_point(0, 0.0, 1.0, 0.0)?
-///         .set_point(1, 0.0, 0.0, 0.0)?
-///         .set_point(2, 1.0, 1.0, 0.0)?
-///         .set_point(3, 0.0, 1.0, 1.0)?;
+///         .set_point(0, 0, 0.0, 1.0, 0.0)?
+///         .set_point(1, 0, 0.0, 0.0, 0.0)?
+///         .set_point(2, 0, 1.0, 1.0, 0.0)?
+///         .set_point(3, 0, 0.0, 1.0, 1.0)?;
 ///
 ///     // set facets
 ///     tetgen
@@ -223,9 +224,9 @@ impl Tetgen {
     }
 
     /// Sets the point coordinates
-    pub fn set_point(&mut self, index: usize, x: f64, y: f64, z: f64) -> Result<&mut Self, StrError> {
+    pub fn set_point(&mut self, index: usize, marker: i32, x: f64, y: f64, z: f64) -> Result<&mut Self, StrError> {
         unsafe {
-            let status = tet_set_point(self.ext_tetgen, to_i32(index), x, y, z);
+            let status = tet_set_point(self.ext_tetgen, to_i32(index), marker, x, y, z);
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -494,9 +495,22 @@ impl Tetgen {
     ///
     /// # Warning
     ///
-    /// This function will return 0.0 if either `index` or `dim` are out of range.
+    /// This function will return 0.0 if `index` or `dim` is out of range.
     pub fn out_point(&self, index: usize, dim: usize) -> f64 {
         unsafe { tet_out_point(self.ext_tetgen, to_i32(index), to_i32(dim)) }
+    }
+
+    /// Returns the marker of an output point
+    ///
+    /// # Input
+    ///
+    /// * `index` -- is the index of the point and goes from `0` to `out_npoint`
+    ///
+    /// # Warning
+    ///
+    /// This function will return zero values if either `index` is out of range.
+    pub fn out_point_marker(&self, index: usize) -> i32 {
+        unsafe { tet_out_point_marker(self.ext_tetgen, to_i32(index)) }
     }
 
     /// Returns the ID of a point defining an output cell (aka tetrahedron)
@@ -538,7 +552,7 @@ impl Tetgen {
     ///
     /// # Warning
     ///
-    /// This function will return 0 if either `index` or `m` are out of range.
+    /// This function will return 0 if `index` or `m` is out of range.
     pub fn out_cell_point(&self, index: usize, m: usize) -> usize {
         unsafe {
             let corner = constants::TRITET_TO_TETGEN[m];
@@ -550,7 +564,7 @@ impl Tetgen {
     ///
     /// # Warning
     ///
-    /// This function will return 0 if either `index` is out of range.
+    /// This function will return 0 if `index` is out of range.
     pub fn out_cell_attribute(&self, index: usize) -> usize {
         unsafe { tet_out_cell_attribute(self.ext_tetgen, to_i32(index)) as usize }
     }
@@ -730,7 +744,7 @@ mod tests {
     fn set_point_captures_some_errors() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         assert_eq!(
-            tetgen.set_point(5, 0.0, 0.0, 0.0).err(),
+            tetgen.set_point(5, 0, 0.0, 0.0, 0.0).err(),
             Some("index of point is out of bounds")
         );
         Ok(())
@@ -801,10 +815,10 @@ mod tests {
             Some("cannot generate mesh of tetrahedra because not all points are set")
         );
         tetgen
-            .set_point(0, 0.0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0, 0.0)?
-            .set_point(2, 0.0, 1.0, 0.0)?
-            .set_point(3, 0.0, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0, 0.0)?
+            .set_point(3, 0, 0.0, 0.0, 1.0)?;
         assert_eq!(
             tetgen.generate_mesh(false, false, None, None).err(),
             Some("cannot generate mesh of tetrahedra because not all facets are set")
@@ -816,10 +830,10 @@ mod tests {
     fn generate_delaunay_works() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         tetgen
-            .set_point(0, 0.0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0, 0.0)?
-            .set_point(2, 0.0, 1.0, 0.0)?
-            .set_point(3, 0.0, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0, 0.0)?
+            .set_point(3, 0, 0.0, 0.0, 1.0)?;
         tetgen.generate_delaunay(false)?;
         assert_eq!(tetgen.out_ncell(), 1);
         assert_eq!(tetgen.out_npoint(), 4);
@@ -830,10 +844,10 @@ mod tests {
     fn draw_wireframe_works() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         tetgen
-            .set_point(0, 0.0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0, 0.0)?
-            .set_point(2, 0.0, 1.0, 0.0)?
-            .set_point(3, 0.0, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0, 0.0)?
+            .set_point(3, 0, 0.0, 0.0, 1.0)?;
         tetgen.generate_delaunay(false)?;
         assert_eq!(tetgen.out_ncell(), 1);
         assert_eq!(tetgen.out_npoint(), 4);
@@ -851,14 +865,14 @@ mod tests {
     fn generate_delaunay_works_1() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(8, None, None, None)?;
         tetgen
-            .set_point(0, 0.0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0, 0.0)?
-            .set_point(2, 1.0, 1.0, 0.0)?
-            .set_point(3, 0.0, 1.0, 0.0)?
-            .set_point(4, 0.0, 0.0, 1.0)?
-            .set_point(5, 1.0, 0.0, 1.0)?
-            .set_point(6, 1.0, 1.0, 1.0)?
-            .set_point(7, 0.0, 1.0, 1.0)?;
+            .set_point(0, -100, 0.0, 0.0, 0.0)?
+            .set_point(1, -200, 1.0, 0.0, 0.0)?
+            .set_point(2, -300, 1.0, 1.0, 0.0)?
+            .set_point(3, -400, 0.0, 1.0, 0.0)?
+            .set_point(4, -500, 0.0, 0.0, 1.0)?
+            .set_point(5, -600, 1.0, 0.0, 1.0)?
+            .set_point(6, -700, 1.0, 1.0, 1.0)?
+            .set_point(7, -800, 0.0, 1.0, 1.0)?;
         tetgen.generate_delaunay(false)?;
         assert_eq!(tetgen.out_ncell(), 6);
         assert_eq!(tetgen.out_npoint(), 8);
@@ -885,24 +899,24 @@ mod tests {
         )?;
         // inner cube
         tetgen
-            .set_point(0, 0.0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0, 0.0)?
-            .set_point(2, 1.0, 1.0, 0.0)?
-            .set_point(3, 0.0, 1.0, 0.0)?
-            .set_point(4, 0.0, 0.0, 1.0)?
-            .set_point(5, 1.0, 0.0, 1.0)?
-            .set_point(6, 1.0, 1.0, 1.0)?
-            .set_point(7, 0.0, 1.0, 1.0)?;
+            .set_point(0, -100, 0.0, 0.0, 0.0)?
+            .set_point(1, -200, 1.0, 0.0, 0.0)?
+            .set_point(2, -300, 1.0, 1.0, 0.0)?
+            .set_point(3, -400, 0.0, 1.0, 0.0)?
+            .set_point(4, -500, 0.0, 0.0, 1.0)?
+            .set_point(5, -600, 1.0, 0.0, 1.0)?
+            .set_point(6, -700, 1.0, 1.0, 1.0)?
+            .set_point(7, -800, 0.0, 1.0, 1.0)?;
         // outer cube
         tetgen
-            .set_point(8, -1.0, -1.0, -1.0)?
-            .set_point(9, 2.0, -1.0, -1.0)?
-            .set_point(10, 2.0, 2.0, -1.0)?
-            .set_point(11, -1.0, 2.0, -1.0)?
-            .set_point(12, -1.0, -1.0, 2.0)?
-            .set_point(13, 2.0, -1.0, 2.0)?
-            .set_point(14, 2.0, 2.0, 2.0)?
-            .set_point(15, -1.0, 2.0, 2.0)?;
+            .set_point(8, 0, -1.0, -1.0, -1.0)?
+            .set_point(9, 0, 2.0, -1.0, -1.0)?
+            .set_point(10, 0, 2.0, 2.0, -1.0)?
+            .set_point(11, 0, -1.0, 2.0, -1.0)?
+            .set_point(12, 0, -1.0, -1.0, 2.0)?
+            .set_point(13, 0, 2.0, -1.0, 2.0)?
+            .set_point(14, 0, 2.0, 2.0, 2.0)?
+            .set_point(15, 0, -1.0, 2.0, 2.0)?;
         // inner cube
         tetgen
             .set_facet_point(0, 0, 0)?
@@ -970,6 +984,9 @@ mod tests {
         tetgen.generate_mesh(false, false, None, None)?;
         assert_eq!(tetgen.out_ncell(), 116);
         assert_eq!(tetgen.out_npoint(), 50);
+        assert_eq!(tetgen.out_point_marker(0), -100);
+        assert_eq!(tetgen.out_point_marker(1), -200);
+        assert_eq!(tetgen.out_point_marker(2), -300);
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
         if GENERATE_FIGURES {

@@ -48,7 +48,7 @@ fn new_captures_some_errors() {
 fn set_point_captures_some_errors() -> Result<(), StrError> {
     let mut tetgen = Tetgen::new(4, None, None, None)?;
     assert_eq!(
-        tetgen.set_point(5, 0.0, 0.0, 0.0).err(),
+        tetgen.set_point(5, 0, 0.0, 0.0, 0.0).err(),
         Some("index of point is out of bounds")
     );
     Ok(())
@@ -115,10 +115,10 @@ fn generate_methods_capture_some_errors() -> Result<(), StrError> {
         Some("cannot generate mesh of tetrahedra because not all points are set")
     );
     tetgen
-        .set_point(0, 0.0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0, 0.0)?
-        .set_point(2, 0.0, 1.0, 0.0)?
-        .set_point(3, 0.0, 0.0, 1.0)?;
+        .set_point(0, 0, 0.0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0, 0.0)?
+        .set_point(2, 0, 0.0, 1.0, 0.0)?
+        .set_point(3, 0, 0.0, 0.0, 1.0)?;
     assert_eq!(
         tetgen.generate_mesh(false, false, None, None).err(),
         Some("cannot generate mesh of tetrahedra because not all facets are set")
@@ -129,10 +129,10 @@ fn generate_methods_capture_some_errors() -> Result<(), StrError> {
 fn generate_delaunay_works() -> Result<(), StrError> {
     let mut tetgen = Tetgen::new(4, None, None, None)?;
     tetgen
-        .set_point(0, 0.0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0, 0.0)?
-        .set_point(2, 0.0, 1.0, 0.0)?
-        .set_point(3, 0.0, 0.0, 1.0)?;
+        .set_point(0, 0, 0.0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0, 0.0)?
+        .set_point(2, 0, 0.0, 1.0, 0.0)?
+        .set_point(3, 0, 0.0, 0.0, 1.0)?;
     tetgen.generate_delaunay(false)?;
     assert_eq!(tetgen.out_ncell(), 1);
     assert_eq!(tetgen.out_npoint(), 4);
@@ -151,24 +151,24 @@ fn generate_mesh_works_1() -> Result<(), StrError> {
     )?;
     // inner cube
     tetgen
-        .set_point(0, 0.0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0, 0.0)?
-        .set_point(2, 1.0, 1.0, 0.0)?
-        .set_point(3, 0.0, 1.0, 0.0)?
-        .set_point(4, 0.0, 0.0, 1.0)?
-        .set_point(5, 1.0, 0.0, 1.0)?
-        .set_point(6, 1.0, 1.0, 1.0)?
-        .set_point(7, 0.0, 1.0, 1.0)?;
+        .set_point(0, 0, 0.0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0, 0.0)?
+        .set_point(2, 0, 1.0, 1.0, 0.0)?
+        .set_point(3, 0, 0.0, 1.0, 0.0)?
+        .set_point(4, 0, 0.0, 0.0, 1.0)?
+        .set_point(5, 0, 1.0, 0.0, 1.0)?
+        .set_point(6, 0, 1.0, 1.0, 1.0)?
+        .set_point(7, 0, 0.0, 1.0, 1.0)?;
     // outer cube
     tetgen
-        .set_point(8, -1.0, -1.0, -1.0)?
-        .set_point(9, 2.0, -1.0, -1.0)?
-        .set_point(10, 2.0, 2.0, -1.0)?
-        .set_point(11, -1.0, 2.0, -1.0)?
-        .set_point(12, -1.0, -1.0, 2.0)?
-        .set_point(13, 2.0, -1.0, 2.0)?
-        .set_point(14, 2.0, 2.0, 2.0)?
-        .set_point(15, -1.0, 2.0, 2.0)?;
+        .set_point(8, 0, -1.0, -1.0, -1.0)?
+        .set_point(9, 0, 2.0, -1.0, -1.0)?
+        .set_point(10, 0, 2.0, 2.0, -1.0)?
+        .set_point(11, 0, -1.0, 2.0, -1.0)?
+        .set_point(12, 0, -1.0, -1.0, 2.0)?
+        .set_point(13, 0, 2.0, -1.0, 2.0)?
+        .set_point(14, 0, 2.0, 2.0, 2.0)?
+        .set_point(15, 0, -1.0, 2.0, 2.0)?;
     // inner cube
     tetgen
         .set_facet_point(0, 0, 0)?

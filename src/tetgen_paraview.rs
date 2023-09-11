@@ -146,10 +146,10 @@ mod tests {
     fn tetgen_write_vtu() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         tetgen
-            .set_point(0, 0.0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0, 0.0)?
-            .set_point(2, 0.0, 1.0, 0.0)?
-            .set_point(3, 0.0, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0, 0.0)?
+            .set_point(3, 0, 0.0, 0.0, 1.0)?;
         tetgen.generate_delaunay(false)?;
         let file_path = "/tmp/tritet/test_tetgen_write_vtu.vtu";
         tetgen.write_vtu(file_path)?;

@@ -210,14 +210,14 @@ fn main() -> Result<(), StrError> {
 
     // set points
     tetgen
-        .set_point(0, 0.0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0, 0.0)?
-        .set_point(2, 1.0, 1.0, 0.0)?
-        .set_point(3, 0.0, 1.0, 0.0)?
-        .set_point(4, 0.0, 0.0, 1.0)?
-        .set_point(5, 1.0, 0.0, 1.0)?
-        .set_point(6, 1.0, 1.0, 1.0)?
-        .set_point(7, 0.0, 1.0, 1.0)?;
+        .set_point(0, 0, 0.0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0, 0.0)?
+        .set_point(2, 0, 1.0, 1.0, 0.0)?
+        .set_point(3, 0, 0.0, 1.0, 0.0)?
+        .set_point(4, 0, 0.0, 0.0, 1.0)?
+        .set_point(5, 0, 1.0, 0.0, 1.0)?
+        .set_point(6, 0, 1.0, 1.0, 1.0)?
+        .set_point(7, 0, 0.0, 1.0, 1.0)?;
 
     // generate Delaunay triangulation
     tetgen.generate_delaunay(false)?;
@@ -262,25 +262,25 @@ fn main() -> Result<(), StrError> {
 
     // inner cube
     tetgen
-        .set_point(0, 0.0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0, 0.0)?
-        .set_point(2, 1.0, 1.0, 0.0)?
-        .set_point(3, 0.0, 1.0, 0.0)?
-        .set_point(4, 0.0, 0.0, 1.0)?
-        .set_point(5, 1.0, 0.0, 1.0)?
-        .set_point(6, 1.0, 1.0, 1.0)?
-        .set_point(7, 0.0, 1.0, 1.0)?;
+        .set_point(0, 0, 0.0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0, 0.0)?
+        .set_point(2, 0, 1.0, 1.0, 0.0)?
+        .set_point(3, 0, 0.0, 1.0, 0.0)?
+        .set_point(4, 0, 0.0, 0.0, 1.0)?
+        .set_point(5, 0, 1.0, 0.0, 1.0)?
+        .set_point(6, 0, 1.0, 1.0, 1.0)?
+        .set_point(7, 0, 0.0, 1.0, 1.0)?;
 
     // outer cube
     tetgen
-        .set_point(8, -1.0, -1.0, -1.0)?
-        .set_point(9, 2.0, -1.0, -1.0)?
-        .set_point(10, 2.0, 2.0, -1.0)?
-        .set_point(11, -1.0, 2.0, -1.0)?
-        .set_point(12, -1.0, -1.0, 2.0)?
-        .set_point(13, 2.0, -1.0, 2.0)?
-        .set_point(14, 2.0, 2.0, 2.0)?
-        .set_point(15, -1.0, 2.0, 2.0)?;
+        .set_point(8,  0, -1.0, -1.0, -1.0)?
+        .set_point(9,  0, 2.0, -1.0, -1.0)?
+        .set_point(10, 0, 2.0, 2.0, -1.0)?
+        .set_point(11, 0, -1.0, 2.0, -1.0)?
+        .set_point(12, 0, -1.0, -1.0, 2.0)?
+        .set_point(13, 0, 2.0, -1.0, 2.0)?
+        .set_point(14, 0, 2.0, 2.0, 2.0)?
+        .set_point(15, 0, -1.0, 2.0, 2.0)?;
 
     // inner cube
     tetgen

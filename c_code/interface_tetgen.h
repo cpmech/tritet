@@ -14,7 +14,7 @@ struct ExtTetgen *tet_new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *
 
 void tet_drop_tetgen(struct ExtTetgen *tetgen);
 
-int32_t tet_set_point(struct ExtTetgen *tetgen, int32_t index, double x, double y, double z);
+int32_t tet_set_point(struct ExtTetgen *tetgen, int32_t index, int32_t marker, double x, double y, double z);
 
 int32_t tet_set_facet_point(struct ExtTetgen *tetgen, int32_t index, int32_t m, int32_t p);
 
@@ -33,6 +33,8 @@ int32_t tet_out_ncell(struct ExtTetgen *tetgen); // a "cell" here is a "tetrahed
 int32_t tet_out_cell_npoint(struct ExtTetgen *tetgen);
 
 double tet_out_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim);
+
+int32_t tet_out_point_marker(struct ExtTetgen *tetgen, int32_t index);
 
 int32_t tet_out_cell_point(struct ExtTetgen *tetgen, int32_t index, int32_t corner);
 
