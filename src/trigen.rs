@@ -998,7 +998,7 @@ mod tests {
     use crate::{StrError, VoronoiEdgePoint};
     use plotpy::Plot;
 
-    const GENERATE_FIGURES: bool = false;
+    const SAVE_FIGURE: bool = false;
 
     #[test]
     fn derive_works() {
@@ -1232,7 +1232,7 @@ mod tests {
             .set_segment(3, -40, 3, 0)?;
         trigen.generate_mesh(false, false, false, Some(0.1), None)?;
 
-        if GENERATE_FIGURES {
+        if SAVE_FIGURE {
             let mut plot = Plot::new();
             trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
             plot.set_equal_axes(true)
@@ -1298,7 +1298,7 @@ mod tests {
             .set_segment(3, -40, 3, 0)?;
         trigen.generate_mesh(false, false, true, Some(0.1), None)?;
 
-        if GENERATE_FIGURES {
+        if SAVE_FIGURE {
             let mut plot = Plot::new();
             trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
             plot.set_equal_axes(true)
@@ -1400,7 +1400,7 @@ mod tests {
         trigen.generate_mesh(false, true, false, Some(0.25), None)?;
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
-        if GENERATE_FIGURES {
+        if SAVE_FIGURE {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_draw_triangles_works.svg")?;
@@ -1421,7 +1421,7 @@ mod tests {
         assert_eq!(trigen.out_voronoi_npoint(), 4);
         let mut plot = Plot::new();
         trigen.draw_voronoi(&mut plot);
-        if GENERATE_FIGURES {
+        if SAVE_FIGURE {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_draw_voronoi_works.svg")?;
@@ -1448,7 +1448,7 @@ mod tests {
         assert_eq!(trigen.out_cell_attribute(1), 1);
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
-        if GENERATE_FIGURES {
+        if SAVE_FIGURE {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_mesh_3_works.svg")?;
@@ -1490,7 +1490,7 @@ mod tests {
 
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, Some(12.0), Some(20.0), None);
-        if GENERATE_FIGURES {
+        if SAVE_FIGURE {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_mesh_4_works.svg")?;

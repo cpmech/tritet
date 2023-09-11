@@ -54,6 +54,8 @@ extern "C" {
 /// use plotpy::Plot;
 /// use tritet::{StrError, Tetgen};
 ///
+/// const SAVE_FIGURE: bool = false;
+///
 /// fn main() -> Result<(), StrError> {
 ///     // allocate data for 4 points
 ///     let mut tetgen = Tetgen::new(5, None, None, None)?;
@@ -68,15 +70,18 @@ extern "C" {
 ///
 ///     // generate Delaunay triangulation
 ///     tetgen.generate_delaunay(false)?;
-///     assert_eq!(tetgen.out_ncell(), 3);
-///     assert_eq!(tetgen.out_npoint(), 5);
 ///
 ///     // draw edges of tetrahedra
-///     let mut plot = Plot::new();
-///     // tetgen.draw_wireframe(&mut plot, true, true, true, false, None, None, None);
-///     // plot.set_equal_axes(true)
-///     //    .set_figure_size_points(600.0, 600.0)
-///     //    .save("/tmp/tritet/doc_tetgen_delaunay_1.svg")?;
+///     if SAVE_FIGURE{
+///         let mut plot = Plot::new();
+///         tetgen.draw_wireframe(&mut plot, true, true, true, false, None, None, None);
+///         plot.set_equal_axes(true)
+///            .set_figure_size_points(600.0, 600.0)
+///            .save("/tmp/tritet/doc_tetgen_delaunay_1.svg")?;
+///     }
+///
+///     assert_eq!(tetgen.out_ncell(), 3);
+///     assert_eq!(tetgen.out_npoint(), 5);
 ///     Ok(())
 /// }
 /// ```
@@ -88,6 +93,8 @@ extern "C" {
 /// ```
 /// use plotpy::Plot;
 /// use tritet::{StrError, Tetgen};
+///
+/// const SAVE_FIGURE: bool = false;
 ///
 /// fn main() -> Result<(), StrError> {
 ///     // allocate data for 4 points
@@ -122,16 +129,20 @@ extern "C" {
 ///     tetgen.set_region(0, 1, 0.1, 0.9, 0.1, None)?;
 ///
 ///     // generate mesh
-///     tetgen.generate_mesh(false, false, Some(0.01), None)?;
-///     assert_eq!(tetgen.out_ncell(), 12);
-///     assert_eq!(tetgen.out_npoint(), 11);
+///     let global_max_volume = Some(0.5);
+///     tetgen.generate_mesh(false, false, global_max_volume, None)?;
 ///
 ///     // draw edges of tetrahedra
-///     let mut plot = Plot::new();
-///     // tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
-///     // plot.set_equal_axes(true)
-///     //     .set_figure_size_points(600.0, 600.0)
-///     //     .save("/tmp/tritet/doc_tetgen_mesh_1.svg")?;
+///     if SAVE_FIGURE{
+///         let mut plot = Plot::new();
+///         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+///         plot.set_equal_axes(true)
+///             .set_figure_size_points(600.0, 600.0)
+///             .save("/tmp/tritet/doc_tetgen_mesh_1.svg")?;
+///     }
+///
+///     assert_eq!(tetgen.out_ncell(), 7);
+///     assert_eq!(tetgen.out_npoint(), 10);
 ///     Ok(())
 /// }
 /// ```
@@ -427,7 +438,7 @@ impl Tetgen {
         &self,
         verbose: bool,
         o2: bool,
-        global_volume_area: Option<f64>,
+        global_max_volume: Option<f64>,
         global_min_angle: Option<f64>,
     ) -> Result<(), StrError> {
         if !self.all_points_set {
@@ -436,7 +447,7 @@ impl Tetgen {
         if !self.all_facets_set {
             return Err("cannot generate mesh of tetrahedra because not all facets are set");
         }
-        let max_volume = match global_volume_area {
+        let max_volume = match global_max_volume {
             Some(v) => v,
             None => 0.0,
         };
@@ -710,7 +721,7 @@ mod tests {
     use crate::StrError;
     use plotpy::Plot;
 
-    const GENERATE_FIGURES: bool = false;
+    const SAVE_FIGURE: bool = false;
 
     #[test]
     fn new_captures_some_errors() {
@@ -853,7 +864,7 @@ mod tests {
         assert_eq!(tetgen.out_npoint(), 4);
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
-        if GENERATE_FIGURES {
+        if SAVE_FIGURE {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/tetgen_draw_wireframe_works.svg")?;
@@ -878,7 +889,7 @@ mod tests {
         assert_eq!(tetgen.out_npoint(), 8);
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
-        if GENERATE_FIGURES {
+        if SAVE_FIGURE {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/tetgen_test_delaunay_1.svg")?;
@@ -981,20 +992,22 @@ mod tests {
             .set_facet_point(11, 3, 8 + 7)?;
         tetgen.set_region(0, 1, -0.9, -0.9, -0.9, None)?;
         tetgen.set_hole(0, 0.5, 0.5, 0.5)?;
-        tetgen.generate_mesh(false, false, None, None)?;
-        assert_eq!(tetgen.out_ncell(), 116);
-        assert_eq!(tetgen.out_npoint(), 50);
-        assert_eq!(tetgen.out_point_marker(0), -100);
-        assert_eq!(tetgen.out_point_marker(1), -200);
-        assert_eq!(tetgen.out_point_marker(2), -300);
+        tetgen.generate_mesh(false, false, None, Some(1.0))?;
+
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
-        if GENERATE_FIGURES {
+        if SAVE_FIGURE {
             tetgen.write_vtu("/tmp/tritet/tetgen_test_mesh_1.vtu")?;
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/tetgen_test_mesh_1.svg")?;
         }
+
+        assert_eq!(tetgen.out_ncell(), 84);
+        assert_eq!(tetgen.out_npoint(), 34);
+        assert_eq!(tetgen.out_point_marker(0), -100);
+        assert_eq!(tetgen.out_point_marker(1), -200);
+        assert_eq!(tetgen.out_point_marker(2), -300);
         Ok(())
     }
 }

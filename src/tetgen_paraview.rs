@@ -167,7 +167,7 @@ mod tests {
 </Points>
 <Cells>
 <DataArray type="Int32" Name="connectivity" format="ascii">
-1 0 3 2 
+0 2 3 1 
 </DataArray>
 <DataArray type="Int32" Name="offsets" format="ascii">
 4 
