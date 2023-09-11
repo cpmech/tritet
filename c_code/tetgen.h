@@ -50,7 +50,9 @@
 #include <math.h>
 #include <time.h>
 #include <assert.h> 
-#include <map> // dorival / gemlab
+
+#include <tuple> // dorival
+#include <map> // dorival
 
 // The types 'intptr_t' and 'uintptr_t' are signed and unsigned integer types,
 //   respectively. They are guaranteed to be the same width as a pointer.
@@ -286,10 +288,8 @@ public:
   int *adjtetlist;
   int numberoftrifaces;
 
-
-  struct facemarkers { int m[4]; }; // dorival / gemlab
-  std::map<int,facemarkers> tetfacemarkers; // dorival / gemlab
-
+  typedef std::tuple<int,int,int> face_key_t;
+  std::map<face_key_t,int> tetfacemarkers; // dorival
 
   // 'edgelist':  An array of edge endpoints.  The first edge's endpoints
   //   are at indices [0] and [1], followed by the remaining edges.
@@ -2212,7 +2212,7 @@ public:
     if (highordertable != NULL) {
       delete [] highordertable;
     }
-    //printf("[1;31mmemory freed[0m\n"); // dorival / gemlab
+    //printf("[1;31mmemory freed[0m\n"); // dorival
   }
 
   ~tetgenmesh()
@@ -2243,7 +2243,7 @@ void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
 #ifdef TETLIBRARY
 void tetrahedralize(char const *switches, tetgenio *in, tetgenio *out,
                     tetgenio *addin = NULL, tetgenio *bgmin = NULL,
-                    char const *outfilename=NULL); // dorival / gemlab
+                    char const *outfilename=NULL); // dorival
 #endif // #ifdef TETLIBRARY
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2255,8 +2255,8 @@ void tetrahedralize(char const *switches, tetgenio *in, tetgenio *out,
 inline void terminatetetgen(tetgenmesh *m, int x)
 {
   // Release the allocated memory.
-  //printf("about to release memory\n"); // dorival / gemlab
-  //if (m) { // dorival / gemlab => this is redundant since the destructor already calls freememory
+  //printf("about to release memory\n"); // dorival
+  //if (m) { // dorival => this is redundant since the destructor already calls freememory
     //m->freememory();
   //}
 #ifdef TETLIBRARY
@@ -3338,7 +3338,7 @@ inline REAL tetgenmesh::norm2(REAL x, REAL y, REAL z)
   return (x) * (x) + (y) * (y) + (z) * (z);
 }
 
-#undef REAL // dorival / gemlab
+#undef REAL // dorival
 
 #endif // #ifndef tetgenH
 

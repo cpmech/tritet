@@ -17,12 +17,14 @@
 
 // #define DORIDEBUG
 #ifdef DORIDEBUG
- #include <iomanip>  // dorival / gemlab
- #include <iostream> // dorival / gemlab
- #include <sstream>  // dorival / gemlab
+ #include <iomanip>  // dorival
+ #include <iostream> // dorival
+ #include <sstream>  // dorival
 #endif
 
-#define REAL double // dorival / gemlab
+#include "auxiliary.h" // dorival
+
+#define REAL double // dorival
 
 //// io_cxx ///////////////////////////////////////////////////////////////////
 ////                                                                       ////
@@ -2186,24 +2188,24 @@ bool tetgenio::load_vtk(char* filebasename)
         for(i = 0; i < nverts; i++) {
           coord = &pointlist[i * 3];
           if(!strcmp(fmt, "double")) {
-            size_t res = fread((char*)(&(coord[0])), sizeof(double), 1, fp); // dorival / gemlab
-            if (res != 1) { printf("Error: cannot fread @ line 2190\n"); } // dorival / gemlab
-            res = fread((char*)(&(coord[1])), sizeof(double), 1, fp); // dorival / gemlab
-            if (res != 1) { printf("Error: cannot fread @ line 2192\n"); } // dorival / gemlab
-            res = fread((char*)(&(coord[2])), sizeof(double), 1, fp); // dorival / gemlab
-            if (res != 1) { printf("Error: cannot fread @ line 2193\n"); } // dorival / gemlab
+            size_t res = fread((char*)(&(coord[0])), sizeof(double), 1, fp); // dorival
+            if (res != 1) { printf("Error: cannot fread @ line 2190\n"); } // dorival
+            res = fread((char*)(&(coord[1])), sizeof(double), 1, fp); // dorival
+            if (res != 1) { printf("Error: cannot fread @ line 2192\n"); } // dorival
+            res = fread((char*)(&(coord[2])), sizeof(double), 1, fp); // dorival
+            if (res != 1) { printf("Error: cannot fread @ line 2193\n"); } // dorival
             if(ImALittleEndian){
               swapBytes((unsigned char *) &(coord[0]), sizeof(coord[0]));
               swapBytes((unsigned char *) &(coord[1]), sizeof(coord[1]));
               swapBytes((unsigned char *) &(coord[2]), sizeof(coord[2]));
             }
           } else if(!strcmp(fmt, "float")) {
-            size_t res = fread((char*)(&_x), sizeof(float), 1, fp); // dorival / gemlab
-            if (res != 1) { printf("Error: cannot fread @ line 2202\n"); } // dorival / gemlab
-            res = fread((char*)(&_y), sizeof(float), 1, fp); // dorival / gemlab
-            if (res != 1) { printf("Error: cannot fread @ line 2203\n"); } // dorival / gemlab
-            res = fread((char*)(&_z), sizeof(float), 1, fp); // dorival / gemlab
-            if (res != 1) { printf("Error: cannot fread @ line 2205\n"); } // dorival / gemlab
+            size_t res = fread((char*)(&_x), sizeof(float), 1, fp); // dorival
+            if (res != 1) { printf("Error: cannot fread @ line 2202\n"); } // dorival
+            res = fread((char*)(&_y), sizeof(float), 1, fp); // dorival
+            if (res != 1) { printf("Error: cannot fread @ line 2203\n"); } // dorival
+            res = fread((char*)(&_z), sizeof(float), 1, fp); // dorival
+            if (res != 1) { printf("Error: cannot fread @ line 2205\n"); } // dorival
             if(ImALittleEndian){
               swapBytes((unsigned char *) &_x, sizeof(_x));
               swapBytes((unsigned char *) &_y, sizeof(_y));
@@ -2252,8 +2254,8 @@ bool tetgenio::load_vtk(char* filebasename)
 
       if(!strcmp(mode, "BINARY")) {
         for(i = 0; i < nfaces; i++){
-          size_t res = fread((char*)(&nn), sizeof(int), 1, fp); // dorival / gemlab
-          if (res != 1) { printf("Error: cannot fread @ line 2255\n"); } // dorival / gemlab
+          size_t res = fread((char*)(&nn), sizeof(int), 1, fp); // dorival
+          if (res != 1) { printf("Error: cannot fread @ line 2255\n"); } // dorival
           if(ImALittleEndian){
             swapBytes((unsigned char *) &nn, sizeof(nn));
           }
@@ -2265,12 +2267,12 @@ bool tetgenio::load_vtk(char* filebasename)
           }
 
           if(nn == 3){
-            size_t res = fread((char*)(&id1), sizeof(int), 1, fp); // dorival / gemlab
-            if (res != 1) { printf("Error: cannot fread @ line 2268\n"); } // dorival / gemlab
-            res = fread((char*)(&id2), sizeof(int), 1, fp); // dorival / gemlab
-            if (res != 1) { printf("Error: cannot fread @ line 2270\n"); } // dorival / gemlab
-            res = fread((char*)(&id3), sizeof(int), 1, fp); // dorival / gemlab
-            if (res != 1) { printf("Error: cannot fread @ line 2272\n"); } // dorival / gemlab
+            size_t res = fread((char*)(&id1), sizeof(int), 1, fp); // dorival
+            if (res != 1) { printf("Error: cannot fread @ line 2268\n"); } // dorival
+            res = fread((char*)(&id2), sizeof(int), 1, fp); // dorival
+            if (res != 1) { printf("Error: cannot fread @ line 2270\n"); } // dorival
+            res = fread((char*)(&id3), sizeof(int), 1, fp); // dorival
+            if (res != 1) { printf("Error: cannot fread @ line 2272\n"); } // dorival
             if(ImALittleEndian){
               swapBytes((unsigned char *) &id1, sizeof(id1));
               swapBytes((unsigned char *) &id2, sizeof(id2));
@@ -29203,11 +29205,15 @@ void tetgenmesh::outfaces(tetgenio* out)
                 faceid = shellmark(checkmark) - 1;
                 marker = in->facetmarkerlist[faceid];
 
-                // set marker into map / dorival / gemlab
-                if (out != (tetgenio *) NULL) { // dorival / gemlab
-                    //printf("icell=%d idx=%d tag=%d\n", elemindex(tface.tet), tface.ver, marker); // dorival / gemlab
-                    out->tetfacemarkers[elemindex(tface.tet)].m[tface.ver] = marker; // dorival / gemlab
-                } // dorival / gemlab
+                // add marker to map // dorival
+                if (out != (tetgenio *) NULL) { // dorival
+                    int point_a = pointmark(torg) - shift; // dorival
+                    int point_b = pointmark(tdest) - shift; // dorival
+                    int point_c = pointmark(tapex) - shift; // dorival
+                    sort_3(&point_a, &point_b, &point_c); // dorival
+                    auto face_key = std::tuple<int, int, int>{point_a, point_b, point_c}; // dorival
+                    out->tetfacemarkers[face_key] = marker; // dorival
+                } // dorival
 
               } else {
                 marker = 1; // The default marker for subface is 1.
@@ -30870,7 +30876,7 @@ void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
 {
   #ifdef DORIDEBUG
   #define _P std::setw(23)<<std::scientific<<std::setprecision(15)
-  // dorival / gemlab / debug / START
+  // dorival / debug / START
   if (true) {
     std::ostringstream oss;
     // points
@@ -30918,7 +30924,7 @@ void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
     }
     printf("%s\n", oss.str().c_str());
   }
-  // dorival / gemlab / debug / END
+  // dorival / debug / END
   #undef _P
   #endif // DORIDEBUG
 
@@ -31218,8 +31224,8 @@ void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
     m.outmesh2medit(b->outfilename); 
   }
 
-  //if (!out && b->vtkview) { // dorival / gemlab
-  if (b->vtkview) { // dorival / gemlab
+  //if (!out && b->vtkview) { // dorival
+  if (b->vtkview) { // dorival
     m.outmesh2vtk(b->outfilename); 
   }
 
@@ -31275,7 +31281,7 @@ int main(int argc, char *argv[])
 
 void tetrahedralize(char const *switches, tetgenio *in, tetgenio *out, 
                     tetgenio *addin, tetgenio *bgmin,
-                    char const *outfilename) // dorival / gemlab
+                    char const *outfilename) // dorival
 
 #endif // not TETLIBRARY
 
@@ -31319,10 +31325,10 @@ void tetrahedralize(char const *switches, tetgenio *in, tetgenio *out,
     terminatetetgen(NULL, 10);
   }
 
-  if (outfilename != NULL) { // dorival / gemlab
+  if (outfilename != NULL) { // dorival
       b.vtkview = 1;
-      strcpy(b.outfilename, outfilename); // dorival / gemlab
-  } // dorival / gemlab
+      strcpy(b.outfilename, outfilename); // dorival
+  } // dorival
 
   tetrahedralize(&b, in, out, addin, bgmin);
 

@@ -15,6 +15,7 @@ extern "C" {
     fn tet_drop_tetgen(tetgen: *mut ExtTetgen);
     fn tet_set_point(tetgen: *mut ExtTetgen, index: i32, marker: i32, x: f64, y: f64, z: f64) -> i32;
     fn tet_set_facet_point(tetgen: *mut ExtTetgen, index: i32, m: i32, p: i32) -> i32;
+    fn tet_set_facet_marker(tetgen: *mut ExtTetgen, index: i32, marker: i32) -> i32;
     fn tet_set_region(
         tetgen: *mut ExtTetgen,
         index: i32,
@@ -40,6 +41,7 @@ extern "C" {
     fn tet_out_point_marker(tetgen: *mut ExtTetgen, index: i32) -> i32;
     fn tet_out_cell_point(tetgen: *mut ExtTetgen, index: i32, corner: i32) -> i32;
     fn tet_out_cell_attribute(tetgen: *mut ExtTetgen, index: i32) -> i32;
+    fn tet_out_face_marker(tetgen: *mut ExtTetgen, a: i32, b: i32, c: i32) -> i32;
 }
 
 /// Implements high-level functions to call Si's Tetgen Cpp-Code
@@ -308,6 +310,35 @@ impl Tetgen {
         Ok(self)
     }
 
+    /// Sets the facet's marker (OPTIONAL)
+    ///
+    /// # Input
+    ///
+    /// * `index` -- is the index of the facet and goes from 0 to `nfacet` (passed down to `new`)
+    /// * `marker` -- is the marker
+    pub fn set_facet_marker(&mut self, index: usize, marker: i32) -> Result<&mut Self, StrError> {
+        match &self.facet_npoint {
+            Some(n) => n,
+            None => return Err("cannot set facet marker because facet_npoint is None"),
+        };
+        unsafe {
+            let status = tet_set_facet_marker(self.ext_tetgen, to_i32(index), marker);
+            if status != constants::TRITET_SUCCESS {
+                if status == constants::TRITET_ERROR_NULL_DATA {
+                    return Err("INTERNAL ERROR: found NULL data");
+                }
+                if status == constants::TRITET_ERROR_NULL_FACET_LIST {
+                    return Err("INTERNAL ERROR: found NULL facet list");
+                }
+                if status == constants::TRITET_ERROR_INVALID_FACET_INDEX {
+                    return Err("index of facet is out of bounds");
+                }
+                return Err("INTERNAL ERROR: some error occurred");
+            }
+        }
+        Ok(self)
+    }
+
     /// Marks a region within the Piecewise Linear Complexes (PLCs)
     ///
     /// # Input
@@ -501,7 +532,7 @@ impl Tetgen {
     ///
     /// # Input
     ///
-    /// * `index` -- is the index of the point and goes from 0 to `npoint`
+    /// * `index` -- is the index of the point and goes from `0` to `out_npoint`
     /// * `dim` -- is the space dimension index: 0, 1, or 2
     ///
     /// # Warning
@@ -558,8 +589,8 @@ impl Tetgen {
     ///
     /// # Input
     ///
-    /// * `index` -- is the index of the tetrahedron and goes from 0 to `ntetrahedron`
-    /// * `m` -- is the local index of the node and goes from 0 to `nnode`
+    /// * `index` -- is the index of the tetrahedron and goes from `0` to `out_ncell`
+    /// * `m` -- is the local index of the node and goes from `0` to `out_cell_npoint`
     ///
     /// # Warning
     ///
@@ -573,11 +604,31 @@ impl Tetgen {
 
     /// Returns the attribute ID of an output cell (aka tetrahedron)
     ///
+    /// # Input
+    ///
+    /// * `index` -- is the index of the tetrahedron and goes from 0 to `out_ncell`
+    ///
     /// # Warning
     ///
     /// This function will return 0 if `index` is out of range.
     pub fn out_cell_attribute(&self, index: usize) -> usize {
         unsafe { tet_out_cell_attribute(self.ext_tetgen, to_i32(index)) as usize }
+    }
+
+    /// Returns the marker associated with an output face
+    ///
+    /// # Input
+    ///
+    /// * `(a, b, c)` -- is a sorted list of global point ids
+    /// * `a` -- the first point on the face
+    /// * `b` -- the second point on the face
+    /// * `c` -- the third point on the face
+    ///
+    /// # Output
+    ///
+    /// Returns the marker associate with face `(a, b, c)` or zero if no marker is defined
+    pub fn out_face_marker(&self, a: usize, b: usize, c: usize) -> i32 {
+        unsafe { tet_out_face_marker(self.ext_tetgen, to_i32(a), to_i32(b), to_i32(c)) }
     }
 
     /// Draws wireframe representing the edges of tetrahedra
@@ -899,6 +950,110 @@ mod tests {
 
     #[test]
     fn generate_mesh_works_1() -> Result<(), StrError> {
+        let mut tetgen = Tetgen::new(8, Some(vec![4, 4, 4, 4, 4, 4]), Some(1), None)?;
+        tetgen
+            .set_point(0, -100, 0.0, 0.0, 0.0)?
+            .set_point(1, -200, 1.0, 0.0, 0.0)?
+            .set_point(2, -300, 1.0, 1.0, 0.0)?
+            .set_point(3, -400, 0.0, 1.0, 0.0)?
+            .set_point(4, -500, 0.0, 0.0, 1.0)?
+            .set_point(5, -600, 1.0, 0.0, 1.0)?
+            .set_point(6, -700, 1.0, 1.0, 1.0)?
+            .set_point(7, -800, 0.0, 1.0, 1.0)?;
+        tetgen
+            .set_facet_point(0, 0, 0)?
+            .set_facet_point(0, 1, 4)?
+            .set_facet_point(0, 2, 7)?
+            .set_facet_point(0, 3, 3)?; // -x
+        tetgen
+            .set_facet_point(1, 0, 1)?
+            .set_facet_point(1, 1, 2)?
+            .set_facet_point(1, 2, 6)?
+            .set_facet_point(1, 3, 5)?; // +x
+        tetgen
+            .set_facet_point(2, 0, 0)?
+            .set_facet_point(2, 1, 1)?
+            .set_facet_point(2, 2, 5)?
+            .set_facet_point(2, 3, 4)?; // -y
+        tetgen
+            .set_facet_point(3, 0, 2)?
+            .set_facet_point(3, 1, 3)?
+            .set_facet_point(3, 2, 7)?
+            .set_facet_point(3, 3, 6)?; // +y
+        tetgen
+            .set_facet_point(4, 0, 0)?
+            .set_facet_point(4, 1, 3)?
+            .set_facet_point(4, 2, 2)?
+            .set_facet_point(4, 3, 1)?; // -z
+        tetgen
+            .set_facet_point(5, 0, 4)?
+            .set_facet_point(5, 1, 5)?
+            .set_facet_point(5, 2, 6)?
+            .set_facet_point(5, 3, 7)?; // +z
+        tetgen
+            .set_facet_marker(0, -10)? // -x
+            .set_facet_marker(1, -20)? // +x
+            .set_facet_marker(2, -30)? // -y
+            .set_facet_marker(3, -40)? // +y
+            .set_facet_marker(4, -50)? // -z
+            .set_facet_marker(5, -60)?; // +z
+
+        tetgen.set_region(0, 1, 0.5, 0.5, 0.5, None)?;
+        tetgen.generate_mesh(false, false, None, None)?;
+
+        let mut plot = Plot::new();
+        tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+        if SAVE_FIGURE {
+            tetgen.write_vtu("/tmp/tritet/tetgen_test_mesh_1.vtu")?;
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/tetgen_test_mesh_1.svg")?;
+        }
+
+        assert_eq!(tetgen.out_ncell(), 6);
+        assert_eq!(tetgen.out_npoint(), 8);
+        assert_eq!(tetgen.out_point_marker(0), -100);
+        assert_eq!(tetgen.out_point_marker(1), -200);
+        assert_eq!(tetgen.out_point_marker(2), -300);
+        assert_eq!(tetgen.out_point_marker(3), -400);
+        assert_eq!(tetgen.out_point_marker(4), -500);
+        assert_eq!(tetgen.out_point_marker(5), -600);
+        assert_eq!(tetgen.out_point_marker(6), -700);
+        assert_eq!(tetgen.out_point_marker(7), -800);
+
+        let z4 = [0, 1, 2, 3];
+
+        let pp0: Vec<_> = z4.iter().map(|m| tetgen.out_cell_point(0, *m)).collect();
+        let pp1: Vec<_> = z4.iter().map(|m| tetgen.out_cell_point(1, *m)).collect();
+        let pp2: Vec<_> = z4.iter().map(|m| tetgen.out_cell_point(2, *m)).collect();
+        let pp3: Vec<_> = z4.iter().map(|m| tetgen.out_cell_point(3, *m)).collect();
+        let pp4: Vec<_> = z4.iter().map(|m| tetgen.out_cell_point(4, *m)).collect();
+        let pp5: Vec<_> = z4.iter().map(|m| tetgen.out_cell_point(5, *m)).collect();
+        assert_eq!(pp0, &[0, 3, 7, 2]);
+        assert_eq!(pp1, &[0, 7, 4, 6]);
+        assert_eq!(pp2, &[5, 0, 4, 6]);
+        assert_eq!(pp3, &[0, 7, 6, 2]);
+        assert_eq!(pp4, &[5, 0, 6, 1]);
+        assert_eq!(pp5, &[6, 0, 2, 1]);
+
+        assert_eq!(tetgen.out_face_marker(0, 4, 7), -10); // -x
+        assert_eq!(tetgen.out_face_marker(0, 3, 7), -10); // -x
+        assert_eq!(tetgen.out_face_marker(1, 2, 6), -20); // +x
+        assert_eq!(tetgen.out_face_marker(1, 5, 6), -20); // +x
+        assert_eq!(tetgen.out_face_marker(0, 1, 5), -30); // -y
+        assert_eq!(tetgen.out_face_marker(0, 4, 5), -30); // -y
+        assert_eq!(tetgen.out_face_marker(2, 3, 7), -40); // +y
+        assert_eq!(tetgen.out_face_marker(2, 6, 7), -40); // +y
+        assert_eq!(tetgen.out_face_marker(0, 1, 2), -50); // -z
+        assert_eq!(tetgen.out_face_marker(0, 2, 3), -50); // -z
+        assert_eq!(tetgen.out_face_marker(4, 5, 6), -60); // +z
+        assert_eq!(tetgen.out_face_marker(4, 6, 7), -60); // +z
+
+        Ok(())
+    }
+
+    #[test]
+    fn generate_mesh_works_2() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(
             16,
             Some(vec![
@@ -997,10 +1152,10 @@ mod tests {
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
         if SAVE_FIGURE {
-            tetgen.write_vtu("/tmp/tritet/tetgen_test_mesh_1.vtu")?;
+            tetgen.write_vtu("/tmp/tritet/tetgen_test_mesh_2.vtu")?;
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
-                .save("/tmp/tritet/tetgen_test_mesh_1.svg")?;
+                .save("/tmp/tritet/tetgen_test_mesh_2.svg")?;
         }
 
         assert_eq!(tetgen.out_ncell(), 84);

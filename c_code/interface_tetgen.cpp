@@ -250,10 +250,11 @@ int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_
     }
 
     // Generate mesh
-    // Switches:
+    // Selected:
     // * `p` -- tetrahedralize a piecewise linear complex (PLC)
     // * `z` -- number everything from zero (z)
     // * `A` -- assign a regional attribute to each element (A)
+    // * `f` -- Outputs all faces to .face file
     // All:
     // * `b` -- NOT AVAILABLE / DISABLED
     // * `p` -- Tetrahedralize a piecewise linear complex (PLC)
@@ -291,7 +292,7 @@ int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_
     // * `V` -- Verbose: Detailed information, more terminal output
     // * `h` -- Help: A brief instruction for using TetGen
     char command[128];
-    strcpy(command, "pzA");
+    strcpy(command, "pzAf");
     if (verbose == TRITET_FALSE) {
         strcat(command, "Q");
     }
@@ -352,7 +353,7 @@ double tet_out_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim) {
     if (tetgen == NULL) {
         return 0.0;
     }
-    if (index < tetgen->output.numberofpoints && (dim == 0 || dim == 1 || dim == 2)) {
+    if (index >= 0 && index < tetgen->output.numberofpoints && (dim == 0 || dim == 1 || dim == 2)) {
         return tetgen->output.pointlist[index * 3 + dim];
     } else {
         return 0.0;
@@ -363,7 +364,7 @@ int32_t tet_out_point_marker(struct ExtTetgen *tetgen, int32_t index) {
     if (tetgen == NULL) {
         return 0;
     }
-    if (index < tetgen->output.numberofpoints) {
+    if (index >= 0 && index < tetgen->output.numberofpoints) {
         return tetgen->output.pointmarkerlist[index];
     } else {
         return 0;
@@ -374,7 +375,7 @@ int32_t tet_out_cell_point(struct ExtTetgen *tetgen, int32_t index, int32_t corn
     if (tetgen == NULL) {
         return 0;
     }
-    if (index < tetgen->output.numberoftetrahedra && corner < tetgen->output.numberofcorners) {
+    if (index >= 0 && index < tetgen->output.numberoftetrahedra && corner < tetgen->output.numberofcorners) {
         return tetgen->output.tetrahedronlist[index * tetgen->output.numberofcorners + corner];
     } else {
         return 0;
@@ -385,8 +386,21 @@ int32_t tet_out_cell_attribute(struct ExtTetgen *tetgen, int32_t index) {
     if (tetgen == NULL) {
         return 0;
     }
-    if (index < tetgen->output.numberoftetrahedra && tetgen->output.numberoftetrahedronattributes > 0) {
+    if (index >= 0 && index < tetgen->output.numberoftetrahedra && tetgen->output.numberoftetrahedronattributes > 0) {
         return tetgen->output.tetrahedronattributelist[index * tetgen->output.numberoftetrahedronattributes];
+    } else {
+        return 0;
+    }
+}
+
+int32_t tet_out_face_marker(struct ExtTetgen *tetgen, int32_t a, int32_t b, int32_t c) {
+    if (tetgen == NULL) {
+        return 0;
+    }
+    auto face_key = std::tuple<int, int, int>{a, b, c};
+    std::map<tetgenio::face_key_t, int>::const_iterator search = tetgen->output.tetfacemarkers.find(face_key);
+    if (search != tetgen->output.tetfacemarkers.end()) {
+        return search->second;
     } else {
         return 0;
     }

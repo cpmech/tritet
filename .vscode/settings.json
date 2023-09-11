@@ -45,6 +45,7 @@
     "reporttriangles",
     "segmentlist",
     "segmentmarkerlist",
+    "tetfacemarkers",
     "tetrahedralization",
     "tetrahedralize",
     "tetrahedronattributelist",
