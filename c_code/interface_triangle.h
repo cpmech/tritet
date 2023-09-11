@@ -45,6 +45,8 @@ int32_t tri_out_cell_npoint(struct ExtTrigen *trigen);
 
 double tri_out_point(struct ExtTrigen *trigen, int32_t index, int32_t dim);
 
+int32_t tri_out_point_marker(struct ExtTrigen *trigen, int32_t index);
+
 int32_t tri_out_segment_point(struct ExtTrigen *trigen, int32_t index, int32_t side);
 
 int32_t tri_out_segment_marker(struct ExtTrigen *trigen, int32_t index);

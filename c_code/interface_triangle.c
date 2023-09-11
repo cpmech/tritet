@@ -133,6 +133,13 @@ struct ExtTrigen *tri_new_trigen(int32_t npoint, int32_t nsegment, int32_t nregi
     }
     trigen->input.numberofpoints = npoint;
 
+    // point markers
+    trigen->input.pointmarkerlist = (int32_t *)malloc(npoint * sizeof(int32_t));
+    if (trigen->input.pointmarkerlist == NULL) {
+        free(trigen);
+        return NULL;
+    }
+
     // segments
     if (nsegment > 0) {
         trigen->input.segmentlist = (int32_t *)malloc(nsegment * 2 * sizeof(int32_t));
@@ -197,6 +204,7 @@ int32_t tri_set_point(struct ExtTrigen *trigen, int32_t index, int32_t marker, d
     }
     trigen->input.pointlist[index * 2] = x;
     trigen->input.pointlist[index * 2 + 1] = y;
+    trigen->input.pointmarkerlist[index] = marker;
     return TRITET_SUCCESS;
 }
 
@@ -413,6 +421,17 @@ double tri_out_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
         return trigen->output.pointlist[index * 2 + dim];
     } else {
         return 0.0;
+    }
+}
+
+int32_t tri_out_point_marker(struct ExtTrigen *trigen, int32_t index) {
+    if (trigen == NULL) {
+        return 0;
+    }
+    if (index < trigen->output.numberofpoints) {
+        return trigen->output.pointmarkerlist[index];
+    } else {
+        return 0;
     }
 }
 

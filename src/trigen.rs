@@ -32,6 +32,7 @@ extern "C" {
     fn tri_out_ncell(trigen: *mut ExtTrigen) -> i32;
     fn tri_out_cell_npoint(trigen: *mut ExtTrigen) -> i32;
     fn tri_out_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn tri_out_point_marker(trigen: *mut ExtTrigen, index: i32) -> i32;
     fn tri_out_segment_point(trigen: *mut ExtTrigen, index: i32, side: i32) -> i32;
     fn tri_out_segment_marker(trigen: *mut ExtTrigen, index: i32) -> i32;
     fn tri_out_cell_point(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
@@ -322,6 +323,15 @@ impl Trigen {
     /// * `marker` -- is a marker for the point
     /// * `x` -- is x-coordinate of the point
     /// * `y` -- is y-coordinate of the point
+    ///
+    /// # Note about boundary markers -- by J.R.Shewchuk
+    ///
+    /// The boundary marker associated with each vertex in the output is chosen as follows:
+    ///
+    /// * If a vertex is assigned a nonzero boundary marker in the input, then it is assigned the same marker in the output.
+    /// * Otherwise, if the vertex lies on a PSLG segment (including the segment's endpoints) with a nonzero boundary marker, then the vertex is assigned the same marker. If the vertex lies on several such segments, one of the markers is chosen arbitrarily.
+    /// * Otherwise, if the vertex occurs on a boundary of the triangulation, then the vertex is assigned the marker one (1).
+    /// * Otherwise, the vertex is assigned the marker zero (0).
     pub fn set_point(&mut self, index: usize, marker: i32, x: f64, y: f64) -> Result<&mut Self, StrError> {
         unsafe {
             let status = tri_set_point(self.ext_triangle, to_i32(index), marker, x, y);
@@ -354,6 +364,14 @@ impl Trigen {
     /// * `marker` -- a marker to identify the segment (e.g., a boundary segment)
     /// * `a` -- is the ID (index) of the first point on the segment
     /// * `b` -- is the ID (index) of the second point on the segment
+    ///
+    /// # Note about boundary markers -- by J.R.Shewchuk
+    ///
+    /// The boundary marker associated with each segment in the output is chosen as follows:
+    ///
+    /// * If an output edge is part or all of a PSLG segment with a nonzero boundary marker, then the edge is assigned the same marker as the segment.
+    /// * Otherwise, if the edge occurs on a boundary of the triangulation (including boundaries of holes), then the edge is assigned the marker one (1).
+    /// * Otherwise, the edge is assigned the marker zero (0).
     pub fn set_segment(&mut self, index: usize, marker: i32, a: usize, b: usize) -> Result<&mut Self, StrError> {
         let nsegment = match self.nsegment {
             Some(n) => n,
@@ -622,6 +640,28 @@ impl Trigen {
         unsafe { tri_out_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
+    /// Returns the marker of an output point
+    ///
+    /// # Input
+    ///
+    /// * `index` -- is the index of the point and goes from `0` to `out_npoint`
+    ///
+    /// # Warning
+    ///
+    /// This function will return zero values if either `index` is out of range.
+    ///
+    /// # Note about boundary markers -- by J.R.Shewchuk
+    ///
+    /// The boundary marker associated with each vertex in the output is chosen as follows:
+    ///
+    /// * If a vertex is assigned a nonzero boundary marker in the input, then it is assigned the same marker in the output.
+    /// * Otherwise, if the vertex lies on a PSLG segment (including the segment's endpoints) with a nonzero boundary marker, then the vertex is assigned the same marker. If the vertex lies on several such segments, one of the markers is chosen arbitrarily.
+    /// * Otherwise, if the vertex occurs on a boundary of the triangulation, then the vertex is assigned the marker one (1).
+    /// * Otherwise, the vertex is assigned the marker zero (0).
+    pub fn out_point_marker(&self, index: usize) -> i32 {
+        unsafe { tri_out_point_marker(self.ext_triangle, to_i32(index)) }
+    }
+
     /// Returns the ID of a point of a segment generated on the PSLG
     ///
     /// # Input
@@ -645,6 +685,14 @@ impl Trigen {
     /// # Warning
     ///
     /// This function will return zero values if the `index` is out of range.
+    ///
+    /// # Note about boundary markers -- by J.R.Shewchuk
+    ///
+    /// The boundary marker associated with each segment in the output is chosen as follows:
+    ///
+    /// * If an output edge is part or all of a PSLG segment with a nonzero boundary marker, then the edge is assigned the same marker as the segment.
+    /// * Otherwise, if the edge occurs on a boundary of the triangulation (including boundaries of holes), then the edge is assigned the marker one (1).
+    /// * Otherwise, the edge is assigned the marker zero (0).
     pub fn out_segment_marker(&self, index: usize) -> i32 {
         unsafe { tri_out_segment_marker(self.ext_triangle, to_i32(index)) }
     }
@@ -1141,15 +1189,16 @@ mod tests {
     fn mesh_1_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, Some(3), None, None)?;
         trigen
-            .set_point(0, 0, 0.0, 0.0)?
-            .set_point(1, 0, 1.0, 0.0)?
-            .set_point(2, 0, 0.0, 1.0)?;
+            .set_point(0, -100, 0.0, 0.0)?
+            .set_point(1, -200, 1.0, 0.0)?
+            .set_point(2, -300, 0.0, 1.0)?;
         trigen
             .set_segment(0, -10, 0, 1)?
             .set_segment(1, -20, 1, 2)?
             .set_segment(2, -30, 2, 0)?;
         trigen.generate_mesh(false, false, false, None, None)?;
         assert_eq!(trigen.out_npoint(), 3);
+        assert_eq!(trigen.out_nsegment(), 3);
         assert_eq!(trigen.out_ncell(), 1);
         assert_eq!(trigen.out_cell_npoint(), 3);
         assert_eq!(trigen.out_point(0, 0), 0.0);
@@ -1158,6 +1207,12 @@ mod tests {
         assert_eq!(trigen.out_point(1, 1), 0.0);
         assert_eq!(trigen.out_point(2, 0), 0.0);
         assert_eq!(trigen.out_point(2, 1), 1.0);
+        assert_eq!(trigen.out_point_marker(0), -100);
+        assert_eq!(trigen.out_point_marker(1), -200);
+        assert_eq!(trigen.out_point_marker(2), -300);
+        assert_eq!(trigen.out_segment_marker(0), -10);
+        assert_eq!(trigen.out_segment_marker(1), -20);
+        assert_eq!(trigen.out_segment_marker(2), -30);
         assert_eq!(trigen.out_cell_point(0, 0), 0);
         assert_eq!(trigen.out_cell_point(0, 1), 1);
         assert_eq!(trigen.out_cell_point(0, 2), 2);
@@ -1173,10 +1228,10 @@ mod tests {
     fn mesh_2_no_steiner_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(4, Some(4), None, None)?;
         trigen
-            .set_point(0, 0, 0.0, 0.0)?
-            .set_point(1, 0, 1.0, 0.0)?
-            .set_point(2, 0, 1.0, 1.0)?
-            .set_point(3, 0, 0.0, 1.0)?;
+            .set_point(0, -100, 0.0, 0.0)?
+            .set_point(1, -200, 1.0, 0.0)?
+            .set_point(2, -300, 1.0, 1.0)?
+            .set_point(3, -400, 0.0, 1.0)?;
         trigen
             .set_segment(0, -10, 0, 1)?
             .set_segment(1, -20, 1, 2)?
@@ -1193,10 +1248,22 @@ mod tests {
         }
 
         assert_eq!(trigen.out_npoint(), 5);
+        assert_eq!(trigen.out_nsegment(), 4);
         assert_eq!(trigen.out_ncell(), 4);
         assert_eq!(trigen.out_cell_npoint(), 3);
 
-        println!("nsegment = {}", trigen.out_nsegment());
+        println!("point markers");
+        for i in 0..trigen.out_npoint() {
+            println!("{} => {}", i, trigen.out_point_marker(i));
+        }
+
+        assert_eq!(trigen.out_point_marker(0), -100);
+        assert_eq!(trigen.out_point_marker(1), -200);
+        assert_eq!(trigen.out_point_marker(2), -300);
+        assert_eq!(trigen.out_point_marker(3), -400);
+        assert_eq!(trigen.out_point_marker(4), 0);
+
+        println!("segments");
         for i in 0..trigen.out_nsegment() {
             let a = trigen.out_segment_point(i, 0);
             let b = trigen.out_segment_point(i, 1);
@@ -1204,7 +1271,6 @@ mod tests {
             println!("{:2} - {:2} => {}", a, b, marker);
         }
 
-        assert_eq!(trigen.out_nsegment(), 4);
         let mut sides0 = vec![trigen.out_segment_point(0, 0), trigen.out_segment_point(0, 1)];
         let mut sides1 = vec![trigen.out_segment_point(1, 0), trigen.out_segment_point(1, 1)];
         let mut sides2 = vec![trigen.out_segment_point(2, 0), trigen.out_segment_point(2, 1)];
@@ -1228,10 +1294,10 @@ mod tests {
     fn mesh_2_ok_steiner_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(4, Some(4), None, None)?;
         trigen
-            .set_point(0, 0, 0.0, 0.0)?
-            .set_point(1, 0, 1.0, 0.0)?
-            .set_point(2, 0, 1.0, 1.0)?
-            .set_point(3, 0, 0.0, 1.0)?;
+            .set_point(0, -100, 0.0, 0.0)?
+            .set_point(1, -200, 1.0, 0.0)?
+            .set_point(2, -300, 1.0, 1.0)?
+            .set_point(3, -400, 0.0, 1.0)?;
         trigen
             .set_segment(0, -10, 0, 1)?
             .set_segment(1, -20, 1, 2)?
@@ -1248,18 +1314,36 @@ mod tests {
         }
 
         assert_eq!(trigen.out_npoint(), 13);
+        assert_eq!(trigen.out_nsegment(), 8);
         assert_eq!(trigen.out_ncell(), 16);
         assert_eq!(trigen.out_cell_npoint(), 3);
 
-        println!("nsegment = {}", trigen.out_nsegment());
+        println!("point markers");
+        for i in 0..trigen.out_npoint() {
+            println!("{} => {}", i, trigen.out_point_marker(i));
+        }
+
+        assert_eq!(trigen.out_point_marker(0), -100);
+        assert_eq!(trigen.out_point_marker(1), -200);
+        assert_eq!(trigen.out_point_marker(2), -300);
+        assert_eq!(trigen.out_point_marker(3), -400);
+        assert_eq!(trigen.out_point_marker(4), 0);
+        assert_eq!(trigen.out_point_marker(5), -40);
+        assert_eq!(trigen.out_point_marker(6), -10);
+        assert_eq!(trigen.out_point_marker(7), -30);
+        assert_eq!(trigen.out_point_marker(8), 0);
+        assert_eq!(trigen.out_point_marker(9), -20);
+        assert_eq!(trigen.out_point_marker(10), 0);
+        assert_eq!(trigen.out_point_marker(11), 0);
+        assert_eq!(trigen.out_point_marker(12), 0);
+
+        println!("segments");
         for i in 0..trigen.out_nsegment() {
             let a = trigen.out_segment_point(i, 0);
             let b = trigen.out_segment_point(i, 1);
             let marker = trigen.out_segment_marker(i);
             println!("{:2} - {:2} => {}", a, b, marker);
         }
-
-        assert_eq!(trigen.out_nsegment(), 8);
 
         let mut sides0 = vec![trigen.out_segment_point(0, 0), trigen.out_segment_point(0, 1)];
         let mut sides1 = vec![trigen.out_segment_point(1, 0), trigen.out_segment_point(1, 1)];
