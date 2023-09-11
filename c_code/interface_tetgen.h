@@ -16,6 +16,8 @@ void tet_drop_tetgen(struct ExtTetgen *tetgen);
 
 int32_t tet_set_point(struct ExtTetgen *tetgen, int32_t index, int32_t marker, double x, double y, double z);
 
+int32_t tet_set_facet_marker(struct ExtTetgen *tetgen, int32_t index, int32_t marker);
+
 int32_t tet_set_facet_point(struct ExtTetgen *tetgen, int32_t index, int32_t m, int32_t p);
 
 int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, int32_t attribute, double x, double y, double z, double max_volume);

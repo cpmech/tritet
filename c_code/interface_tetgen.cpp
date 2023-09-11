@@ -60,6 +60,7 @@ struct ExtTetgen *tet_new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *
             tet_drop_tetgen(tetgen);
             return NULL;
         }
+        tetgen->input.facetmarkerlist = new (std::nothrow) int32_t[nfacet];
         const int32_t NUM_POLY = 1;
         for (int32_t index = 0; index < nfacet; index++) {
             // facet polygon
@@ -72,7 +73,7 @@ struct ExtTetgen *tet_new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *
             fac->numberofpolygons = NUM_POLY;
             fac->numberofholes = 0;
             fac->holelist = NULL;
-            // face polygon vertices
+            // facet polygon vertices
             size_t nvertex = facet_npoint[index];
             tetgenio::polygon *gon = &fac->polygonlist[0];
             gon->vertexlist = new (std::nothrow) int32_t[nvertex];
@@ -81,6 +82,8 @@ struct ExtTetgen *tet_new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *
                 return NULL;
             }
             gon->numberofvertices = nvertex;
+            // facet marker
+            tetgen->input.facetmarkerlist[index] = 0;
         }
     }
 
@@ -152,6 +155,22 @@ int32_t tet_set_facet_point(struct ExtTetgen *tetgen, int32_t index, int32_t m, 
         return TRITET_ERROR_INVALID_FACET_POINT_ID;
     }
     gon->vertexlist[m] = p;
+
+    return TRITET_SUCCESS;
+}
+
+int32_t tet_set_facet_marker(struct ExtTetgen *tetgen, int32_t index, int32_t marker) {
+    if (tetgen == NULL) {
+        return TRITET_ERROR_NULL_DATA;
+    }
+    if (tetgen->input.facetlist == NULL) {
+        return TRITET_ERROR_NULL_FACET_LIST;
+    }
+    if (index >= tetgen->input.numberoffacets) {
+        return TRITET_ERROR_INVALID_FACET_INDEX;
+    }
+
+    tetgen->input.facetmarkerlist[index] = marker;
 
     return TRITET_SUCCESS;
 }
