@@ -416,17 +416,25 @@ double tri_out_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
     }
 }
 
-void tri_out_segment(struct ExtTrigen *trigen, int32_t index, int32_t *marker, int32_t *a, int32_t *b) {
-    *marker = 0;
-    *a = 0;
-    *b = 0;
+int32_t tri_out_segment_point(struct ExtTrigen *trigen, int32_t index, int32_t side) {
     if (trigen == NULL) {
-        return;
+        return 0;
+    }
+    if (index < trigen->output.numberofsegments && (side == 0 || side == 1)) {
+        return trigen->output.segmentlist[index * 2 + side];
+    } else {
+        return 0;
+    }
+}
+
+int32_t tri_out_segment_marker(struct ExtTrigen *trigen, int32_t index) {
+    if (trigen == NULL) {
+        return 0;
     }
     if (index < trigen->output.numberofsegments) {
-        *marker = trigen->output.segmentmarkerlist[index];
-        *a = trigen->output.segmentlist[index * 2];
-        *b = trigen->output.segmentlist[index * 2 + 1];
+        return trigen->output.segmentmarkerlist[index];
+    } else {
+        return 0;
     }
 }
 

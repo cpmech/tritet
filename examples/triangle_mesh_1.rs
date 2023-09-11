@@ -82,13 +82,6 @@ fn main() -> Result<(), StrError> {
     // generate mesh without constraints
     trigen.generate_mesh(true, true, true, None, None)?;
 
-    // print segments
-    println!("nsegment = {}", trigen.out_nsegment());
-    for i in 0..trigen.out_nsegment() {
-        let (marker, a, b) = trigen.out_segment(i);
-        println!("{:2} - {:2} => {}", a, b, marker);
-    }
-
     // draw mesh
     let mut plot = Plot::new();
     trigen.draw_triangles(&mut plot, true, false, false, false, None, None, None);

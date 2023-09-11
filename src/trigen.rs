@@ -32,7 +32,8 @@ extern "C" {
     fn tri_out_ncell(trigen: *mut ExtTrigen) -> i32;
     fn tri_out_cell_npoint(trigen: *mut ExtTrigen) -> i32;
     fn tri_out_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
-    fn tri_out_segment(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, a: *mut i32, b: *mut i32);
+    fn tri_out_segment_point(trigen: *mut ExtTrigen, index: i32, side: i32) -> i32;
+    fn tri_out_segment_marker(trigen: *mut ExtTrigen, index: i32) -> i32;
     fn tri_out_cell_point(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
     fn tri_out_cell_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
     fn tri_out_voronoi_npoint(trigen: *mut ExtTrigen) -> i32;
@@ -607,7 +608,7 @@ impl Trigen {
     ///
     /// # Input
     ///
-    /// * `index` -- is the index of the point and goes from `0` to `npoint`
+    /// * `index` -- is the index of the point and goes from `0` to `out_npoint`
     /// * `dim` -- is the space dimension index: 0 or 1
     ///
     /// # Output
@@ -621,44 +622,31 @@ impl Trigen {
         unsafe { tri_out_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
-    /// Returns the (output) generated segment on the PSLG
-    ///
-    /// The segment is indicated by a pair of sorted point indices.
+    /// Returns the ID of a point of a segment generated on the PSLG
     ///
     /// # Input
     ///
-    /// * `index` -- is the index of the boundary segment and goes from `0` to `n_bry_segment`
-    ///
-    /// # Output
-    ///
-    /// Returns `(marker, a, b)`, where:
-    ///
-    /// * `marker` -- is the marker of the boundary segment, if specified via `set_segment`.
-    ///               Otherwise, the marker is `0` for segments on the interior of the PSLG
-    ///               or `1` for segments on the boundary of the PSLG
-    /// * `a` -- is the index of the first point on the segment
-    /// * `b` -- is the index of the segment point on the segment
-    ///
-    /// # Notes
-    ///
-    /// 1. This option is only available when calling [Trigen::generate_mesh]
-    /// 2. The point indices `(a, b)` are sorted in increasing order
+    /// * `index` -- is the index of the PSLG segment and goes from `0` to `out_nsegment`
+    /// * `side` -- `0` or `1`; corresponds to the "side" of the segment
     ///
     /// # Warning
     ///
-    /// This function will return zero values if either `index` is out of range.
-    pub fn out_segment(&self, index: usize) -> (i32, usize, usize) {
-        let mut marker: i32 = 0;
-        let mut a: i32 = 0;
-        let mut b: i32 = 0;
-        unsafe {
-            tri_out_segment(self.ext_triangle, to_i32(index), &mut marker, &mut a, &mut b);
-        }
-        if a < b {
-            (marker, a as usize, b as usize)
-        } else {
-            (marker, b as usize, a as usize)
-        }
+    /// This function will return zero values if the `index` or `side` is out of range.
+    pub fn out_segment_point(&self, index: usize, side: usize) -> usize {
+        unsafe { tri_out_segment_point(self.ext_triangle, to_i32(index), to_i32(side)) as usize }
+    }
+
+    /// Returns the marker attached to the output segment
+    ///
+    /// # Input
+    ///
+    /// * `index` -- is the index of the PSLG segment and goes from `0` to `out_nsegment`
+    ///
+    /// # Warning
+    ///
+    /// This function will return zero values if the `index` is out of range.
+    pub fn out_segment_marker(&self, index: usize) -> i32 {
+        unsafe { tri_out_segment_marker(self.ext_triangle, to_i32(index)) }
     }
 
     /// Returns the ID of a point on the triangle (aka cell)
@@ -676,12 +664,12 @@ impl Trigen {
     ///
     /// # Input
     ///
-    /// * `index` -- is the index of the triangle and goes from 0 to `ntriangle`
-    /// * `m` -- is the local index of the node and goes from 0 to `nnode`
+    /// * `index` -- is the index of the triangle and goes from 0 to `out_ncell`
+    /// * `m` -- is the local index of the node and goes from 0 to `out_cell_npoint`
     ///
     /// # Warning
     ///
-    /// This function will return 0 if either `index` or `m` are out of range.
+    /// This function will return 0 if `index` or `m` is out of range.
     pub fn out_cell_point(&self, index: usize, m: usize) -> usize {
         unsafe {
             let corner = constants::TRITET_TO_TRIANGLE[m];
@@ -693,7 +681,7 @@ impl Trigen {
     ///
     /// # Warning
     ///
-    /// This function will return 0 if either `index` is out of range.
+    /// This function will return 0 if the `index` is out of range.
     pub fn out_cell_attribute(&self, index: usize) -> usize {
         unsafe { tri_out_cell_attribute(self.ext_triangle, to_i32(index)) as usize }
     }
@@ -707,12 +695,12 @@ impl Trigen {
     ///
     /// # Input
     ///
-    /// * `index` -- is the index of the point and goes from 0 to `voronoi_npoint`
+    /// * `index` -- is the index of the point and goes from 0 to `out_voronoi_npoint`
     /// * `dim` -- is the space dimension index: 0 or 1
     ///
     /// # Warning
     ///
-    /// This function will return 0.0 if either `index` or `dim` are out of range.
+    /// This function will return 0.0 if `index` or `dim` is out of range.
     pub fn out_voronoi_point(&self, index: usize, dim: usize) -> f64 {
         unsafe { tri_out_voronoi_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
@@ -726,11 +714,11 @@ impl Trigen {
     ///
     /// # Input
     ///
-    /// * `index` -- is the index of the edge and goes from 0 to `voronoi_nedge`
+    /// * `index` -- is the index of the edge and goes from 0 to `out_voronoi_nedge`
     ///
     /// # Warning
     ///
-    /// This function will return 0 if either `index` is out of range.
+    /// This function will return 0 if `index` is out of range.
     pub fn out_voronoi_edge_point_a(&self, index: usize) -> usize {
         unsafe { tri_out_voronoi_edge_point(self.ext_triangle, to_i32(index), 0) as usize }
     }
@@ -739,11 +727,11 @@ impl Trigen {
     ///
     /// # Input
     ///
-    /// * `index` -- is the index of the edge and goes from 0 to `voronoi_nedge`
+    /// * `index` -- is the index of the edge and goes from 0 to `out_voronoi_nedge`
     ///
     /// # Warning
     ///
-    /// This function will return Index(0) if either `index` is out of range.
+    /// This function will return Index(0) if `index` is out of range.
     pub fn out_voronoi_edge_point_b(&self, index: usize) -> VoronoiEdgePoint {
         unsafe {
             let index_i32 = to_i32(index);
@@ -1210,16 +1198,29 @@ mod tests {
 
         println!("nsegment = {}", trigen.out_nsegment());
         for i in 0..trigen.out_nsegment() {
-            let (marker, a, b) = trigen.out_segment(i);
+            let a = trigen.out_segment_point(i, 0);
+            let b = trigen.out_segment_point(i, 1);
+            let marker = trigen.out_segment_marker(i);
             println!("{:2} - {:2} => {}", a, b, marker);
         }
 
         assert_eq!(trigen.out_nsegment(), 4);
-        assert_eq!(trigen.out_segment(0), (-10, 0, 1));
-        assert_eq!(trigen.out_segment(1), (-20, 1, 2));
-        assert_eq!(trigen.out_segment(2), (-30, 2, 3));
-        assert_eq!(trigen.out_segment(3), (-40, 0, 3));
-
+        let mut sides0 = vec![trigen.out_segment_point(0, 0), trigen.out_segment_point(0, 1)];
+        let mut sides1 = vec![trigen.out_segment_point(1, 0), trigen.out_segment_point(1, 1)];
+        let mut sides2 = vec![trigen.out_segment_point(2, 0), trigen.out_segment_point(2, 1)];
+        let mut sides3 = vec![trigen.out_segment_point(3, 0), trigen.out_segment_point(3, 1)];
+        sides0.sort();
+        sides1.sort();
+        sides2.sort();
+        sides3.sort();
+        assert_eq!(sides0, &[0, 1]);
+        assert_eq!(sides1, &[1, 2]);
+        assert_eq!(sides2, &[2, 3]);
+        assert_eq!(sides3, &[0, 3]);
+        assert_eq!(trigen.out_segment_marker(0), -10);
+        assert_eq!(trigen.out_segment_marker(1), -20);
+        assert_eq!(trigen.out_segment_marker(2), -30);
+        assert_eq!(trigen.out_segment_marker(3), -40);
         Ok(())
     }
 
@@ -1252,20 +1253,46 @@ mod tests {
 
         println!("nsegment = {}", trigen.out_nsegment());
         for i in 0..trigen.out_nsegment() {
-            let (marker, a, b) = trigen.out_segment(i);
+            let a = trigen.out_segment_point(i, 0);
+            let b = trigen.out_segment_point(i, 1);
+            let marker = trigen.out_segment_marker(i);
             println!("{:2} - {:2} => {}", a, b, marker);
         }
 
         assert_eq!(trigen.out_nsegment(), 8);
-        assert_eq!(trigen.out_segment(0), (-10, 1, 6));
-        assert_eq!(trigen.out_segment(1), (-20, 2, 9));
-        assert_eq!(trigen.out_segment(2), (-30, 3, 7));
-        assert_eq!(trigen.out_segment(3), (-40, 0, 5));
-        assert_eq!(trigen.out_segment(4), (-40, 3, 5));
-        assert_eq!(trigen.out_segment(5), (-10, 0, 6));
-        assert_eq!(trigen.out_segment(6), (-30, 2, 7));
-        assert_eq!(trigen.out_segment(7), (-20, 1, 9));
 
+        let mut sides0 = vec![trigen.out_segment_point(0, 0), trigen.out_segment_point(0, 1)];
+        let mut sides1 = vec![trigen.out_segment_point(1, 0), trigen.out_segment_point(1, 1)];
+        let mut sides2 = vec![trigen.out_segment_point(2, 0), trigen.out_segment_point(2, 1)];
+        let mut sides3 = vec![trigen.out_segment_point(3, 0), trigen.out_segment_point(3, 1)];
+        let mut sides4 = vec![trigen.out_segment_point(4, 0), trigen.out_segment_point(4, 1)];
+        let mut sides5 = vec![trigen.out_segment_point(5, 0), trigen.out_segment_point(5, 1)];
+        let mut sides6 = vec![trigen.out_segment_point(6, 0), trigen.out_segment_point(6, 1)];
+        let mut sides7 = vec![trigen.out_segment_point(7, 0), trigen.out_segment_point(7, 1)];
+        sides0.sort();
+        sides1.sort();
+        sides2.sort();
+        sides3.sort();
+        sides4.sort();
+        sides5.sort();
+        sides6.sort();
+        sides7.sort();
+        assert_eq!(sides0, &[1, 6]);
+        assert_eq!(sides1, &[2, 9]);
+        assert_eq!(sides2, &[3, 7]);
+        assert_eq!(sides3, &[0, 5]);
+        assert_eq!(sides4, &[3, 5]);
+        assert_eq!(sides5, &[0, 6]);
+        assert_eq!(sides6, &[2, 7]);
+        assert_eq!(sides7, &[1, 9]);
+        assert_eq!(trigen.out_segment_marker(0), -10);
+        assert_eq!(trigen.out_segment_marker(1), -20);
+        assert_eq!(trigen.out_segment_marker(2), -30);
+        assert_eq!(trigen.out_segment_marker(3), -40);
+        assert_eq!(trigen.out_segment_marker(4), -40);
+        assert_eq!(trigen.out_segment_marker(5), -10);
+        assert_eq!(trigen.out_segment_marker(6), -30);
+        assert_eq!(trigen.out_segment_marker(7), -20);
         Ok(())
     }
 
@@ -1390,12 +1417,6 @@ mod tests {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_mesh_4_works.svg")?;
-        }
-
-        println!("nsegment = {}", trigen.out_nsegment());
-        for i in 0..trigen.out_nsegment() {
-            let (marker, a, b) = trigen.out_segment(i);
-            println!("{:2} - {:2} => {}", a, b, marker);
         }
 
         assert_eq!(trigen.out_ncell(), 14);
