@@ -11,15 +11,15 @@ pub(crate) struct ExtTrigen {
 }
 
 extern "C" {
-    fn new_trigen(npoint: i32, nsegment: i32, nregion: i32, nhole: i32) -> *mut ExtTrigen;
-    fn drop_trigen(trigen: *mut ExtTrigen);
-    fn set_point(trigen: *mut ExtTrigen, index: i32, marker: i32, x: f64, y: f64) -> i32;
-    fn set_segment(trigen: *mut ExtTrigen, index: i32, marker: i32, a: i32, b: i32) -> i32;
-    fn set_region(trigen: *mut ExtTrigen, index: i32, attribute: i32, x: f64, y: f64, max_area: f64) -> i32;
-    fn set_hole(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
-    fn run_delaunay(trigen: *mut ExtTrigen, verbose: i32) -> i32;
-    fn run_voronoi(trigen: *mut ExtTrigen, verbose: i32) -> i32;
-    fn run_triangulate(
+    fn tri_new_trigen(npoint: i32, nsegment: i32, nregion: i32, nhole: i32) -> *mut ExtTrigen;
+    fn tri_drop_trigen(trigen: *mut ExtTrigen);
+    fn tri_set_point(trigen: *mut ExtTrigen, index: i32, marker: i32, x: f64, y: f64) -> i32;
+    fn tri_set_segment(trigen: *mut ExtTrigen, index: i32, marker: i32, a: i32, b: i32) -> i32;
+    fn tri_set_region(trigen: *mut ExtTrigen, index: i32, attribute: i32, x: f64, y: f64, max_area: f64) -> i32;
+    fn tri_set_hole(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
+    fn tri_run_delaunay(trigen: *mut ExtTrigen, verbose: i32) -> i32;
+    fn tri_run_voronoi(trigen: *mut ExtTrigen, verbose: i32) -> i32;
+    fn tri_run_triangulate(
         trigen: *mut ExtTrigen,
         verbose: i32,
         quadratic: i32,
@@ -27,19 +27,19 @@ extern "C" {
         global_max_area: f64,
         global_min_angle: f64,
     ) -> i32;
-    fn get_npoint(trigen: *mut ExtTrigen) -> i32;
-    fn get_n_out_segment(trigen: *mut ExtTrigen) -> i32;
-    fn get_ntriangle(trigen: *mut ExtTrigen) -> i32;
-    fn get_ncorner(trigen: *mut ExtTrigen) -> i32;
-    fn get_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
-    fn get_out_segment(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, a: *mut i32, b: *mut i32);
-    fn get_triangle_corner(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
-    fn get_triangle_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
-    fn get_voronoi_npoint(trigen: *mut ExtTrigen) -> i32;
-    fn get_voronoi_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
-    fn get_voronoi_nedge(trigen: *mut ExtTrigen) -> i32;
-    fn get_voronoi_edge_point(trigen: *mut ExtTrigen, index: i32, side: i32) -> i32;
-    fn get_voronoi_edge_point_b_direction(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn tri_get_n_out_point(trigen: *mut ExtTrigen) -> i32;
+    fn tri_get_n_out_segment(trigen: *mut ExtTrigen) -> i32;
+    fn tri_get_ntriangle(trigen: *mut ExtTrigen) -> i32;
+    fn tri_get_ncorner(trigen: *mut ExtTrigen) -> i32;
+    fn tri_get_out_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn tri_get_out_segment(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, a: *mut i32, b: *mut i32);
+    fn tri_get_triangle_corner(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
+    fn tri_get_triangle_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
+    fn tri_get_voronoi_npoint(trigen: *mut ExtTrigen) -> i32;
+    fn tri_get_voronoi_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn tri_get_voronoi_nedge(trigen: *mut ExtTrigen) -> i32;
+    fn tri_get_voronoi_edge_point(trigen: *mut ExtTrigen, index: i32, side: i32) -> i32;
+    fn tri_get_voronoi_edge_point_b_direction(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
 }
 
 /// Holds the index of an endpoint on a Voronoi edge or the direction of the Voronoi edge
@@ -253,7 +253,7 @@ impl Drop for Trigen {
     /// Tells the c-code to release memory
     fn drop(&mut self) {
         unsafe {
-            drop_trigen(self.ext_triangle);
+            tri_drop_trigen(self.ext_triangle);
         }
     }
 }
@@ -295,7 +295,7 @@ impl Trigen {
             None => 0,
         };
         unsafe {
-            let ext_triangle = new_trigen(npoint_i32, nsegment_i32, nregion_i32, nhole_i32);
+            let ext_triangle = tri_new_trigen(npoint_i32, nsegment_i32, nregion_i32, nhole_i32);
             if ext_triangle.is_null() {
                 return Err("INTERNAL ERROR: cannot allocate ExtTriangle");
             }
@@ -323,7 +323,7 @@ impl Trigen {
     /// * `y` -- is y-coordinate of the point
     pub fn set_point(&mut self, index: usize, marker: i32, x: f64, y: f64) -> Result<&mut Self, StrError> {
         unsafe {
-            let status = set_point(self.ext_triangle, to_i32(index), marker, x, y);
+            let status = tri_set_point(self.ext_triangle, to_i32(index), marker, x, y);
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -359,7 +359,7 @@ impl Trigen {
             None => return Err("cannot set segment because the number of segments is None"),
         };
         unsafe {
-            let status = set_segment(self.ext_triangle, to_i32(index), marker, to_i32(a), to_i32(b));
+            let status = tri_set_segment(self.ext_triangle, to_i32(index), marker, to_i32(a), to_i32(b));
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -410,7 +410,7 @@ impl Trigen {
             None => -1.0,
         };
         unsafe {
-            let status = set_region(
+            let status = tri_set_region(
                 self.ext_triangle,
                 to_i32(index),
                 to_i32(attribute),
@@ -452,7 +452,7 @@ impl Trigen {
             None => return Err("cannot set hole because the number of holes is None"),
         };
         unsafe {
-            let status = set_hole(self.ext_triangle, to_i32(index), x, y);
+            let status = tri_set_hole(self.ext_triangle, to_i32(index), x, y);
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -484,7 +484,7 @@ impl Trigen {
             return Err("cannot generate Delaunay triangulation because not all points are set");
         }
         unsafe {
-            let status = run_delaunay(self.ext_triangle, if verbose { 1 } else { 0 });
+            let status = tri_run_delaunay(self.ext_triangle, if verbose { 1 } else { 0 });
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -508,7 +508,7 @@ impl Trigen {
             return Err("cannot generate Voronoi tessellation because not all points are set");
         }
         unsafe {
-            let status = run_voronoi(self.ext_triangle, if verbose { 1 } else { 0 });
+            let status = tri_run_voronoi(self.ext_triangle, if verbose { 1 } else { 0 });
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -554,7 +554,7 @@ impl Trigen {
             None => 0.0,
         };
         unsafe {
-            let status = run_triangulate(
+            let status = tri_run_triangulate(
                 self.ext_triangle,
                 if verbose { 1 } else { 0 },
                 if quadratic { 1 } else { 0 },
@@ -583,24 +583,24 @@ impl Trigen {
 
     /// Returns the number of points of the Delaunay triangulation (constrained or not)
     pub fn npoint(&self) -> usize {
-        unsafe { get_npoint(self.ext_triangle) as usize }
+        unsafe { tri_get_n_out_point(self.ext_triangle) as usize }
     }
 
     /// Returns the number of (output) segments generated on the PSLG (not the interior)
     ///
     /// **Note:** This option is only available when calling [Trigen::generate_mesh]
     pub fn n_out_segment(&self) -> usize {
-        unsafe { get_n_out_segment(self.ext_triangle) as usize }
+        unsafe { tri_get_n_out_segment(self.ext_triangle) as usize }
     }
 
     /// Returns the number of triangles on the Delaunay triangulation (constrained or not)
     pub fn ntriangle(&self) -> usize {
-        unsafe { get_ntriangle(self.ext_triangle) as usize }
+        unsafe { tri_get_ntriangle(self.ext_triangle) as usize }
     }
 
     /// Returns the number of nodes on a triangle (e.g., 3 or 6)
     pub fn nnode(&self) -> usize {
-        unsafe { get_ncorner(self.ext_triangle) as usize }
+        unsafe { tri_get_ncorner(self.ext_triangle) as usize }
     }
 
     /// Returns the (output) generated point
@@ -618,7 +618,7 @@ impl Trigen {
     ///
     /// This function will return zero values if either `index` is out of range.
     pub fn point(&self, index: usize, dim: usize) -> f64 {
-        unsafe { get_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
+        unsafe { tri_get_out_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the (output) generated segment on the PSLG
@@ -652,7 +652,7 @@ impl Trigen {
         let mut a: i32 = 0;
         let mut b: i32 = 0;
         unsafe {
-            get_out_segment(self.ext_triangle, to_i32(index), &mut marker, &mut a, &mut b);
+            tri_get_out_segment(self.ext_triangle, to_i32(index), &mut marker, &mut a, &mut b);
         }
         if a < b {
             (marker, a as usize, b as usize)
@@ -685,7 +685,7 @@ impl Trigen {
     pub fn triangle_node(&self, index: usize, m: usize) -> usize {
         unsafe {
             let corner = constants::TRITET_TO_TRIANGLE[m];
-            get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize
+            tri_get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize
         }
     }
 
@@ -695,12 +695,12 @@ impl Trigen {
     ///
     /// This function will return 0 if either `index` is out of range.
     pub fn triangle_attribute(&self, index: usize) -> usize {
-        unsafe { get_triangle_attribute(self.ext_triangle, to_i32(index)) as usize }
+        unsafe { tri_get_triangle_attribute(self.ext_triangle, to_i32(index)) as usize }
     }
 
     /// Returns the number of points of the Voronoi tessellation
     pub fn voronoi_npoint(&self) -> usize {
-        unsafe { get_voronoi_npoint(self.ext_triangle) as usize }
+        unsafe { tri_get_voronoi_npoint(self.ext_triangle) as usize }
     }
 
     /// Returns the x-y coordinates of a point on the Voronoi tessellation
@@ -714,12 +714,12 @@ impl Trigen {
     ///
     /// This function will return 0.0 if either `index` or `dim` are out of range.
     pub fn voronoi_point(&self, index: usize, dim: usize) -> f64 {
-        unsafe { get_voronoi_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
+        unsafe { tri_get_voronoi_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the number of edges on the Voronoi tessellation
     pub fn voronoi_nedge(&self) -> usize {
-        unsafe { get_voronoi_nedge(self.ext_triangle) as usize }
+        unsafe { tri_get_voronoi_nedge(self.ext_triangle) as usize }
     }
 
     /// Returns the index of the first endpoint on a Voronoi edge
@@ -732,7 +732,7 @@ impl Trigen {
     ///
     /// This function will return 0 if either `index` is out of range.
     pub fn voronoi_edge_point_a(&self, index: usize) -> usize {
-        unsafe { get_voronoi_edge_point(self.ext_triangle, to_i32(index), 0) as usize }
+        unsafe { tri_get_voronoi_edge_point(self.ext_triangle, to_i32(index), 0) as usize }
     }
 
     /// Returns the index of the second endpoint on a Voronoi edge or the direction of the Voronoi edge
@@ -747,10 +747,10 @@ impl Trigen {
     pub fn voronoi_edge_point_b(&self, index: usize) -> VoronoiEdgePoint {
         unsafe {
             let index_i32 = to_i32(index);
-            let id = get_voronoi_edge_point(self.ext_triangle, index_i32, 1);
+            let id = tri_get_voronoi_edge_point(self.ext_triangle, index_i32, 1);
             if id == -1 {
-                let x = get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 0);
-                let y = get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 1);
+                let x = tri_get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 0);
+                let y = tri_get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 1);
                 VoronoiEdgePoint::Direction(x, y)
             } else {
                 VoronoiEdgePoint::Index(id as usize)

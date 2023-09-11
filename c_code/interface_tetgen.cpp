@@ -11,14 +11,14 @@ extern "C" {
 #include "interface_tetgen.h"
 }
 
-void drop_tetgen(struct ExtTetgen *tetgen) {
+void tet_drop_tetgen(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return;
     }
     delete tetgen;
 }
 
-struct ExtTetgen *new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *facet_npoint, int32_t nregion, int32_t nhole) {
+struct ExtTetgen *tet_new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *facet_npoint, int32_t nregion, int32_t nhole) {
     if (npoint < 4) {
         return NULL;
     }
@@ -32,7 +32,7 @@ struct ExtTetgen *new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *face
         tetgen->input.initialize();
         tetgen->output.initialize();
     } catch (...) {
-        drop_tetgen(tetgen);
+        tet_drop_tetgen(tetgen);
         return NULL;
     }
 
@@ -41,7 +41,7 @@ struct ExtTetgen *new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *face
     tetgen->input.numberofpoints = npoint;
     tetgen->input.pointlist = new (std::nothrow) double[npoint * 3];
     if (tetgen->input.pointlist == NULL) {
-        drop_tetgen(tetgen);
+        tet_drop_tetgen(tetgen);
         return NULL;
     }
 
@@ -50,7 +50,7 @@ struct ExtTetgen *new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *face
         tetgen->input.numberoffacets = nfacet;
         tetgen->input.facetlist = new (std::nothrow) tetgenio::facet[nfacet];
         if (tetgen->input.facetlist == NULL) {
-            drop_tetgen(tetgen);
+            tet_drop_tetgen(tetgen);
             return NULL;
         }
         const int32_t NUM_POLY = 1;
@@ -59,7 +59,7 @@ struct ExtTetgen *new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *face
             tetgenio::facet *fac = &tetgen->input.facetlist[index];
             fac->polygonlist = new (std::nothrow) tetgenio::polygon[NUM_POLY];
             if (fac->polygonlist == NULL) {
-                drop_tetgen(tetgen);
+                tet_drop_tetgen(tetgen);
                 return NULL;
             }
             fac->numberofpolygons = NUM_POLY;
@@ -70,7 +70,7 @@ struct ExtTetgen *new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *face
             tetgenio::polygon *gon = &fac->polygonlist[0];
             gon->vertexlist = new (std::nothrow) int32_t[nvertex];
             if (gon->vertexlist == NULL) {
-                drop_tetgen(tetgen);
+                tet_drop_tetgen(tetgen);
                 return NULL;
             }
             gon->numberofvertices = nvertex;
@@ -82,7 +82,7 @@ struct ExtTetgen *new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *face
         tetgen->input.numberofregions = nregion;
         tetgen->input.regionlist = new (std::nothrow) double[nregion * 5];
         if (tetgen->input.regionlist == NULL) {
-            drop_tetgen(tetgen);
+            tet_drop_tetgen(tetgen);
             return NULL;
         }
     }
@@ -92,7 +92,7 @@ struct ExtTetgen *new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *face
         tetgen->input.numberofholes = nhole;
         tetgen->input.holelist = new (std::nothrow) double[nhole * 3];
         if (tetgen->input.holelist == NULL) {
-            drop_tetgen(tetgen);
+            tet_drop_tetgen(tetgen);
             return NULL;
         }
     }
@@ -264,7 +264,7 @@ int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_
     return TRITET_SUCCESS;
 }
 
-int32_t tet_get_npoint(struct ExtTetgen *tetgen) {
+int32_t tet_get_n_out_point(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return 0;
     }
@@ -291,7 +291,7 @@ int32_t tet_get_ncorner(struct ExtTetgen *tetgen) {
     return 0;
 }
 
-double tet_get_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim) {
+double tet_get_out_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim) {
     if (tetgen == NULL) {
         return 0.0;
     }

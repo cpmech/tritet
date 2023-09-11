@@ -11,8 +11,8 @@ pub(crate) struct ExtTetgen {
 }
 
 extern "C" {
-    fn new_tetgen(npoint: i32, nfacet: i32, facet_npoint: *const i32, nregion: i32, nhole: i32) -> *mut ExtTetgen;
-    fn drop_tetgen(tetgen: *mut ExtTetgen);
+    fn tet_new_tetgen(npoint: i32, nfacet: i32, facet_npoint: *const i32, nregion: i32, nhole: i32) -> *mut ExtTetgen;
+    fn tet_drop_tetgen(tetgen: *mut ExtTetgen);
     fn tet_set_point(tetgen: *mut ExtTetgen, index: i32, x: f64, y: f64, z: f64) -> i32;
     fn tet_set_facet_point(tetgen: *mut ExtTetgen, index: i32, m: i32, p: i32) -> i32;
     fn tet_set_region(
@@ -33,10 +33,10 @@ extern "C" {
         global_max_volume: f64,
         global_min_angle: f64,
     ) -> i32;
-    fn tet_get_npoint(tetgen: *mut ExtTetgen) -> i32;
+    fn tet_get_n_out_point(tetgen: *mut ExtTetgen) -> i32;
     fn tet_get_ntetrahedron(tetgen: *mut ExtTetgen) -> i32;
     fn tet_get_ncorner(tetgen: *mut ExtTetgen) -> i32;
-    fn tet_get_point(tetgen: *mut ExtTetgen, index: i32, dim: i32) -> f64;
+    fn tet_get_out_point(tetgen: *mut ExtTetgen, index: i32, dim: i32) -> f64;
     fn tet_get_tetrahedron_corner(tetgen: *mut ExtTetgen, index: i32, corner: i32) -> i32;
     fn tet_get_tetrahedron_attribute(tetgen: *mut ExtTetgen, index: i32) -> i32;
 }
@@ -154,7 +154,7 @@ impl Drop for Tetgen {
     /// Tells the c-code to release memory
     fn drop(&mut self) {
         unsafe {
-            drop_tetgen(self.ext_tetgen);
+            tet_drop_tetgen(self.ext_tetgen);
         }
     }
 }
@@ -196,7 +196,7 @@ impl Tetgen {
             None => 0,
         };
         unsafe {
-            let ext_tetgen = new_tetgen(
+            let ext_tetgen = tet_new_tetgen(
                 npoint_i32,
                 nfacet_i32,
                 facet_npoint_i32.as_ptr(),
@@ -472,7 +472,7 @@ impl Tetgen {
 
     /// Returns the number of points of the Delaunay triangulation (constrained or not)
     pub fn npoint(&self) -> usize {
-        unsafe { tet_get_npoint(self.ext_tetgen) as usize }
+        unsafe { tet_get_n_out_point(self.ext_tetgen) as usize }
     }
 
     /// Returns the number of tetrahedra on the Delaunay triangulation (constrained or not)
@@ -496,7 +496,7 @@ impl Tetgen {
     ///
     /// This function will return 0.0 if either `index` or `dim` are out of range.
     pub fn point(&self, index: usize, dim: usize) -> f64 {
-        unsafe { tet_get_point(self.ext_tetgen, to_i32(index), to_i32(dim)) }
+        unsafe { tet_get_out_point(self.ext_tetgen, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the ID of a tetrahedron's node
