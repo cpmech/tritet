@@ -7,40 +7,40 @@ fn main() -> Result<(), StrError> {
 
     // the outer polyhedron
     trigen
-        .set_point(0, 80.0, 0.0)?
-        .set_point(1, 100.0, 50.0)?
-        .set_point(2, 0.0, 100.0)?
-        .set_point(3, -100.0, 50.0)?
-        .set_point(4, -80.0, 0.0)?
-        .set_point(5, -100.0, -50.0)?
-        .set_point(6, 0.0, -100.0)?
-        .set_point(7, 100.0, -50.0)?;
+        .set_point(0, 0, 80.0, 0.0)?
+        .set_point(1, 0, 100.0, 50.0)?
+        .set_point(2, 0, 0.0, 100.0)?
+        .set_point(3, 0, -100.0, 50.0)?
+        .set_point(4, 0, -80.0, 0.0)?
+        .set_point(5, 0, -100.0, -50.0)?
+        .set_point(6, 0, 0.0, -100.0)?
+        .set_point(7, 0, 100.0, -50.0)?;
     // the mouth
     trigen
-        .set_point(8, 0.0, -90.0)?
-        .set_point(9, 80.0, -50.0)?
-        .set_point(10, 0.0, -10.0)?
-        .set_point(11, -80.0, -50.0)?;
+        .set_point(8, 0, 0.0, -90.0)?
+        .set_point(9, 0, 80.0, -50.0)?
+        .set_point(10, 0, 0.0, -10.0)?
+        .set_point(11, 0, -80.0, -50.0)?;
     // the left eye
     trigen
-        .set_point(12, -70.0, 50.0)?
-        .set_point(13, -60.0, 30.0)?
-        .set_point(14, -10.0, 55.0)?
-        .set_point(15, -40.0, 55.0)?;
+        .set_point(12, 0, -70.0, 50.0)?
+        .set_point(13, 0, -60.0, 30.0)?
+        .set_point(14, 0, -10.0, 55.0)?
+        .set_point(15, 0, -40.0, 55.0)?;
     // the right eye
     trigen
-        .set_point(16, 70.0, 50.0)?
-        .set_point(17, 60.0, 30.0)?
-        .set_point(18, 10.0, 55.0)?
-        .set_point(19, 40.0, 55.0)?;
+        .set_point(16, 0, 70.0, 50.0)?
+        .set_point(17, 0, 60.0, 30.0)?
+        .set_point(18, 0, 10.0, 55.0)?
+        .set_point(19, 0, 40.0, 55.0)?;
     // two nostril segments
     trigen
-        .set_point(20, -10.0, 25.0)?
-        .set_point(21, -20.0, -10.0)?
-        .set_point(22, 10.0, 25.0)?
-        .set_point(23, 20.0, -10.0)?;
+        .set_point(20, 0, -10.0, 25.0)?
+        .set_point(21, 0, -20.0, -10.0)?
+        .set_point(22, 0, 10.0, 25.0)?
+        .set_point(23, 0, 20.0, -10.0)?;
     // two dimples
-    trigen.set_point(24, -50.0, 0.0)?.set_point(25, 50.0, 0.0)?;
+    trigen.set_point(24, 0, -50.0, 0.0)?.set_point(25, 0, 50.0, 0.0)?;
 
     // the outer polyhedron
     trigen

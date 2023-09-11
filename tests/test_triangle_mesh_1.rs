@@ -5,18 +5,18 @@ use tritet::{StrError, Trigen};
 fn test_triangle_mesh_1() -> Result<(), StrError> {
     let mut triangle = Trigen::new(12, Some(20), Some(7), Some(2))?;
     triangle
-        .set_point(0, 0.0, 0.0)?
-        .set_point(1, 2.0, 0.0)?
-        .set_point(2, 4.0, 0.0)?
-        .set_point(3, 1.0, 1.0)?
-        .set_point(4, 3.0, 1.0)?
-        .set_point(5, 0.0, 2.0)?
-        .set_point(6, 4.0, 2.0)?
-        .set_point(7, 1.0, 3.0)?
-        .set_point(8, 3.0, 3.0)?
-        .set_point(9, 0.0, 4.0)?
-        .set_point(10, 2.0, 4.0)?
-        .set_point(11, 4.0, 4.0)?;
+        .set_point(0, 0, 0.0, 0.0)?
+        .set_point(1, 0, 2.0, 0.0)?
+        .set_point(2, 0, 4.0, 0.0)?
+        .set_point(3, 0, 1.0, 1.0)?
+        .set_point(4, 0, 3.0, 1.0)?
+        .set_point(5, 0, 0.0, 2.0)?
+        .set_point(6, 0, 4.0, 2.0)?
+        .set_point(7, 0, 1.0, 3.0)?
+        .set_point(8, 0, 3.0, 3.0)?
+        .set_point(9, 0, 0.0, 4.0)?
+        .set_point(10, 0, 2.0, 4.0)?
+        .set_point(11, 0, 4.0, 4.0)?;
     triangle
         .set_segment(0, 0, 0, 1)?
         .set_segment(1, 0, 1, 2)?

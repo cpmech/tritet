@@ -51,13 +51,8 @@ impl Trigen {
         )
         .unwrap();
         for index in 0..npoint {
-            write!(
-                &mut buffer,
-                "{:?} {:?} 0.0 ",
-                self.point(index, 0),
-                self.point(index, 1)
-            )
-            .unwrap();
+            let (_, x, y) = self.point(index);
+            write!(&mut buffer, "{:?} {:?} 0.0 ", x, y).unwrap();
         }
         write!(
             &mut buffer,
@@ -145,9 +140,9 @@ mod tests {
     fn trigen_write_vtu() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0)?;
         trigen.generate_delaunay(false)?;
         let file_path = "/tmp/tritet/test_trigen_write_vtu.vtu";
         trigen.write_vtu(file_path)?;
@@ -186,9 +181,9 @@ mod tests {
     fn trigen_write_vtu_o2() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, Some(3), None, None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0)?;
         trigen
             .set_segment(0, -10, 0, 1)?
             .set_segment(1, -20, 1, 2)?

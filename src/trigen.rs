@@ -13,7 +13,7 @@ pub(crate) struct ExtTrigen {
 extern "C" {
     fn new_trigen(npoint: i32, nsegment: i32, nregion: i32, nhole: i32) -> *mut ExtTrigen;
     fn drop_trigen(trigen: *mut ExtTrigen);
-    fn set_point(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
+    fn set_point(trigen: *mut ExtTrigen, index: i32, marker: i32, x: f64, y: f64) -> i32;
     fn set_segment(trigen: *mut ExtTrigen, index: i32, marker: i32, a: i32, b: i32) -> i32;
     fn set_region(trigen: *mut ExtTrigen, index: i32, attribute: i32, x: f64, y: f64, max_area: f64) -> i32;
     fn set_hole(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
@@ -31,7 +31,7 @@ extern "C" {
     fn get_n_out_segment(trigen: *mut ExtTrigen) -> i32;
     fn get_ntriangle(trigen: *mut ExtTrigen) -> i32;
     fn get_ncorner(trigen: *mut ExtTrigen) -> i32;
-    fn get_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn get_point(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, x: *mut f64, y: *mut f64);
     fn get_out_segment(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, a: *mut i32, b: *mut i32);
     fn get_triangle_corner(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
     fn get_triangle_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
@@ -70,16 +70,16 @@ pub enum VoronoiEdgePoint {
 ///
 ///     // set points
 ///     trigen
-///         .set_point(0, 0.478554, 0.00869692)?
-///         .set_point(1, 0.13928, 0.180603)?
-///         .set_point(2, 0.578587, 0.760349)?
-///         .set_point(3, 0.903726, 0.975904)?
-///         .set_point(4, 0.0980015, 0.981755)?
-///         .set_point(5, 0.133721, 0.348832)?
-///         .set_point(6, 0.648071, 0.369534)?
-///         .set_point(7, 0.230951, 0.558482)?
-///         .set_point(8, 0.0307942, 0.459123)?
-///         .set_point(9, 0.540745, 0.331184)?;
+///         .set_point(0, 0, 0.478554, 0.00869692)?
+///         .set_point(1, 0, 0.13928, 0.180603)?
+///         .set_point(2, 0, 0.578587, 0.760349)?
+///         .set_point(3, 0, 0.903726, 0.975904)?
+///         .set_point(4, 0, 0.0980015, 0.981755)?
+///         .set_point(5, 0, 0.133721, 0.348832)?
+///         .set_point(6, 0, 0.648071, 0.369534)?
+///         .set_point(7, 0, 0.230951, 0.558482)?
+///         .set_point(8, 0, 0.0307942, 0.459123)?
+///         .set_point(9, 0, 0.540745, 0.331184)?;
 ///
 ///     // generate Delaunay triangulation
 ///     trigen.generate_delaunay(false)?;
@@ -108,16 +108,16 @@ pub enum VoronoiEdgePoint {
 ///
 ///     // set points
 ///     trigen
-///         .set_point(0, 0.478554, 0.00869692)?
-///         .set_point(1, 0.13928, 0.180603)?
-///         .set_point(2, 0.578587, 0.760349)?
-///         .set_point(3, 0.903726, 0.975904)?
-///         .set_point(4, 0.0980015, 0.981755)?
-///         .set_point(5, 0.133721, 0.348832)?
-///         .set_point(6, 0.648071, 0.369534)?
-///         .set_point(7, 0.230951, 0.558482)?
-///         .set_point(8, 0.0307942, 0.459123)?
-///         .set_point(9, 0.540745, 0.331184)?;
+///         .set_point(0, 0, 0.478554, 0.00869692)?
+///         .set_point(1, 0, 0.13928, 0.180603)?
+///         .set_point(2, 0, 0.578587, 0.760349)?
+///         .set_point(3, 0, 0.903726, 0.975904)?
+///         .set_point(4, 0, 0.0980015, 0.981755)?
+///         .set_point(5, 0, 0.133721, 0.348832)?
+///         .set_point(6, 0, 0.648071, 0.369534)?
+///         .set_point(7, 0, 0.230951, 0.558482)?
+///         .set_point(8, 0, 0.0307942, 0.459123)?
+///         .set_point(9, 0, 0.540745, 0.331184)?;
 ///
 ///     // generate Voronoi tessellation
 ///     trigen.generate_voronoi(false)?;
@@ -146,18 +146,18 @@ pub enum VoronoiEdgePoint {
 ///
 ///     // set points
 ///     trigen
-///         .set_point(0, 0.0, 0.0)?
-///         .set_point(1, 1.0, 0.0)?
-///         .set_point(2, 1.0, 1.0)?
-///         .set_point(3, 0.0, 1.0)?
-///         .set_point(4, 0.2, 0.2)?
-///         .set_point(5, 0.8, 0.2)?
-///         .set_point(6, 0.8, 0.8)?
-///         .set_point(7, 0.2, 0.8)?
-///         .set_point(8, 0.0, 0.5)?
-///         .set_point(9, 0.2, 0.5)?
-///         .set_point(10, 0.8, 0.5)?
-///         .set_point(11, 1.0, 0.5)?;
+///         .set_point(0, 0, 0.0, 0.0)?
+///         .set_point(1, 0, 1.0, 0.0)?
+///         .set_point(2, 0, 1.0, 1.0)?
+///         .set_point(3, 0, 0.0, 1.0)?
+///         .set_point(4, 0, 0.2, 0.2)?
+///         .set_point(5, 0, 0.8, 0.2)?
+///         .set_point(6, 0, 0.8, 0.8)?
+///         .set_point(7, 0, 0.2, 0.8)?
+///         .set_point(8, 0, 0.0, 0.5)?
+///         .set_point(9, 0, 0.2, 0.5)?
+///         .set_point(10, 0, 0.8, 0.5)?
+///         .set_point(11, 0, 1.0, 0.5)?;
 ///
 ///     // set segments
 ///     trigen
@@ -260,6 +260,13 @@ impl Drop for Trigen {
 
 impl Trigen {
     /// Allocates a new instance
+    ///
+    /// # Input
+    ///
+    /// * `npoint` -- is the number of points in the input PSLG
+    /// * `nsegment` -- (only for [Trigen::generate_mesh]) is the number of segments in the input PSLG
+    /// * `nregion` -- (only for [Trigen::generate_mesh]) is the number of regions in the input PSLG
+    /// * `nhole` -- (only for [Trigen::generate_mesh]) is the number of holes in the input PSLG
     pub fn new(
         npoint: usize,
         nsegment: Option<usize>,
@@ -307,9 +314,16 @@ impl Trigen {
     }
 
     /// Sets the point coordinates
-    pub fn set_point(&mut self, index: usize, x: f64, y: f64) -> Result<&mut Self, StrError> {
+    ///
+    /// # Input
+    ///
+    /// * `index` -- is the index of the point and goes from `0` to `npoint` (specified in [Trigen::new])
+    /// * `marker` -- is a marker for the point
+    /// * `x` -- is x-coordinate of the point
+    /// * `y` -- is y-coordinate of the point
+    pub fn set_point(&mut self, index: usize, marker: i32, x: f64, y: f64) -> Result<&mut Self, StrError> {
         unsafe {
-            let status = set_point(self.ext_triangle, to_i32(index), x, y);
+            let status = set_point(self.ext_triangle, to_i32(index), marker, x, y);
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -589,18 +603,29 @@ impl Trigen {
         unsafe { get_ncorner(self.ext_triangle) as usize }
     }
 
-    /// Returns the x-y coordinates of a point
+    /// Returns the (output) generated point
     ///
     /// # Input
     ///
     /// * `index` -- is the index of the point and goes from `0` to `npoint`
-    /// * `dim` -- is the space dimension index: 0 or 1
+    ///
+    /// # Output
+    ///
+    /// Returns `(marker, x, y)`, where:
+    ///
+    /// * `marker` -- is the marker assigned to the point
+    /// * `x` -- is the x-coordinate
+    /// * `y` -- is the y-coordinate
     ///
     /// # Warning
     ///
-    /// This function will return 0.0 if either `index` or `dim` are out of range.
-    pub fn point(&self, index: usize, dim: usize) -> f64 {
-        unsafe { get_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
+    /// This function will return zero values if either `index` is out of range.
+    pub fn point(&self, index: usize) -> (i32, f64, f64) {
+        let mut marker: i32 = 0;
+        let mut x: f64 = 0.0;
+        let mut y: f64 = 0.0;
+        unsafe { get_point(self.ext_triangle, to_i32(index), &mut marker, &mut x, &mut y) }
+        (marker, x, y)
     }
 
     /// Returns the (output) generated segment on the PSLG
@@ -625,6 +650,10 @@ impl Trigen {
     ///
     /// 1. This option is only available when calling [Trigen::generate_mesh]
     /// 2. The point indices `(a, b)` are sorted in increasing order
+    ///
+    /// # Warning
+    ///
+    /// This function will return zero values if either `index` is out of range.
     pub fn out_segment(&self, index: usize) -> (i32, usize, usize) {
         let mut marker: i32 = 0;
         let mut a: i32 = 0;
@@ -814,8 +843,10 @@ impl Trigen {
             }
             for m in 0..3 {
                 let p = self.triangle_node(tri, m);
+                let (_, x_val, y_val) = self.point(p);
+                x[0] = x_val;
+                x[1] = y_val;
                 for dim in 0..2 {
-                    x[dim] = self.point(p, dim);
                     min[dim] = f64::min(min[dim], x[dim]);
                     max[dim] = f64::max(max[dim], x[dim]);
                     xmid[dim] += x[dim] / 3.0;
@@ -831,8 +862,11 @@ impl Trigen {
                 triangle_ids.draw(xmid[0], xmid[1], format!("{}", tri).as_str());
             }
             if with_attribute_ids {
+                let p = self.triangle_node(tri, 0);
+                let (_, x_val, y_val) = self.point(p);
+                x[0] = x_val;
+                x[1] = y_val;
                 for dim in 0..2 {
-                    x[dim] = self.point(self.triangle_node(tri, 0), dim);
                     xatt[dim] = (x[dim] + xmid[dim]) / 2.0;
                 }
                 attribute_ids.draw(xatt[0], xatt[1], format!("[{}]", attribute).as_str());
@@ -840,9 +874,8 @@ impl Trigen {
         }
         if with_point_ids {
             for p in 0..self.npoint() {
-                let x = self.point(p, 0);
-                let y = self.point(p, 1);
-                point_ids.draw(x, y, format!("{}", p).as_str());
+                let (_, x_val, y_val) = self.point(p);
+                point_ids.draw(x_val, y_val, format!("{}", p).as_str());
             }
         }
         plot.add(&canvas);
@@ -875,8 +908,10 @@ impl Trigen {
             .set_marker_style("o")
             .set_stop_clip(true);
         for p in 0..self.npoint() {
+            let (_, x_val, y_val) = self.point(p);
+            x[0] = x_val;
+            x[1] = y_val;
             for dim in 0..2 {
-                x[dim] = self.point(p, dim);
                 min[dim] = f64::min(min[dim], x[dim]);
                 max[dim] = f64::max(max[dim], x[dim]);
             }
@@ -981,7 +1016,7 @@ mod tests {
     fn set_point_captures_some_errors() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
-            trigen.set_point(4, 0.0, 0.0).err(),
+            trigen.set_point(4, 0, 0.0, 0.0).err(),
             Some("index of point is out of bounds")
         );
         Ok(())
@@ -1052,9 +1087,9 @@ mod tests {
             Some("cannot generate mesh of triangles because not all points are set")
         );
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0)?;
         assert_eq!(
             trigen.generate_mesh(false, false, false, None, None).err(),
             Some("cannot generate mesh of triangles because not all segments are set")
@@ -1066,19 +1101,16 @@ mod tests {
     fn delaunay_1_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0)?;
         trigen.generate_delaunay(false)?;
         assert_eq!(trigen.npoint(), 3);
         assert_eq!(trigen.ntriangle(), 1);
         assert_eq!(trigen.nnode(), 3);
-        assert_eq!(trigen.point(0, 0), 0.0);
-        assert_eq!(trigen.point(0, 1), 0.0);
-        assert_eq!(trigen.point(1, 0), 1.0);
-        assert_eq!(trigen.point(1, 1), 0.0);
-        assert_eq!(trigen.point(2, 0), 0.0);
-        assert_eq!(trigen.point(2, 1), 1.0);
+        assert_eq!(trigen.point(0), (0, 0.0, 0.0));
+        assert_eq!(trigen.point(1), (0, 1.0, 0.0));
+        assert_eq!(trigen.point(2), (0, 0.0, 1.0));
         assert_eq!(trigen.triangle_node(0, 0), 0);
         assert_eq!(trigen.triangle_node(0, 1), 1);
         assert_eq!(trigen.triangle_node(0, 2), 2);
@@ -1091,19 +1123,16 @@ mod tests {
     fn voronoi_1_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0)?;
         trigen.generate_voronoi(false)?;
         assert_eq!(trigen.npoint(), 3);
         assert_eq!(trigen.ntriangle(), 1);
         assert_eq!(trigen.nnode(), 3);
-        assert_eq!(trigen.point(0, 0), 0.0);
-        assert_eq!(trigen.point(0, 1), 0.0);
-        assert_eq!(trigen.point(1, 0), 1.0);
-        assert_eq!(trigen.point(1, 1), 0.0);
-        assert_eq!(trigen.point(2, 0), 0.0);
-        assert_eq!(trigen.point(2, 1), 1.0);
+        assert_eq!(trigen.point(0), (0, 0.0, 0.0));
+        assert_eq!(trigen.point(1), (0, 1.0, 0.0));
+        assert_eq!(trigen.point(2), (0, 0.0, 1.0));
         assert_eq!(trigen.triangle_node(0, 0), 0);
         assert_eq!(trigen.triangle_node(0, 1), 1);
         assert_eq!(trigen.triangle_node(0, 2), 2);
@@ -1124,9 +1153,9 @@ mod tests {
     fn mesh_1_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, Some(3), None, None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0)?;
         trigen
             .set_segment(0, -10, 0, 1)?
             .set_segment(1, -20, 1, 2)?
@@ -1135,12 +1164,9 @@ mod tests {
         assert_eq!(trigen.npoint(), 3);
         assert_eq!(trigen.ntriangle(), 1);
         assert_eq!(trigen.nnode(), 3);
-        assert_eq!(trigen.point(0, 0), 0.0);
-        assert_eq!(trigen.point(0, 1), 0.0);
-        assert_eq!(trigen.point(1, 0), 1.0);
-        assert_eq!(trigen.point(1, 1), 0.0);
-        assert_eq!(trigen.point(2, 0), 0.0);
-        assert_eq!(trigen.point(2, 1), 1.0);
+        assert_eq!(trigen.point(0), (0, 0.0, 0.0));
+        assert_eq!(trigen.point(1), (0, 1.0, 0.0));
+        assert_eq!(trigen.point(2), (0, 0.0, 1.0));
         assert_eq!(trigen.triangle_node(0, 0), 0);
         assert_eq!(trigen.triangle_node(0, 1), 1);
         assert_eq!(trigen.triangle_node(0, 2), 2);
@@ -1156,10 +1182,10 @@ mod tests {
     fn mesh_2_no_steiner_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(4, Some(4), None, None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 1.0, 1.0)?
-            .set_point(3, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 1.0, 1.0)?
+            .set_point(3, 0, 0.0, 1.0)?;
         trigen
             .set_segment(0, -10, 0, 1)?
             .set_segment(1, -20, 1, 2)?
@@ -1198,10 +1224,10 @@ mod tests {
     fn mesh_2_ok_steiner_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(4, Some(4), None, None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 1.0, 1.0)?
-            .set_point(3, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 1.0, 1.0)?
+            .set_point(3, 0, 0.0, 1.0)?;
         trigen
             .set_segment(0, -10, 0, 1)?
             .set_segment(1, -20, 1, 2)?
@@ -1243,8 +1269,7 @@ mod tests {
     #[test]
     fn get_methods_work_with_wrong_indices() -> Result<(), StrError> {
         let trigen = Trigen::new(3, None, None, None)?;
-        assert_eq!(trigen.point(100, 0), 0.0);
-        assert_eq!(trigen.point(0, 100), 0.0);
+        assert_eq!(trigen.point(100), (0, 0.0, 0.0));
         assert_eq!(trigen.triangle_attribute(100), 0);
         assert_eq!(trigen.voronoi_point(100, 0), 0.0);
         assert_eq!(trigen.voronoi_point(0, 100), 0.0);
@@ -1257,9 +1282,9 @@ mod tests {
     fn draw_triangles_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, Some(3), None, None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 0.0, 1.0)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0)?;
         trigen
             .set_segment(0, -10, 0, 1)?
             .set_segment(1, -20, 1, 2)?
@@ -1279,11 +1304,11 @@ mod tests {
     fn draw_voronoi_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(5, None, None, None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 1.0, 1.0)?
-            .set_point(3, 0.0, 1.0)?
-            .set_point(4, 0.5, 0.5)?;
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 1.0, 1.0)?
+            .set_point(3, 0, 0.0, 1.0)?
+            .set_point(4, 0, 0.5, 0.5)?;
         trigen.generate_voronoi(false)?;
         assert_eq!(trigen.voronoi_npoint(), 4);
         let mut plot = Plot::new();
@@ -1300,10 +1325,10 @@ mod tests {
     fn mesh_3_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(4, Some(3), Some(1), None)?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 0.0, 1.0)?
-            .set_point(3, 0.5, 0.5)?
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 0.0, 1.0)?
+            .set_point(3, 0, 0.5, 0.5)?
             .set_region(0, 1, 0.5, 0.2, None)?;
         trigen
             .set_segment(0, -10, 0, 1)?
@@ -1327,18 +1352,18 @@ mod tests {
     fn mesh_4_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(12, Some(10), Some(2), Some(1))?;
         trigen
-            .set_point(0, 0.0, 0.0)?
-            .set_point(1, 1.0, 0.0)?
-            .set_point(2, 1.0, 1.0)?
-            .set_point(3, 0.0, 1.0)?
-            .set_point(4, 0.2, 0.2)?
-            .set_point(5, 0.8, 0.2)?
-            .set_point(6, 0.8, 0.8)?
-            .set_point(7, 0.2, 0.8)?
-            .set_point(8, 0.0, 0.5)?
-            .set_point(9, 0.2, 0.5)?
-            .set_point(10, 0.8, 0.5)?
-            .set_point(11, 1.0, 0.5)?
+            .set_point(0, 0, 0.0, 0.0)?
+            .set_point(1, 0, 1.0, 0.0)?
+            .set_point(2, 0, 1.0, 1.0)?
+            .set_point(3, 0, 0.0, 1.0)?
+            .set_point(4, 0, 0.2, 0.2)?
+            .set_point(5, 0, 0.8, 0.2)?
+            .set_point(6, 0, 0.8, 0.8)?
+            .set_point(7, 0, 0.2, 0.8)?
+            .set_point(8, 0, 0.0, 0.5)?
+            .set_point(9, 0, 0.2, 0.5)?
+            .set_point(10, 0, 0.8, 0.5)?
+            .set_point(11, 0, 1.0, 0.5)?
             .set_region(0, 111, 0.1, 0.1, None)?
             .set_region(1, 222, 0.1, 0.9, None)?
             .set_hole(0, 0.5, 0.5)?;
