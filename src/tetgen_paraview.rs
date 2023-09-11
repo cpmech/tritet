@@ -17,13 +17,13 @@ impl Tetgen {
     where
         P: AsRef<OsStr> + ?Sized,
     {
-        let ntet = self.ntet();
+        let ntet = self.out_ncell();
         if ntet < 1 {
             return Err("there are no tetrahedra to write");
         }
 
-        let npoint = self.npoint();
-        let nnode = self.nnode();
+        let npoint = self.out_npoint();
+        let nnode = self.out_cell_npoint();
         let vtk_type = if nnode == 4 {
             constants::VTK_TETRA
         } else {
@@ -54,9 +54,9 @@ impl Tetgen {
             write!(
                 &mut buffer,
                 "{:?} {:?} {:?} ",
-                self.point(index, 0),
-                self.point(index, 1),
-                self.point(index, 2)
+                self.out_point(index, 0),
+                self.out_point(index, 1),
+                self.out_point(index, 2)
             )
             .unwrap();
         }
@@ -76,7 +76,7 @@ impl Tetgen {
         .unwrap();
         for index in 0..ntet {
             for m in 0..nnode {
-                write!(&mut buffer, "{} ", self.tet_node(index, m)).unwrap();
+                write!(&mut buffer, "{} ", self.out_cell_point(index, m)).unwrap();
             }
         }
 

@@ -264,7 +264,7 @@ int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_
     return TRITET_SUCCESS;
 }
 
-int32_t tet_get_n_out_point(struct ExtTetgen *tetgen) {
+int32_t tet_out_npoint(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return 0;
     }
@@ -273,7 +273,7 @@ int32_t tet_get_n_out_point(struct ExtTetgen *tetgen) {
     return 0;
 }
 
-int32_t tet_get_ntetrahedron(struct ExtTetgen *tetgen) {
+int32_t tet_out_ncell(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return 0;
     }
@@ -282,7 +282,7 @@ int32_t tet_get_ntetrahedron(struct ExtTetgen *tetgen) {
     return 0;
 }
 
-int32_t tet_get_ncorner(struct ExtTetgen *tetgen) {
+int32_t tet_out_cell_npoint(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return 0;
     }
@@ -291,7 +291,7 @@ int32_t tet_get_ncorner(struct ExtTetgen *tetgen) {
     return 0;
 }
 
-double tet_get_out_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim) {
+double tet_out_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim) {
     if (tetgen == NULL) {
         return 0.0;
     }
@@ -304,7 +304,7 @@ double tet_get_out_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim) {
     return 0.0;
 }
 
-int32_t tet_get_tetrahedron_corner(struct ExtTetgen *tetgen, int32_t index, int32_t corner) {
+int32_t tet_out_cell_point(struct ExtTetgen *tetgen, int32_t index, int32_t corner) {
     if (tetgen == NULL) {
         return 0;
     }
@@ -317,7 +317,7 @@ int32_t tet_get_tetrahedron_corner(struct ExtTetgen *tetgen, int32_t index, int3
     return 0;
 }
 
-int32_t tet_get_tetrahedron_attribute(struct ExtTetgen *tetgen, int32_t index) {
+int32_t tet_out_cell_attribute(struct ExtTetgen *tetgen, int32_t index) {
     if (tetgen == NULL) {
         return 0;
     }

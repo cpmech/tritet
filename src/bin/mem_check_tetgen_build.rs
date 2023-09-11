@@ -134,8 +134,8 @@ fn generate_delaunay_works() -> Result<(), StrError> {
         .set_point(2, 0.0, 1.0, 0.0)?
         .set_point(3, 0.0, 0.0, 1.0)?;
     tetgen.generate_delaunay(false)?;
-    assert_eq!(tetgen.ntet(), 1);
-    assert_eq!(tetgen.npoint(), 4);
+    assert_eq!(tetgen.out_ncell(), 1);
+    assert_eq!(tetgen.out_npoint(), 4);
     Ok(())
 }
 
@@ -234,7 +234,7 @@ fn generate_mesh_works_1() -> Result<(), StrError> {
     tetgen.set_region(0, 1, -0.9, -0.9, -0.9, None)?;
     tetgen.set_hole(0, 0.5, 0.5, 0.5)?;
     tetgen.generate_mesh(false, false, None, None)?;
-    assert_eq!(tetgen.ntet(), 116);
-    assert_eq!(tetgen.npoint(), 50);
+    assert_eq!(tetgen.out_ncell(), 116);
+    assert_eq!(tetgen.out_npoint(), 50);
     Ok(())
 }

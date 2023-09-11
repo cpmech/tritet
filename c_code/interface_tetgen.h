@@ -26,16 +26,16 @@ int32_t tet_run_delaunay(struct ExtTetgen *tetgen, int32_t verbose);
 
 int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_t o2, double global_max_volume, double global_min_angle);
 
-int32_t tet_get_n_out_point(struct ExtTetgen *tetgen);
+int32_t tet_out_npoint(struct ExtTetgen *tetgen);
 
-int32_t tet_get_ntetrahedron(struct ExtTetgen *tetgen);
+int32_t tet_out_ncell(struct ExtTetgen *tetgen); // a "cell" here is a "tetrahedron"
 
-int32_t tet_get_ncorner(struct ExtTetgen *tetgen);
+int32_t tet_out_cell_npoint(struct ExtTetgen *tetgen);
 
-double tet_get_out_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim);
+double tet_out_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim);
 
-int32_t tet_get_tetrahedron_corner(struct ExtTetgen *tetgen, int32_t index, int32_t corner);
+int32_t tet_out_cell_point(struct ExtTetgen *tetgen, int32_t index, int32_t corner);
 
-int32_t tet_get_tetrahedron_attribute(struct ExtTetgen *tetgen, int32_t index);
+int32_t tet_out_cell_attribute(struct ExtTetgen *tetgen, int32_t index);
 
 #endif // INTERFACE_TETGEN_H
