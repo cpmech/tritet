@@ -18,10 +18,10 @@ extern "C" {
     fn tet_set_region(
         tetgen: *mut ExtTetgen,
         index: i32,
+        attribute: i32,
         x: f64,
         y: f64,
         z: f64,
-        attribute: i32,
         max_volume: f64,
     ) -> i32;
     fn tet_set_hole(tetgen: *mut ExtTetgen, index: i32, x: f64, y: f64, z: f64) -> i32;
@@ -118,7 +118,7 @@ extern "C" {
 ///         .set_facet_point(3, 2, 3)?;
 ///
 ///     // set region
-///     tetgen.set_region(0, 0.1, 0.9, 0.1, 1, None)?;
+///     tetgen.set_region(0, 1, 0.1, 0.9, 0.1, None)?;
 ///
 ///     // generate mesh
 ///     tetgen.generate_mesh(false, false, Some(0.01), None)?;
@@ -301,18 +301,18 @@ impl Tetgen {
     /// # Input
     ///
     /// * `index` -- is the index of the region and goes from 0 to `nregion` (passed down to `new`)
+    /// * `attribute` -- is the attribute ID to group the tetrahedra belonging to this region
     /// * `x` -- is the x-coordinate of the region
     /// * `y` -- is the y-coordinate of the region
     /// * `z` -- is the z-coordinate of the region
-    /// * `attribute` -- is the attribute ID to group the tetrahedra belonging to this region
     /// * `max_volume` -- is the maximum volume constraint for the tetrahedra belonging to this region
     pub fn set_region(
         &mut self,
         index: usize,
+        attribute: usize,
         x: f64,
         y: f64,
         z: f64,
-        attribute: usize,
         max_volume: Option<f64>,
     ) -> Result<&mut Self, StrError> {
         let nregion = match self.nregion {
@@ -327,10 +327,10 @@ impl Tetgen {
             let status = tet_set_region(
                 self.ext_tetgen,
                 to_i32(index),
+                to_i32(attribute),
                 x,
                 y,
                 z,
-                to_i32(attribute),
                 volume_constraint,
             );
             if status != constants::TRITET_SUCCESS {
@@ -761,12 +761,12 @@ mod tests {
     fn set_region_captures_some_errors() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         assert_eq!(
-            tetgen.set_region(0, 0.33, 0.33, 0.33, 1, Some(0.1)).err(),
+            tetgen.set_region(0, 1, 0.33, 0.33, 0.33, Some(0.1)).err(),
             Some("cannot set region because the number of regions is None")
         );
         let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), Some(1), None)?;
         assert_eq!(
-            tetgen.set_region(1, 0.33, 0.33, 0.33, 1, Some(0.1)).err(),
+            tetgen.set_region(1, 1, 0.33, 0.33, 0.33, Some(0.1)).err(),
             Some("index of region is out of bounds")
         );
         Ok(())
@@ -963,7 +963,7 @@ mod tests {
             .set_facet_point(11, 1, 8 + 5)?
             .set_facet_point(11, 2, 8 + 6)?
             .set_facet_point(11, 3, 8 + 7)?;
-        tetgen.set_region(0, -0.9, -0.9, -0.9, 1, None)?;
+        tetgen.set_region(0, 1, -0.9, -0.9, -0.9, None)?;
         tetgen.set_hole(0, 0.5, 0.5, 0.5)?;
         tetgen.generate_mesh(false, false, None, None)?;
         assert_eq!(tetgen.ntet(), 116);

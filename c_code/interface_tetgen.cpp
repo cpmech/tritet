@@ -148,7 +148,7 @@ int32_t tet_set_facet_point(struct ExtTetgen *tetgen, int32_t index, int32_t m, 
     return TRITET_SUCCESS;
 }
 
-int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, double x, double y, double z, int32_t attribute, double max_volume) {
+int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, int32_t attribute, double x, double y, double z, double max_volume) {
     if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -203,9 +203,9 @@ int32_t tet_run_delaunay(struct ExtTetgen *tetgen, int32_t verbose) {
     try {
         tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
     } catch (int32_t status) {
-        printf("status = %d\n", status);  // TODO
+        printf("status = %d\n", status); // TODO
     } catch (...) {
-        return 1;  // TODO
+        return 1; // TODO
     }
 
     return TRITET_SUCCESS;
@@ -256,9 +256,9 @@ int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_
     try {
         tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
     } catch (int32_t status) {
-        printf("status = %d\n", status);  // TODO
+        printf("status = %d\n", status); // TODO
     } catch (...) {
-        return 1;  // TODO
+        return 1; // TODO
     }
 
     return TRITET_SUCCESS;

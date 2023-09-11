@@ -101,7 +101,7 @@ fn main() -> Result<(), StrError> {
         .set_facet_point(11, 3, 8 + 7)?;
 
     // set region and hole
-    tetgen.set_region(0, -0.9, -0.9, -0.9, 1, None)?;
+    tetgen.set_region(0, 1, -0.9, -0.9, -0.9, None)?;
     tetgen.set_hole(0, 0.5, 0.5, 0.5)?;
 
     // generate mesh

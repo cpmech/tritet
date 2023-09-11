@@ -39,13 +39,13 @@ fn test_triangle_mesh_1() -> Result<(), StrError> {
         .set_segment(18, 0, 3, 4)?
         .set_segment(19, 0, 7, 8)?;
     triangle
-        .set_region(0, 0.1, 0.1, 1, None)?
-        .set_region(1, 2.0, 0.1, 2, None)?
-        .set_region(2, 3.9, 0.1, 3, None)?
-        .set_region(3, 0.1, 3.9, 4, None)?
-        .set_region(4, 2.0, 3.9, 5, None)?
-        .set_region(5, 3.9, 3.9, 6, None)?
-        .set_region(6, 2.0, 2.0, 7, None)?;
+        .set_region(0, 1, 0.1, 0.1, None)?
+        .set_region(1, 2, 2.0, 0.1, None)?
+        .set_region(2, 3, 3.9, 0.1, None)?
+        .set_region(3, 4, 0.1, 3.9, None)?
+        .set_region(4, 5, 2.0, 3.9, None)?
+        .set_region(5, 6, 3.9, 3.9, None)?
+        .set_region(6, 7, 2.0, 2.0, None)?;
     triangle.set_hole(0, 0.1, 2.0)?.set_hole(1, 3.9, 2.0)?;
     triangle.generate_mesh(false, false, false, None, None)?;
 

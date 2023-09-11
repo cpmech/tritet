@@ -79,12 +79,12 @@ fn set_facet_point_captures_some_errors() -> Result<(), StrError> {
 fn set_region_captures_some_errors() -> Result<(), StrError> {
     let mut tetgen = Tetgen::new(4, None, None, None)?;
     assert_eq!(
-        tetgen.set_region(0, 0.33, 0.33, 0.33, 1, Some(0.1)).err(),
+        tetgen.set_region(0, 1, 0.33, 0.33, 0.33, Some(0.1)).err(),
         Some("cannot set region because the number of regions is None")
     );
     let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), Some(1), None)?;
     assert_eq!(
-        tetgen.set_region(1, 0.33, 0.33, 0.33, 1, Some(0.1)).err(),
+        tetgen.set_region(1, 1, 0.33, 0.33, 0.33, Some(0.1)).err(),
         Some("index of region is out of bounds")
     );
     Ok(())
@@ -231,7 +231,7 @@ fn generate_mesh_works_1() -> Result<(), StrError> {
         .set_facet_point(11, 1, 8 + 5)?
         .set_facet_point(11, 2, 8 + 6)?
         .set_facet_point(11, 3, 8 + 7)?;
-    tetgen.set_region(0, -0.9, -0.9, -0.9, 1, None)?;
+    tetgen.set_region(0, 1, -0.9, -0.9, -0.9, None)?;
     tetgen.set_hole(0, 0.5, 0.5, 0.5)?;
     tetgen.generate_mesh(false, false, None, None)?;
     assert_eq!(tetgen.ntet(), 116);

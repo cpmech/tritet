@@ -219,7 +219,7 @@ int32_t set_segment(struct ExtTrigen *trigen, int32_t index, int32_t marker, int
     return TRITET_SUCCESS;
 }
 
-int32_t set_region(struct ExtTrigen *trigen, int32_t index, double x, double y, int32_t attribute, double max_area) {
+int32_t set_region(struct ExtTrigen *trigen, int32_t index, int32_t attribute, double x, double y, double max_area) {
     // Shewchuk: If you are using the -A and -a switches simultaneously and wish to assign an attribute
     // to some region without imposing an area constraint, use a negative maximum area.
     if (trigen == NULL) {

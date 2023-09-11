@@ -65,12 +65,12 @@ fn set_segment_captures_some_errors() -> Result<(), StrError> {
 fn set_region_captures_some_errors() -> Result<(), StrError> {
     let mut trigen = Trigen::new(3, None, None, None)?;
     assert_eq!(
-        trigen.set_region(0, 0.33, 0.33, 1, Some(0.1)).err(),
+        trigen.set_region(0, 1, 0.33, 0.33, Some(0.1)).err(),
         Some("cannot set region because the number of regions is None")
     );
     let mut trigen = Trigen::new(3, Some(3), Some(1), None)?;
     assert_eq!(
-        trigen.set_region(1, 0.33, 0.33, 1, Some(0.1)).err(),
+        trigen.set_region(1, 1, 0.33, 0.33, Some(0.1)).err(),
         Some("index of region is out of bounds")
     );
     Ok(())
@@ -306,7 +306,7 @@ fn mesh() -> Result<(), StrError> {
     mesh.set_segment(20, 0, 20, 21)?.set_segment(21, 0, 22, 23)?;
 
     // region
-    mesh.set_region(0, 0.0, 0.0, 1, None)?;
+    mesh.set_region(0, 1, 0.0, 0.0, None)?;
 
     // three holes
     mesh.set_hole(0, 0.0, -50.0)? // mouth

@@ -18,7 +18,7 @@ int32_t tet_set_point(struct ExtTetgen *tetgen, int32_t index, double x, double 
 
 int32_t tet_set_facet_point(struct ExtTetgen *tetgen, int32_t index, int32_t m, int32_t p);
 
-int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, double x, double y, double z, int32_t attribute, double max_volume);
+int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, int32_t attribute, double x, double y, double z, double max_volume);
 
 int32_t tet_set_hole(struct ExtTetgen *tetgen, int32_t index, double x, double y, double z);
 
@@ -38,4 +38,4 @@ int32_t tet_get_tetrahedron_corner(struct ExtTetgen *tetgen, int32_t index, int3
 
 int32_t tet_get_tetrahedron_attribute(struct ExtTetgen *tetgen, int32_t index);
 
-#endif  // INTERFACE_TETGEN_H
+#endif // INTERFACE_TETGEN_H

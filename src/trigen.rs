@@ -15,7 +15,7 @@ extern "C" {
     fn drop_trigen(trigen: *mut ExtTrigen);
     fn set_point(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
     fn set_segment(trigen: *mut ExtTrigen, index: i32, marker: i32, a: i32, b: i32) -> i32;
-    fn set_region(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64, attribute: i32, max_area: f64) -> i32;
+    fn set_region(trigen: *mut ExtTrigen, index: i32, attribute: i32, x: f64, y: f64, max_area: f64) -> i32;
     fn set_hole(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
     fn run_delaunay(trigen: *mut ExtTrigen, verbose: i32) -> i32;
     fn run_voronoi(trigen: *mut ExtTrigen, verbose: i32) -> i32;
@@ -174,8 +174,8 @@ pub enum VoronoiEdgePoint {
 ///
 ///     // set regions
 ///     trigen
-///         .set_region(0, 0.1, 0.1, 1, None)?
-///         .set_region(1, 0.1, 0.9, 2, None)?;
+///         .set_region(0, 1, 0.1, 0.1, None)?
+///         .set_region(1, 2, 0.1, 0.9, None)?;
 ///
 ///     // set holes
 ///     trigen.set_hole(0, 0.5, 0.5)?;
@@ -375,16 +375,16 @@ impl Trigen {
     /// # Input
     ///
     /// * `index` -- is the index of the region and goes from 0 to `nregion` (passed down to `new`)
+    /// * `attribute` -- is the attribute ID to group the triangles belonging to this region
     /// * `x` -- is the x-coordinate of the region
     /// * `y` -- is the y-coordinate of the region
-    /// * `attribute` -- is the attribute ID to group the triangles belonging to this region
     /// * `max_area` -- is the maximum area constraint for the triangles belonging to this region
     pub fn set_region(
         &mut self,
         index: usize,
+        attribute: usize,
         x: f64,
         y: f64,
-        attribute: usize,
         max_area: Option<f64>,
     ) -> Result<&mut Self, StrError> {
         let nregion = match self.nregion {
@@ -399,9 +399,9 @@ impl Trigen {
             let status = set_region(
                 self.ext_triangle,
                 to_i32(index),
+                to_i32(attribute),
                 x,
                 y,
-                to_i32(attribute),
                 area_constraint,
             );
             if status != constants::TRITET_SUCCESS {
@@ -1010,12 +1010,12 @@ mod tests {
     fn set_region_captures_some_errors() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
-            trigen.set_region(0, 0.33, 0.33, 1, Some(0.1)).err(),
+            trigen.set_region(0, 1, 0.33, 0.33, Some(0.1)).err(),
             Some("cannot set region because the number of regions is None")
         );
         let mut trigen = Trigen::new(3, Some(3), Some(1), None)?;
         assert_eq!(
-            trigen.set_region(1, 0.33, 0.33, 1, Some(0.1)).err(),
+            trigen.set_region(1, 1, 0.33, 0.33, Some(0.1)).err(),
             Some("index of region is out of bounds")
         );
         Ok(())
@@ -1304,7 +1304,7 @@ mod tests {
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?
             .set_point(3, 0.5, 0.5)?
-            .set_region(0, 0.5, 0.2, 1, None)?;
+            .set_region(0, 1, 0.5, 0.2, None)?;
         trigen
             .set_segment(0, -10, 0, 1)?
             .set_segment(1, -20, 1, 2)?
@@ -1339,8 +1339,8 @@ mod tests {
             .set_point(9, 0.2, 0.5)?
             .set_point(10, 0.8, 0.5)?
             .set_point(11, 1.0, 0.5)?
-            .set_region(0, 0.1, 0.1, 1, None)?
-            .set_region(1, 0.1, 0.9, 2, None)?
+            .set_region(0, 1, 0.1, 0.1, None)?
+            .set_region(1, 2, 0.1, 0.9, None)?
             .set_hole(0, 0.5, 0.5)?;
         trigen
             .set_segment(0, -10, 0, 1)?
