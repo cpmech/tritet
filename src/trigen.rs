@@ -1339,8 +1339,8 @@ mod tests {
             .set_point(9, 0.2, 0.5)?
             .set_point(10, 0.8, 0.5)?
             .set_point(11, 1.0, 0.5)?
-            .set_region(0, 1, 0.1, 0.1, None)?
-            .set_region(1, 2, 0.1, 0.9, None)?
+            .set_region(0, 111, 0.1, 0.1, None)?
+            .set_region(1, 222, 0.1, 0.9, None)?
             .set_hole(0, 0.5, 0.5)?;
         trigen
             .set_segment(0, -10, 0, 1)?
@@ -1370,8 +1370,8 @@ mod tests {
         }
 
         assert_eq!(trigen.ntriangle(), 14);
-        assert_eq!(trigen.triangle_attribute(0), 1);
-        assert_eq!(trigen.triangle_attribute(12), 2);
+        assert_eq!(trigen.triangle_attribute(0), 111);
+        assert_eq!(trigen.triangle_attribute(12), 222);
         Ok(())
     }
 }
