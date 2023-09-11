@@ -66,6 +66,8 @@ pub enum VoronoiEdgePoint {
 /// use plotpy::Plot;
 /// use tritet::{StrError, Trigen};
 ///
+/// const SAVE_FIGURE: bool = false;
+///
 /// fn main() -> Result<(), StrError> {
 ///     // allocate data for 10 points
 ///     let mut trigen = Trigen::new(10, None, None, None)?;
@@ -87,11 +89,13 @@ pub enum VoronoiEdgePoint {
 ///     trigen.generate_delaunay(false)?;
 ///
 ///     // draw triangles
-///     let mut plot = Plot::new();
-///     // trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
-///     // plot.set_equal_axes(true)
-///     //     .set_figure_size_points(600.0, 600.0)
-///     //     .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
+///     if SAVE_FIGURE {
+///         let mut plot = Plot::new();
+///         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///         plot.set_equal_axes(true)
+///             .set_figure_size_points(600.0, 600.0)
+///             .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
+///     }
 ///     Ok(())
 /// }
 /// ```
@@ -103,6 +107,8 @@ pub enum VoronoiEdgePoint {
 /// ```
 /// use plotpy::Plot;
 /// use tritet::{StrError, Trigen};
+///
+/// const SAVE_FIGURE: bool = false;
 ///
 /// fn main() -> Result<(), StrError> {
 ///     // allocate data for 10 points
@@ -125,11 +131,13 @@ pub enum VoronoiEdgePoint {
 ///     trigen.generate_voronoi(false)?;
 ///
 ///     // draw Voronoi diagram
-///     let mut plot = Plot::new();
-///     // trigen.draw_voronoi(&mut plot);
-///     // plot.set_equal_axes(true)
-///     //     .set_figure_size_points(600.0, 600.0)
-///     //     .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
+///     if SAVE_FIGURE {
+///         let mut plot = Plot::new();
+///         trigen.draw_voronoi(&mut plot);
+///         plot.set_equal_axes(true)
+///             .set_figure_size_points(600.0, 600.0)
+///             .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
+///     }
 ///     Ok(())
 /// }
 /// ```
@@ -141,6 +149,8 @@ pub enum VoronoiEdgePoint {
 /// ```
 /// use plotpy::Plot;
 /// use tritet::{StrError, Trigen};
+///
+/// const SAVE_FIGURE: bool = false;
 ///
 /// fn main() -> Result<(), StrError> {
 ///     // allocate data for 12 points, 10 segments, 2 regions, and 1 hole
@@ -187,11 +197,13 @@ pub enum VoronoiEdgePoint {
 ///     assert_eq!(trigen.out_ncell(), 12);
 ///
 ///     // draw mesh
-///     let mut plot = Plot::new();
-///     // trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
-///     // plot.set_equal_axes(true)
-///     //      .set_figure_size_points(600.0, 600.0)
-///     //      .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
+///     if SAVE_FIGURE {
+///         let mut plot = Plot::new();
+///         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///         plot.set_equal_axes(true)
+///              .set_figure_size_points(600.0, 600.0)
+///              .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
+///     }
 ///     Ok(())
 /// }
 /// ```
