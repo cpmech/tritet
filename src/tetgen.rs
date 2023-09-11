@@ -696,6 +696,8 @@ mod tests {
     use crate::StrError;
     use plotpy::Plot;
 
+    const GENERATE_FIGURES: bool = false;
+
     #[test]
     fn new_captures_some_errors() {
         assert_eq!(Tetgen::new(3, None, None, None).err(), Some("npoint must be ≥ 4"));
@@ -837,7 +839,7 @@ mod tests {
         assert_eq!(tetgen.out_npoint(), 4);
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
-        if false {
+        if GENERATE_FIGURES {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/tetgen_draw_wireframe_works.svg")?;
@@ -862,7 +864,7 @@ mod tests {
         assert_eq!(tetgen.out_npoint(), 8);
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
-        if false {
+        if GENERATE_FIGURES {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/tetgen_test_delaunay_1.svg")?;
@@ -970,7 +972,7 @@ mod tests {
         assert_eq!(tetgen.out_npoint(), 50);
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
-        if false {
+        if GENERATE_FIGURES {
             tetgen.write_vtu("/tmp/tritet/tetgen_test_mesh_1.vtu")?;
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
