@@ -27,19 +27,19 @@ extern "C" {
         global_max_area: f64,
         global_min_angle: f64,
     ) -> i32;
-    fn tri_get_n_out_point(trigen: *mut ExtTrigen) -> i32;
-    fn tri_get_n_out_segment(trigen: *mut ExtTrigen) -> i32;
-    fn tri_get_ntriangle(trigen: *mut ExtTrigen) -> i32;
-    fn tri_get_ncorner(trigen: *mut ExtTrigen) -> i32;
-    fn tri_get_out_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
-    fn tri_get_out_segment(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, a: *mut i32, b: *mut i32);
-    fn tri_get_triangle_corner(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
-    fn tri_get_triangle_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
-    fn tri_get_voronoi_npoint(trigen: *mut ExtTrigen) -> i32;
-    fn tri_get_voronoi_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
-    fn tri_get_voronoi_nedge(trigen: *mut ExtTrigen) -> i32;
-    fn tri_get_voronoi_edge_point(trigen: *mut ExtTrigen, index: i32, side: i32) -> i32;
-    fn tri_get_voronoi_edge_point_b_direction(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn tri_out_npoint(trigen: *mut ExtTrigen) -> i32;
+    fn tri_out_nsegment(trigen: *mut ExtTrigen) -> i32;
+    fn tri_out_ncell(trigen: *mut ExtTrigen) -> i32;
+    fn tri_out_cell_npoint(trigen: *mut ExtTrigen) -> i32;
+    fn tri_out_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn tri_out_segment(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, a: *mut i32, b: *mut i32);
+    fn tri_out_cell_point(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
+    fn tri_out_cell_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
+    fn tri_out_voronoi_npoint(trigen: *mut ExtTrigen) -> i32;
+    fn tri_out_voronoi_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn tri_out_voronoi_nedge(trigen: *mut ExtTrigen) -> i32;
+    fn tri_out_voronoi_edge_point(trigen: *mut ExtTrigen, index: i32, side: i32) -> i32;
+    fn tri_out_voronoi_edge_point_b_direction(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
 }
 
 /// Holds the index of an endpoint on a Voronoi edge or the direction of the Voronoi edge
@@ -182,7 +182,7 @@ pub enum VoronoiEdgePoint {
 ///
 ///     // generate o2 mesh without constraints
 ///     trigen.generate_mesh(false, true, false, None, None)?;
-///     assert_eq!(trigen.ntriangle(), 12);
+///     assert_eq!(trigen.out_ncell(), 12);
 ///
 ///     // draw mesh
 ///     let mut plot = Plot::new();
@@ -581,26 +581,26 @@ impl Trigen {
         Ok(())
     }
 
-    /// Returns the number of points of the Delaunay triangulation (constrained or not)
-    pub fn npoint(&self) -> usize {
-        unsafe { tri_get_n_out_point(self.ext_triangle) as usize }
+    /// Returns the number of (output) points of the Delaunay triangulation (constrained or not)
+    pub fn out_npoint(&self) -> usize {
+        unsafe { tri_out_npoint(self.ext_triangle) as usize }
     }
 
     /// Returns the number of (output) segments generated on the PSLG (not the interior)
     ///
     /// **Note:** This option is only available when calling [Trigen::generate_mesh]
-    pub fn n_out_segment(&self) -> usize {
-        unsafe { tri_get_n_out_segment(self.ext_triangle) as usize }
+    pub fn out_nsegment(&self) -> usize {
+        unsafe { tri_out_nsegment(self.ext_triangle) as usize }
     }
 
-    /// Returns the number of triangles on the Delaunay triangulation (constrained or not)
-    pub fn ntriangle(&self) -> usize {
-        unsafe { tri_get_ntriangle(self.ext_triangle) as usize }
+    /// Returns the number of (output) triangles (aka cells) on the Delaunay triangulation (constrained or not)
+    pub fn out_ncell(&self) -> usize {
+        unsafe { tri_out_ncell(self.ext_triangle) as usize }
     }
 
     /// Returns the number of nodes on a triangle (e.g., 3 or 6)
-    pub fn nnode(&self) -> usize {
-        unsafe { tri_get_ncorner(self.ext_triangle) as usize }
+    pub fn out_cell_npoint(&self) -> usize {
+        unsafe { tri_out_cell_npoint(self.ext_triangle) as usize }
     }
 
     /// Returns the (output) generated point
@@ -617,8 +617,8 @@ impl Trigen {
     /// # Warning
     ///
     /// This function will return zero values if either `index` is out of range.
-    pub fn point(&self, index: usize, dim: usize) -> f64 {
-        unsafe { tri_get_out_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
+    pub fn out_point(&self, index: usize, dim: usize) -> f64 {
+        unsafe { tri_out_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the (output) generated segment on the PSLG
@@ -652,7 +652,7 @@ impl Trigen {
         let mut a: i32 = 0;
         let mut b: i32 = 0;
         unsafe {
-            tri_get_out_segment(self.ext_triangle, to_i32(index), &mut marker, &mut a, &mut b);
+            tri_out_segment(self.ext_triangle, to_i32(index), &mut marker, &mut a, &mut b);
         }
         if a < b {
             (marker, a as usize, b as usize)
@@ -661,7 +661,7 @@ impl Trigen {
         }
     }
 
-    /// Returns the ID of a triangle's node
+    /// Returns the ID of a point on the triangle (aka cell)
     ///
     /// ```text
     ///     NODES
@@ -682,25 +682,25 @@ impl Trigen {
     /// # Warning
     ///
     /// This function will return 0 if either `index` or `m` are out of range.
-    pub fn triangle_node(&self, index: usize, m: usize) -> usize {
+    pub fn out_cell_point(&self, index: usize, m: usize) -> usize {
         unsafe {
             let corner = constants::TRITET_TO_TRIANGLE[m];
-            tri_get_triangle_corner(self.ext_triangle, to_i32(index), to_i32(corner)) as usize
+            tri_out_cell_point(self.ext_triangle, to_i32(index), to_i32(corner)) as usize
         }
     }
 
-    /// Returns the attribute ID of a triangle
+    /// Returns the attribute ID of a triangle (aka cell)
     ///
     /// # Warning
     ///
     /// This function will return 0 if either `index` is out of range.
-    pub fn triangle_attribute(&self, index: usize) -> usize {
-        unsafe { tri_get_triangle_attribute(self.ext_triangle, to_i32(index)) as usize }
+    pub fn out_cell_attribute(&self, index: usize) -> usize {
+        unsafe { tri_out_cell_attribute(self.ext_triangle, to_i32(index)) as usize }
     }
 
     /// Returns the number of points of the Voronoi tessellation
-    pub fn voronoi_npoint(&self) -> usize {
-        unsafe { tri_get_voronoi_npoint(self.ext_triangle) as usize }
+    pub fn out_voronoi_npoint(&self) -> usize {
+        unsafe { tri_out_voronoi_npoint(self.ext_triangle) as usize }
     }
 
     /// Returns the x-y coordinates of a point on the Voronoi tessellation
@@ -713,13 +713,13 @@ impl Trigen {
     /// # Warning
     ///
     /// This function will return 0.0 if either `index` or `dim` are out of range.
-    pub fn voronoi_point(&self, index: usize, dim: usize) -> f64 {
-        unsafe { tri_get_voronoi_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
+    pub fn out_voronoi_point(&self, index: usize, dim: usize) -> f64 {
+        unsafe { tri_out_voronoi_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
     }
 
     /// Returns the number of edges on the Voronoi tessellation
-    pub fn voronoi_nedge(&self) -> usize {
-        unsafe { tri_get_voronoi_nedge(self.ext_triangle) as usize }
+    pub fn out_voronoi_nedge(&self) -> usize {
+        unsafe { tri_out_voronoi_nedge(self.ext_triangle) as usize }
     }
 
     /// Returns the index of the first endpoint on a Voronoi edge
@@ -731,8 +731,8 @@ impl Trigen {
     /// # Warning
     ///
     /// This function will return 0 if either `index` is out of range.
-    pub fn voronoi_edge_point_a(&self, index: usize) -> usize {
-        unsafe { tri_get_voronoi_edge_point(self.ext_triangle, to_i32(index), 0) as usize }
+    pub fn out_voronoi_edge_point_a(&self, index: usize) -> usize {
+        unsafe { tri_out_voronoi_edge_point(self.ext_triangle, to_i32(index), 0) as usize }
     }
 
     /// Returns the index of the second endpoint on a Voronoi edge or the direction of the Voronoi edge
@@ -744,13 +744,13 @@ impl Trigen {
     /// # Warning
     ///
     /// This function will return Index(0) if either `index` is out of range.
-    pub fn voronoi_edge_point_b(&self, index: usize) -> VoronoiEdgePoint {
+    pub fn out_voronoi_edge_point_b(&self, index: usize) -> VoronoiEdgePoint {
         unsafe {
             let index_i32 = to_i32(index);
-            let id = tri_get_voronoi_edge_point(self.ext_triangle, index_i32, 1);
+            let id = tri_out_voronoi_edge_point(self.ext_triangle, index_i32, 1);
             if id == -1 {
-                let x = tri_get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 0);
-                let y = tri_get_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 1);
+                let x = tri_out_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 0);
+                let y = tri_out_voronoi_edge_point_b_direction(self.ext_triangle, index_i32, 1);
                 VoronoiEdgePoint::Direction(x, y)
             } else {
                 VoronoiEdgePoint::Index(id as usize)
@@ -770,7 +770,7 @@ impl Trigen {
         fontsize_triangle_ids: Option<f64>,
         fontsize_attribute_ids: Option<f64>,
     ) {
-        let n_triangle = self.ntriangle();
+        let n_triangle = self.out_ncell();
         if n_triangle < 1 {
             return;
         }
@@ -819,7 +819,7 @@ impl Trigen {
         let mut index_color = 0;
         let clr = constants::LIGHT_COLORS;
         for tri in 0..n_triangle {
-            let attribute = self.triangle_attribute(tri);
+            let attribute = self.out_cell_attribute(tri);
             let color = match colors.get(&attribute) {
                 Some(c) => c,
                 None => {
@@ -835,9 +835,9 @@ impl Trigen {
                 xmid[dim] = 0.0;
             }
             for m in 0..3 {
-                let p = self.triangle_node(tri, m);
+                let p = self.out_cell_point(tri, m);
                 for dim in 0..2 {
-                    x[dim] = self.point(p, dim);
+                    x[dim] = self.out_point(p, dim);
                     min[dim] = f64::min(min[dim], x[dim]);
                     max[dim] = f64::max(max[dim], x[dim]);
                     xmid[dim] += x[dim] / 3.0;
@@ -853,18 +853,18 @@ impl Trigen {
                 triangle_ids.draw(xmid[0], xmid[1], format!("{}", tri).as_str());
             }
             if with_attribute_ids {
-                let p = self.triangle_node(tri, 0);
+                let p = self.out_cell_point(tri, 0);
                 for dim in 0..2 {
-                    x[dim] = self.point(p, dim);
+                    x[dim] = self.out_point(p, dim);
                     xatt[dim] = (x[dim] + xmid[dim]) / 2.0;
                 }
                 attribute_ids.draw(xatt[0], xatt[1], format!("[{}]", attribute).as_str());
             }
         }
         if with_point_ids {
-            for p in 0..self.npoint() {
-                let x_val = self.point(p, 0);
-                let y_val = self.point(p, 1);
+            for p in 0..self.out_npoint() {
+                let x_val = self.out_point(p, 0);
+                let y_val = self.out_point(p, 1);
                 point_ids.draw(x_val, y_val, format!("{}", p).as_str());
             }
         }
@@ -885,7 +885,7 @@ impl Trigen {
 
     /// Draws Voronoi diagram
     pub fn draw_voronoi(&self, plot: &mut Plot) {
-        if self.voronoi_npoint() < 1 || self.voronoi_nedge() < 1 {
+        if self.out_voronoi_npoint() < 1 || self.out_voronoi_nedge() < 1 {
             return;
         }
         let mut x = vec![0.0; 2];
@@ -897,32 +897,32 @@ impl Trigen {
             .set_marker_line_color("gold")
             .set_marker_style("o")
             .set_stop_clip(true);
-        for p in 0..self.npoint() {
+        for p in 0..self.out_npoint() {
             for dim in 0..2 {
-                x[dim] = self.point(p, dim);
+                x[dim] = self.out_point(p, dim);
                 min[dim] = f64::min(min[dim], x[dim]);
                 max[dim] = f64::max(max[dim], x[dim]);
             }
             markers.draw(&[x[0]], &[x[1]]);
         }
-        for q in 0..self.voronoi_npoint() {
+        for q in 0..self.out_voronoi_npoint() {
             for dim in 0..2 {
-                x[dim] = self.voronoi_point(q, dim);
+                x[dim] = self.out_voronoi_point(q, dim);
                 min[dim] = f64::min(min[dim], x[dim]);
                 max[dim] = f64::max(max[dim], x[dim]);
             }
         }
         let mut canvas = Canvas::new();
         canvas.polycurve_begin();
-        for e in 0..self.voronoi_nedge() {
-            let a = self.voronoi_edge_point_a(e);
-            let xa = self.voronoi_point(a, 0);
-            let ya = self.voronoi_point(a, 1);
-            let b_or_direction = self.voronoi_edge_point_b(e);
+        for e in 0..self.out_voronoi_nedge() {
+            let a = self.out_voronoi_edge_point_a(e);
+            let xa = self.out_voronoi_point(a, 0);
+            let ya = self.out_voronoi_point(a, 1);
+            let b_or_direction = self.out_voronoi_edge_point_b(e);
             match b_or_direction {
                 VoronoiEdgePoint::Index(b) => {
-                    let xb = self.voronoi_point(b, 0);
-                    let yb = self.voronoi_point(b, 1);
+                    let xb = self.out_voronoi_point(b, 0);
+                    let yb = self.out_voronoi_point(b, 1);
                     canvas.polycurve_add(xa, ya, PolyCode::MoveTo);
                     canvas.polycurve_add(xb, yb, PolyCode::LineTo);
                 }
@@ -1093,20 +1093,20 @@ mod tests {
             .set_point(1, 0, 1.0, 0.0)?
             .set_point(2, 0, 0.0, 1.0)?;
         trigen.generate_delaunay(false)?;
-        assert_eq!(trigen.npoint(), 3);
-        assert_eq!(trigen.ntriangle(), 1);
-        assert_eq!(trigen.nnode(), 3);
-        assert_eq!(trigen.point(0, 0), 0.0);
-        assert_eq!(trigen.point(0, 1), 0.0);
-        assert_eq!(trigen.point(1, 0), 1.0);
-        assert_eq!(trigen.point(1, 1), 0.0);
-        assert_eq!(trigen.point(2, 0), 0.0);
-        assert_eq!(trigen.point(2, 1), 1.0);
-        assert_eq!(trigen.triangle_node(0, 0), 0);
-        assert_eq!(trigen.triangle_node(0, 1), 1);
-        assert_eq!(trigen.triangle_node(0, 2), 2);
-        assert_eq!(trigen.voronoi_npoint(), 0);
-        assert_eq!(trigen.voronoi_nedge(), 0);
+        assert_eq!(trigen.out_npoint(), 3);
+        assert_eq!(trigen.out_ncell(), 1);
+        assert_eq!(trigen.out_cell_npoint(), 3);
+        assert_eq!(trigen.out_point(0, 0), 0.0);
+        assert_eq!(trigen.out_point(0, 1), 0.0);
+        assert_eq!(trigen.out_point(1, 0), 1.0);
+        assert_eq!(trigen.out_point(1, 1), 0.0);
+        assert_eq!(trigen.out_point(2, 0), 0.0);
+        assert_eq!(trigen.out_point(2, 1), 1.0);
+        assert_eq!(trigen.out_cell_point(0, 0), 0);
+        assert_eq!(trigen.out_cell_point(0, 1), 1);
+        assert_eq!(trigen.out_cell_point(0, 2), 2);
+        assert_eq!(trigen.out_voronoi_npoint(), 0);
+        assert_eq!(trigen.out_voronoi_nedge(), 0);
         Ok(())
     }
 
@@ -1118,25 +1118,34 @@ mod tests {
             .set_point(1, 0, 1.0, 0.0)?
             .set_point(2, 0, 0.0, 1.0)?;
         trigen.generate_voronoi(false)?;
-        assert_eq!(trigen.npoint(), 3);
-        assert_eq!(trigen.ntriangle(), 1);
-        assert_eq!(trigen.nnode(), 3);
-        assert_eq!(trigen.point(0, 0), 0.0);
-        assert_eq!(trigen.point(0, 1), 0.0);
-        assert_eq!(trigen.point(1, 0), 1.0);
-        assert_eq!(trigen.point(1, 1), 0.0);
-        assert_eq!(trigen.point(2, 0), 0.0);
-        assert_eq!(trigen.point(2, 1), 1.0);
-        assert_eq!(trigen.voronoi_npoint(), 1);
-        assert_eq!(trigen.voronoi_point(0, 0), 0.5);
-        assert_eq!(trigen.voronoi_point(0, 1), 0.5);
-        assert_eq!(trigen.voronoi_nedge(), 3);
-        assert_eq!(trigen.voronoi_edge_point_a(0), 0);
-        assert_eq!(format!("{:?}", trigen.voronoi_edge_point_b(0)), "Direction(0.0, -1.0)");
-        assert_eq!(trigen.voronoi_edge_point_a(1), 0);
-        assert_eq!(format!("{:?}", trigen.voronoi_edge_point_b(1)), "Direction(1.0, 1.0)");
-        assert_eq!(trigen.voronoi_edge_point_a(2), 0);
-        assert_eq!(format!("{:?}", trigen.voronoi_edge_point_b(2)), "Direction(-1.0, 0.0)");
+        assert_eq!(trigen.out_npoint(), 3);
+        assert_eq!(trigen.out_ncell(), 1);
+        assert_eq!(trigen.out_cell_npoint(), 3);
+        assert_eq!(trigen.out_point(0, 0), 0.0);
+        assert_eq!(trigen.out_point(0, 1), 0.0);
+        assert_eq!(trigen.out_point(1, 0), 1.0);
+        assert_eq!(trigen.out_point(1, 1), 0.0);
+        assert_eq!(trigen.out_point(2, 0), 0.0);
+        assert_eq!(trigen.out_point(2, 1), 1.0);
+        assert_eq!(trigen.out_voronoi_npoint(), 1);
+        assert_eq!(trigen.out_voronoi_point(0, 0), 0.5);
+        assert_eq!(trigen.out_voronoi_point(0, 1), 0.5);
+        assert_eq!(trigen.out_voronoi_nedge(), 3);
+        assert_eq!(trigen.out_voronoi_edge_point_a(0), 0);
+        assert_eq!(
+            format!("{:?}", trigen.out_voronoi_edge_point_b(0)),
+            "Direction(0.0, -1.0)"
+        );
+        assert_eq!(trigen.out_voronoi_edge_point_a(1), 0);
+        assert_eq!(
+            format!("{:?}", trigen.out_voronoi_edge_point_b(1)),
+            "Direction(1.0, 1.0)"
+        );
+        assert_eq!(trigen.out_voronoi_edge_point_a(2), 0);
+        assert_eq!(
+            format!("{:?}", trigen.out_voronoi_edge_point_b(2)),
+            "Direction(-1.0, 0.0)"
+        );
         Ok(())
     }
 
@@ -1152,23 +1161,23 @@ mod tests {
             .set_segment(1, -20, 1, 2)?
             .set_segment(2, -30, 2, 0)?;
         trigen.generate_mesh(false, false, false, None, None)?;
-        assert_eq!(trigen.npoint(), 3);
-        assert_eq!(trigen.ntriangle(), 1);
-        assert_eq!(trigen.nnode(), 3);
-        assert_eq!(trigen.point(0, 0), 0.0);
-        assert_eq!(trigen.point(0, 1), 0.0);
-        assert_eq!(trigen.point(1, 0), 1.0);
-        assert_eq!(trigen.point(1, 1), 0.0);
-        assert_eq!(trigen.point(2, 0), 0.0);
-        assert_eq!(trigen.point(2, 1), 1.0);
-        assert_eq!(trigen.triangle_node(0, 0), 0);
-        assert_eq!(trigen.triangle_node(0, 1), 1);
-        assert_eq!(trigen.triangle_node(0, 2), 2);
-        assert_eq!(trigen.triangle_attribute(0), 0);
-        assert_eq!(trigen.triangle_attribute(1), 0);
-        assert_eq!(trigen.triangle_attribute(2), 0);
-        assert_eq!(trigen.voronoi_npoint(), 0);
-        assert_eq!(trigen.voronoi_nedge(), 0);
+        assert_eq!(trigen.out_npoint(), 3);
+        assert_eq!(trigen.out_ncell(), 1);
+        assert_eq!(trigen.out_cell_npoint(), 3);
+        assert_eq!(trigen.out_point(0, 0), 0.0);
+        assert_eq!(trigen.out_point(0, 1), 0.0);
+        assert_eq!(trigen.out_point(1, 0), 1.0);
+        assert_eq!(trigen.out_point(1, 1), 0.0);
+        assert_eq!(trigen.out_point(2, 0), 0.0);
+        assert_eq!(trigen.out_point(2, 1), 1.0);
+        assert_eq!(trigen.out_cell_point(0, 0), 0);
+        assert_eq!(trigen.out_cell_point(0, 1), 1);
+        assert_eq!(trigen.out_cell_point(0, 2), 2);
+        assert_eq!(trigen.out_cell_attribute(0), 0);
+        assert_eq!(trigen.out_cell_attribute(1), 0);
+        assert_eq!(trigen.out_cell_attribute(2), 0);
+        assert_eq!(trigen.out_voronoi_npoint(), 0);
+        assert_eq!(trigen.out_voronoi_nedge(), 0);
         Ok(())
     }
 
@@ -1195,17 +1204,17 @@ mod tests {
                 .save("/tmp/tritet/test_mesh_2_no_steiner.svg")?;
         }
 
-        assert_eq!(trigen.npoint(), 5);
-        assert_eq!(trigen.ntriangle(), 4);
-        assert_eq!(trigen.nnode(), 3);
+        assert_eq!(trigen.out_npoint(), 5);
+        assert_eq!(trigen.out_ncell(), 4);
+        assert_eq!(trigen.out_cell_npoint(), 3);
 
-        println!("nsegment = {}", trigen.n_out_segment());
-        for i in 0..trigen.n_out_segment() {
+        println!("nsegment = {}", trigen.out_nsegment());
+        for i in 0..trigen.out_nsegment() {
             let (marker, a, b) = trigen.out_segment(i);
             println!("{:2} - {:2} => {}", a, b, marker);
         }
 
-        assert_eq!(trigen.n_out_segment(), 4);
+        assert_eq!(trigen.out_nsegment(), 4);
         assert_eq!(trigen.out_segment(0), (-10, 0, 1));
         assert_eq!(trigen.out_segment(1), (-20, 1, 2));
         assert_eq!(trigen.out_segment(2), (-30, 2, 3));
@@ -1237,17 +1246,17 @@ mod tests {
                 .save("/tmp/tritet/test_mesh_2_ok_steiner.svg")?;
         }
 
-        assert_eq!(trigen.npoint(), 13);
-        assert_eq!(trigen.ntriangle(), 16);
-        assert_eq!(trigen.nnode(), 3);
+        assert_eq!(trigen.out_npoint(), 13);
+        assert_eq!(trigen.out_ncell(), 16);
+        assert_eq!(trigen.out_cell_npoint(), 3);
 
-        println!("nsegment = {}", trigen.n_out_segment());
-        for i in 0..trigen.n_out_segment() {
+        println!("nsegment = {}", trigen.out_nsegment());
+        for i in 0..trigen.out_nsegment() {
             let (marker, a, b) = trigen.out_segment(i);
             println!("{:2} - {:2} => {}", a, b, marker);
         }
 
-        assert_eq!(trigen.n_out_segment(), 8);
+        assert_eq!(trigen.out_nsegment(), 8);
         assert_eq!(trigen.out_segment(0), (-10, 1, 6));
         assert_eq!(trigen.out_segment(1), (-20, 2, 9));
         assert_eq!(trigen.out_segment(2), (-30, 3, 7));
@@ -1263,13 +1272,13 @@ mod tests {
     #[test]
     fn get_methods_work_with_wrong_indices() -> Result<(), StrError> {
         let trigen = Trigen::new(3, None, None, None)?;
-        assert_eq!(trigen.point(100, 0), 0.0);
-        assert_eq!(trigen.point(0, 100), 0.0);
-        assert_eq!(trigen.triangle_attribute(100), 0);
-        assert_eq!(trigen.voronoi_point(100, 0), 0.0);
-        assert_eq!(trigen.voronoi_point(0, 100), 0.0);
-        assert_eq!(trigen.voronoi_edge_point_a(100), 0,);
-        assert_eq!(format!("{:?}", trigen.voronoi_edge_point_b(100)), "Index(0)");
+        assert_eq!(trigen.out_point(100, 0), 0.0);
+        assert_eq!(trigen.out_point(0, 100), 0.0);
+        assert_eq!(trigen.out_cell_attribute(100), 0);
+        assert_eq!(trigen.out_voronoi_point(100, 0), 0.0);
+        assert_eq!(trigen.out_voronoi_point(0, 100), 0.0);
+        assert_eq!(trigen.out_voronoi_edge_point_a(100), 0,);
+        assert_eq!(format!("{:?}", trigen.out_voronoi_edge_point_b(100)), "Index(0)");
         Ok(())
     }
 
@@ -1305,7 +1314,7 @@ mod tests {
             .set_point(3, 0, 0.0, 1.0)?
             .set_point(4, 0, 0.5, 0.5)?;
         trigen.generate_voronoi(false)?;
-        assert_eq!(trigen.voronoi_npoint(), 4);
+        assert_eq!(trigen.out_voronoi_npoint(), 4);
         let mut plot = Plot::new();
         trigen.draw_voronoi(&mut plot);
         if GENERATE_FIGURES {
@@ -1330,9 +1339,9 @@ mod tests {
             .set_segment(1, -20, 1, 2)?
             .set_segment(2, -30, 2, 0)?;
         trigen.generate_mesh(false, true, false, Some(0.25), None)?;
-        assert_eq!(trigen.ntriangle(), 2);
-        assert_eq!(trigen.triangle_attribute(0), 1);
-        assert_eq!(trigen.triangle_attribute(1), 1);
+        assert_eq!(trigen.out_ncell(), 2);
+        assert_eq!(trigen.out_cell_attribute(0), 1);
+        assert_eq!(trigen.out_cell_attribute(1), 1);
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         if GENERATE_FIGURES {
@@ -1383,15 +1392,15 @@ mod tests {
                 .save("/tmp/tritet/triangle_mesh_4_works.svg")?;
         }
 
-        println!("nsegment = {}", trigen.n_out_segment());
-        for i in 0..trigen.n_out_segment() {
+        println!("nsegment = {}", trigen.out_nsegment());
+        for i in 0..trigen.out_nsegment() {
             let (marker, a, b) = trigen.out_segment(i);
             println!("{:2} - {:2} => {}", a, b, marker);
         }
 
-        assert_eq!(trigen.ntriangle(), 14);
-        assert_eq!(trigen.triangle_attribute(0), 111);
-        assert_eq!(trigen.triangle_attribute(12), 222);
+        assert_eq!(trigen.out_ncell(), 14);
+        assert_eq!(trigen.out_cell_attribute(0), 111);
+        assert_eq!(trigen.out_cell_attribute(12), 222);
         Ok(())
     }
 }

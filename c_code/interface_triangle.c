@@ -377,35 +377,35 @@ int32_t tri_run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t q
     return TRITET_SUCCESS;
 }
 
-int32_t tri_get_n_out_point(struct ExtTrigen *trigen) {
+int32_t tri_out_npoint(struct ExtTrigen *trigen) {
     if (trigen == NULL) {
         return 0;
     }
     return trigen->output.numberofpoints;
 }
 
-int32_t tri_get_n_out_segment(struct ExtTrigen *trigen) {
+int32_t tri_out_nsegment(struct ExtTrigen *trigen) {
     if (trigen == NULL) {
         return 0;
     }
     return trigen->output.numberofsegments;
 }
 
-int32_t tri_get_ntriangle(struct ExtTrigen *trigen) {
+int32_t tri_out_ncell(struct ExtTrigen *trigen) {
     if (trigen == NULL) {
         return 0;
     }
     return trigen->output.numberoftriangles;
 }
 
-int32_t tri_get_ncorner(struct ExtTrigen *trigen) {
+int32_t tri_out_cell_npoint(struct ExtTrigen *trigen) {
     if (trigen == NULL) {
         return 0;
     }
     return trigen->output.numberofcorners;
 }
 
-double tri_get_out_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
+double tri_out_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
     if (trigen == NULL) {
         return 0.0;
     }
@@ -416,7 +416,7 @@ double tri_get_out_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
     }
 }
 
-void tri_get_out_segment(struct ExtTrigen *trigen, int32_t index, int32_t *marker, int32_t *a, int32_t *b) {
+void tri_out_segment(struct ExtTrigen *trigen, int32_t index, int32_t *marker, int32_t *a, int32_t *b) {
     *marker = 0;
     *a = 0;
     *b = 0;
@@ -430,7 +430,7 @@ void tri_get_out_segment(struct ExtTrigen *trigen, int32_t index, int32_t *marke
     }
 }
 
-int32_t tri_get_triangle_corner(struct ExtTrigen *trigen, int32_t index, int32_t corner) {
+int32_t tri_out_cell_point(struct ExtTrigen *trigen, int32_t index, int32_t corner) {
     if (trigen == NULL) {
         return 0;
     }
@@ -441,7 +441,7 @@ int32_t tri_get_triangle_corner(struct ExtTrigen *trigen, int32_t index, int32_t
     }
 }
 
-int32_t tri_get_triangle_attribute(struct ExtTrigen *trigen, int32_t index) {
+int32_t tri_out_cell_attribute(struct ExtTrigen *trigen, int32_t index) {
     if (trigen == NULL) {
         return 0;
     }
@@ -452,14 +452,14 @@ int32_t tri_get_triangle_attribute(struct ExtTrigen *trigen, int32_t index) {
     }
 }
 
-int32_t tri_get_voronoi_npoint(struct ExtTrigen *trigen) {
+int32_t tri_out_voronoi_npoint(struct ExtTrigen *trigen) {
     if (trigen == NULL) {
         return 0;
     }
     return trigen->voronoi.numberofpoints;
 }
 
-int32_t tri_get_voronoi_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
+int32_t tri_out_voronoi_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
     if (trigen == NULL) {
         return 0.0;
     }
@@ -470,14 +470,14 @@ int32_t tri_get_voronoi_point(struct ExtTrigen *trigen, int32_t index, int32_t d
     }
 }
 
-int32_t tri_get_voronoi_nedge(struct ExtTrigen *trigen) {
+int32_t tri_out_voronoi_nedge(struct ExtTrigen *trigen) {
     if (trigen == NULL) {
         return 0;
     }
     return trigen->voronoi.numberofedges;
 }
 
-int32_t tri_get_voronoi_edge_point(struct ExtTrigen *trigen, int32_t index, int32_t side) {
+int32_t tri_out_voronoi_edge_point(struct ExtTrigen *trigen, int32_t index, int32_t side) {
     if (trigen == NULL) {
         return 0;
     }
@@ -488,7 +488,7 @@ int32_t tri_get_voronoi_edge_point(struct ExtTrigen *trigen, int32_t index, int3
     }
 }
 
-double tri_get_voronoi_edge_point_b_direction(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
+double tri_out_voronoi_edge_point_b_direction(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
     if (trigen == NULL) {
         return 0.0;
     }

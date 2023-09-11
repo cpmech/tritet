@@ -17,13 +17,13 @@ impl Trigen {
     where
         P: AsRef<OsStr> + ?Sized,
     {
-        let ntriangle = self.ntriangle();
+        let ntriangle = self.out_ncell();
         if ntriangle < 1 {
             return Err("there are no triangles to write");
         }
 
-        let npoint = self.npoint();
-        let nnode = self.nnode();
+        let npoint = self.out_npoint();
+        let nnode = self.out_cell_npoint();
         let vtk_type = if nnode == 3 {
             constants::VTK_TRIANGLE
         } else {
@@ -54,8 +54,8 @@ impl Trigen {
             write!(
                 &mut buffer,
                 "{:?} {:?} 0.0 ",
-                self.point(index, 0),
-                self.point(index, 1)
+                self.out_point(index, 0),
+                self.out_point(index, 1)
             )
             .unwrap();
         }
@@ -75,7 +75,7 @@ impl Trigen {
         .unwrap();
         for index in 0..ntriangle {
             for m in 0..nnode {
-                write!(&mut buffer, "{} ", self.triangle_node(index, m)).unwrap();
+                write!(&mut buffer, "{} ", self.out_cell_point(index, m)).unwrap();
             }
         }
 

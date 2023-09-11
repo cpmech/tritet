@@ -180,7 +180,7 @@ fn main() -> Result<(), StrError> {
 
     // generate o2 mesh without constraints
     trigen.generate_mesh(false, true, false, None, None)?;
-    assert_eq!(trigen.ntriangle(), 12);
+    assert_eq!(trigen.out_ncell(), 12);
 
     // draw mesh
     if SAVE_FIGURE {

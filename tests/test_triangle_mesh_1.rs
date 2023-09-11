@@ -49,20 +49,20 @@ fn test_triangle_mesh_1() -> Result<(), StrError> {
     triangle.set_hole(0, 0.1, 2.0)?.set_hole(1, 3.9, 2.0)?;
     triangle.generate_mesh(false, false, false, None, None)?;
 
-    assert_eq!(triangle.npoint(), 12);
-    assert_eq!(triangle.ntriangle(), 12);
-    assert_eq!(triangle.triangle_attribute(0), 1);
-    assert_eq!(triangle.triangle_attribute(1), 7);
-    assert_eq!(triangle.triangle_attribute(2), 1);
-    assert_eq!(triangle.triangle_attribute(3), 4);
-    assert_eq!(triangle.triangle_attribute(4), 4);
-    assert_eq!(triangle.triangle_attribute(5), 2);
-    assert_eq!(triangle.triangle_attribute(6), 3);
-    assert_eq!(triangle.triangle_attribute(7), 3);
-    assert_eq!(triangle.triangle_attribute(8), 6);
-    assert_eq!(triangle.triangle_attribute(9), 5);
-    assert_eq!(triangle.triangle_attribute(10), 6);
-    assert_eq!(triangle.triangle_attribute(11), 7);
+    assert_eq!(triangle.out_npoint(), 12);
+    assert_eq!(triangle.out_ncell(), 12);
+    assert_eq!(triangle.out_cell_attribute(0), 1);
+    assert_eq!(triangle.out_cell_attribute(1), 7);
+    assert_eq!(triangle.out_cell_attribute(2), 1);
+    assert_eq!(triangle.out_cell_attribute(3), 4);
+    assert_eq!(triangle.out_cell_attribute(4), 4);
+    assert_eq!(triangle.out_cell_attribute(5), 2);
+    assert_eq!(triangle.out_cell_attribute(6), 3);
+    assert_eq!(triangle.out_cell_attribute(7), 3);
+    assert_eq!(triangle.out_cell_attribute(8), 6);
+    assert_eq!(triangle.out_cell_attribute(9), 5);
+    assert_eq!(triangle.out_cell_attribute(10), 6);
+    assert_eq!(triangle.out_cell_attribute(11), 7);
 
     let mut plot = Plot::new();
     triangle.draw_triangles(&mut plot, true, true, true, true, Some(12.0), Some(24.0), Some(14.0));

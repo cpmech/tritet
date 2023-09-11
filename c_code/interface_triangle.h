@@ -35,30 +35,30 @@ int32_t tri_run_voronoi(struct ExtTrigen *trigen, int32_t verbose);
 
 int32_t tri_run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t quadratic, int32_t allow_new_points_on_bry, double global_max_area, double global_min_angle);
 
-int32_t tri_get_n_out_point(struct ExtTrigen *trigen);
+int32_t tri_out_npoint(struct ExtTrigen *trigen);
 
-int32_t tri_get_n_out_segment(struct ExtTrigen *trigen);
+int32_t tri_out_nsegment(struct ExtTrigen *trigen);
 
-int32_t tri_get_ntriangle(struct ExtTrigen *trigen);
+int32_t tri_out_ncell(struct ExtTrigen *trigen); // a "cell" here is a "triangle"
 
-int32_t tri_get_ncorner(struct ExtTrigen *trigen);
+int32_t tri_out_cell_npoint(struct ExtTrigen *trigen);
 
-double tri_get_out_point(struct ExtTrigen *trigen, int32_t index, int32_t dim);
+double tri_out_point(struct ExtTrigen *trigen, int32_t index, int32_t dim);
 
-void tri_get_out_segment(struct ExtTrigen *trigen, int32_t index, int32_t *marker, int32_t *a, int32_t *b);
+void tri_out_segment(struct ExtTrigen *trigen, int32_t index, int32_t *marker, int32_t *a, int32_t *b);
 
-int32_t tri_get_triangle_corner(struct ExtTrigen *trigen, int32_t index, int32_t corner);
+int32_t tri_out_cell_point(struct ExtTrigen *trigen, int32_t index, int32_t corner);
 
-int32_t tri_get_triangle_attribute(struct ExtTrigen *trigen, int32_t index);
+int32_t tri_out_cell_attribute(struct ExtTrigen *trigen, int32_t index);
 
-int32_t tri_get_voronoi_npoint(struct ExtTrigen *trigen);
+int32_t tri_out_voronoi_npoint(struct ExtTrigen *trigen);
 
-int32_t tri_get_voronoi_point(struct ExtTrigen *trigen, int32_t index, int32_t dim);
+int32_t tri_out_voronoi_point(struct ExtTrigen *trigen, int32_t index, int32_t dim);
 
-int32_t tri_get_voronoi_nedge(struct ExtTrigen *trigen);
+int32_t tri_out_voronoi_nedge(struct ExtTrigen *trigen);
 
-int32_t tri_get_voronoi_edge_point(struct ExtTrigen *trigen, int32_t index, int32_t side);
+int32_t tri_out_voronoi_edge_point(struct ExtTrigen *trigen, int32_t index, int32_t side);
 
-double tri_get_voronoi_edge_point_b_direction(struct ExtTrigen *trigen, int32_t index, int32_t dim);
+double tri_out_voronoi_edge_point_b_direction(struct ExtTrigen *trigen, int32_t index, int32_t dim);
 
 #endif // INTERFACE_TRIANGLE_H

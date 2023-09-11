@@ -83,8 +83,8 @@ fn main() -> Result<(), StrError> {
     trigen.generate_mesh(true, true, true, None, None)?;
 
     // print segments
-    println!("nsegment = {}", trigen.n_out_segment());
-    for i in 0..trigen.n_out_segment() {
+    println!("nsegment = {}", trigen.out_nsegment());
+    for i in 0..trigen.out_nsegment() {
         let (marker, a, b) = trigen.out_segment(i);
         println!("{:2} - {:2} => {}", a, b, marker);
     }

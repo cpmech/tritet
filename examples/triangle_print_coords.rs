@@ -24,7 +24,7 @@ fn main() -> Result<(), StrError> {
     // print coordinates
     let mut x = vec![0.0; 2];
     println!("vector<vector<vector<double>>> triangles = {{");
-    for index in 0..trigen.ntriangle() {
+    for index in 0..trigen.out_ncell() {
         if index != 0 {
             print!(",\n");
         }
@@ -33,9 +33,9 @@ fn main() -> Result<(), StrError> {
             if m != 0 {
                 print!(", ");
             }
-            let p = trigen.triangle_node(index, m);
+            let p = trigen.out_cell_point(index, m);
             for dim in 0..2 {
-                x[dim] = trigen.point(p, dim);
+                x[dim] = trigen.out_point(p, dim);
             }
             print!("{{{},{}}}", x[0], x[1]);
         }
