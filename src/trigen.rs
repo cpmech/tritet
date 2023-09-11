@@ -14,7 +14,7 @@ extern "C" {
     fn new_trigen(npoint: i32, nsegment: i32, nregion: i32, nhole: i32) -> *mut ExtTrigen;
     fn drop_trigen(trigen: *mut ExtTrigen);
     fn set_point(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
-    fn set_segment(trigen: *mut ExtTrigen, index: i32, a: i32, b: i32) -> i32;
+    fn set_segment(trigen: *mut ExtTrigen, index: i32, marker: i32, a: i32, b: i32) -> i32;
     fn set_region(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64, attribute: i32, max_area: f64) -> i32;
     fn set_hole(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
     fn run_delaunay(trigen: *mut ExtTrigen, verbose: i32) -> i32;
@@ -28,9 +28,11 @@ extern "C" {
         global_min_angle: f64,
     ) -> i32;
     fn get_npoint(trigen: *mut ExtTrigen) -> i32;
+    fn get_n_out_segment(trigen: *mut ExtTrigen) -> i32;
     fn get_ntriangle(trigen: *mut ExtTrigen) -> i32;
     fn get_ncorner(trigen: *mut ExtTrigen) -> i32;
     fn get_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
+    fn get_out_segment(trigen: *mut ExtTrigen, index: i32, marker: *mut i32, a: *mut i32, b: *mut i32);
     fn get_triangle_corner(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
     fn get_triangle_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
     fn get_voronoi_npoint(trigen: *mut ExtTrigen) -> i32;
@@ -159,16 +161,16 @@ pub enum VoronoiEdgePoint {
 ///
 ///     // set segments
 ///     trigen
-///         .set_segment(0, 0, 1)?
-///         .set_segment(1, 1, 2)?
-///         .set_segment(2, 2, 3)?
-///         .set_segment(3, 3, 0)?
-///         .set_segment(4, 4, 5)?
-///         .set_segment(5, 5, 6)?
-///         .set_segment(6, 6, 7)?
-///         .set_segment(7, 7, 4)?
-///         .set_segment(8, 8, 9)?
-///         .set_segment(9, 10, 11)?;
+///         .set_segment(0, -1, 0, 1)?
+///         .set_segment(1, -1, 1, 2)?
+///         .set_segment(2, -1, 2, 3)?
+///         .set_segment(3, -1, 3, 0)?
+///         .set_segment(4, -1, 4, 5)?
+///         .set_segment(5, -1, 5, 6)?
+///         .set_segment(6, -1, 6, 7)?
+///         .set_segment(7, -1, 7, 4)?
+///         .set_segment(8, -1, 8, 9)?
+///         .set_segment(9, -1, 10, 11)?;
 ///
 ///     // set regions
 ///     trigen
@@ -210,7 +212,28 @@ pub enum VoronoiEdgePoint {
 ///
 /// A constrained conforming Delaunay triangulation (CCDT) of a PSLG is a constrained Delaunay triangulation that includes Steiner points. It usually takes fewer vertices to make a good-quality CCDT than a good-quality CDT, because the triangles do not need to be Delaunay (although they still must be constrained Delaunay).
 ///
+/// # Boundary markers -- by J.R.Shewchuk
+///
+/// Boundary markers are tags used mainly to identify which output vertices and edges are associated with which PSLG segment, and to identify which vertices and edges occur on a boundary of the triangulation. A common use is to determine where boundary conditions should be applied to a finite element mesh. You can prevent boundary markers from being written into files produced by Triangle by using the -B switch.
+///
+/// The boundary marker associated with each segment in an output .poly file and each edge in an output .edge file is chosen as follows:
+///
+/// * If an output edge is part or all of a PSLG segment with a nonzero boundary marker, then the edge is assigned the same marker as the segment.
+/// * Otherwise, if the edge occurs on a boundary of the triangulation (including boundaries of holes), then the edge is assigned the marker one (1).
+/// * Otherwise, the edge is assigned the marker zero (0).
+///
+/// The boundary marker associated with each vertex in an output .node file is chosen as follows:
+///
+/// * If a vertex is assigned a nonzero boundary marker in the input file, then it is assigned the same marker in the output .node file.
+/// * Otherwise, if the vertex lies on a PSLG segment (including the segment's endpoints) with a nonzero boundary marker, then the vertex is assigned the same marker. If the vertex lies on several such segments, one of the markers is chosen arbitrarily.
+/// * Otherwise, if the vertex occurs on a boundary of the triangulation, then the vertex is assigned the marker one (1).
+/// * Otherwise, the vertex is assigned the marker zero (0).
+///
+/// If you want Triangle to determine for you which vertices and edges are on the boundary, assign them the boundary marker zero (or use no markers at all) in your input files. In the output files, all boundary vertices, edges, and segments will be assigned the value one.
+///
 /// # References
+///
+/// See also [J. R. Shewchuk' Triangle Website](https://www.cs.cmu.edu/~quake/triangle.html).
 ///
 /// * **Jonathan Richard Shewchuk**, Triangle: Engineering a 2D Quality Mesh Generator and Delaunay Triangulator, in Applied Computational Geometry: Towards Geometric Engineering (Ming C. Lin and Dinesh Manocha, editors), volume 1148 of Lecture Notes in Computer Science, pages 203-222, Springer-Verlag, Berlin, May 1996.
 /// * **Jonathan Richard Shewchuk**, Delaunay Refinement Algorithms for Triangular Mesh Generation, Computational Geometry: Theory and Applications 22(1-3):21-74, May 2002.
@@ -313,15 +336,16 @@ impl Trigen {
     /// # Input
     ///
     /// * `index` -- is the index of the segment and goes from 0 to `nsegment` (passed down to `new`)
+    /// * `marker` -- a marker to identify the segment (e.g., a boundary segment)
     /// * `a` -- is the ID (index) of the first point on the segment
     /// * `b` -- is the ID (index) of the second point on the segment
-    pub fn set_segment(&mut self, index: usize, a: usize, b: usize) -> Result<&mut Self, StrError> {
+    pub fn set_segment(&mut self, index: usize, marker: i32, a: usize, b: usize) -> Result<&mut Self, StrError> {
         let nsegment = match self.nsegment {
             Some(n) => n,
             None => return Err("cannot set segment because the number of segments is None"),
         };
         unsafe {
-            let status = set_segment(self.ext_triangle, to_i32(index), to_i32(a), to_i32(b));
+            let status = set_segment(self.ext_triangle, to_i32(index), marker, to_i32(a), to_i32(b));
             if status != constants::TRITET_SUCCESS {
                 if status == constants::TRITET_ERROR_NULL_DATA {
                     return Err("INTERNAL ERROR: found NULL data");
@@ -548,6 +572,13 @@ impl Trigen {
         unsafe { get_npoint(self.ext_triangle) as usize }
     }
 
+    /// Returns the number of (output) segments generated on the PSLG (not the interior)
+    ///
+    /// **Note:** This option is only available when calling [Trigen::generate_mesh]
+    pub fn n_out_segment(&self) -> usize {
+        unsafe { get_n_out_segment(self.ext_triangle) as usize }
+    }
+
     /// Returns the number of triangles on the Delaunay triangulation (constrained or not)
     pub fn ntriangle(&self) -> usize {
         unsafe { get_ntriangle(self.ext_triangle) as usize }
@@ -562,7 +593,7 @@ impl Trigen {
     ///
     /// # Input
     ///
-    /// * `index` -- is the index of the point and goes from 0 to `npoint`
+    /// * `index` -- is the index of the point and goes from `0` to `npoint`
     /// * `dim` -- is the space dimension index: 0 or 1
     ///
     /// # Warning
@@ -570,6 +601,42 @@ impl Trigen {
     /// This function will return 0.0 if either `index` or `dim` are out of range.
     pub fn point(&self, index: usize, dim: usize) -> f64 {
         unsafe { get_point(self.ext_triangle, to_i32(index), to_i32(dim)) }
+    }
+
+    /// Returns the (output) generated segment on the PSLG
+    ///
+    /// The segment is indicated by a pair of sorted point indices.
+    ///
+    /// # Input
+    ///
+    /// * `index` -- is the index of the boundary segment and goes from `0` to `n_bry_segment`
+    ///
+    /// # Output
+    ///
+    /// Returns `(marker, a, b)`, where:
+    ///
+    /// * `marker` -- is the marker of the boundary segment, if specified via `set_segment`.
+    ///               Otherwise, the marker is `0` for segments on the interior of the PSLG
+    ///               or `1` for segments on the boundary of the PSLG
+    /// * `a` -- is the index of the first point on the segment
+    /// * `b` -- is the index of the segment point on the segment
+    ///
+    /// # Notes
+    ///
+    /// 1. This option is only available when calling [Trigen::generate_mesh]
+    /// 2. The point indices `(a, b)` are sorted in increasing order
+    pub fn out_segment(&self, index: usize) -> (i32, usize, usize) {
+        let mut marker: i32 = 0;
+        let mut a: i32 = 0;
+        let mut b: i32 = 0;
+        unsafe {
+            get_out_segment(self.ext_triangle, to_i32(index), &mut marker, &mut a, &mut b);
+        }
+        if a < b {
+            (marker, a as usize, b as usize)
+        } else {
+            (marker, b as usize, a as usize)
+        }
     }
 
     /// Returns the ID of a triangle's node
@@ -879,6 +946,8 @@ mod tests {
     use crate::{StrError, VoronoiEdgePoint};
     use plotpy::Plot;
 
+    const GENERATE_FIGURES: bool = false;
+
     #[test]
     fn derive_works() {
         let option = VoronoiEdgePoint::Index(0);
@@ -922,16 +991,16 @@ mod tests {
     fn set_segment_captures_some_errors() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
-            trigen.set_segment(0, 0, 1).err(),
+            trigen.set_segment(0, -10, 0, 1).err(),
             Some("cannot set segment because the number of segments is None")
         );
         let mut trigen = Trigen::new(3, Some(3), None, None)?;
         assert_eq!(
-            trigen.set_segment(4, 0, 1).err(),
+            trigen.set_segment(4, -10, 0, 1).err(),
             Some("index of segment is out of bounds")
         );
         assert_eq!(
-            trigen.set_segment(0, 0, 4).err(),
+            trigen.set_segment(0, -10, 0, 4).err(),
             Some("id of segment point is out of bounds")
         );
         Ok(())
@@ -1059,9 +1128,9 @@ mod tests {
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
         trigen
-            .set_segment(0, 0, 1)?
-            .set_segment(1, 1, 2)?
-            .set_segment(2, 2, 0)?;
+            .set_segment(0, -10, 0, 1)?
+            .set_segment(1, -20, 1, 2)?
+            .set_segment(2, -30, 2, 0)?;
         trigen.generate_mesh(false, false, false, None, None)?;
         assert_eq!(trigen.npoint(), 3);
         assert_eq!(trigen.ntriangle(), 1);
@@ -1092,21 +1161,36 @@ mod tests {
             .set_point(2, 1.0, 1.0)?
             .set_point(3, 0.0, 1.0)?;
         trigen
-            .set_segment(0, 0, 1)?
-            .set_segment(1, 1, 2)?
-            .set_segment(2, 2, 3)?
-            .set_segment(3, 3, 0)?;
+            .set_segment(0, -10, 0, 1)?
+            .set_segment(1, -20, 1, 2)?
+            .set_segment(2, -30, 2, 3)?
+            .set_segment(3, -40, 3, 0)?;
         trigen.generate_mesh(false, false, false, Some(0.1), None)?;
-        if false {
+
+        if GENERATE_FIGURES {
             let mut plot = Plot::new();
             trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/test_mesh_2_no_steiner.svg")?;
         }
+
         assert_eq!(trigen.npoint(), 5);
         assert_eq!(trigen.ntriangle(), 4);
         assert_eq!(trigen.nnode(), 3);
+
+        println!("nsegment = {}", trigen.n_out_segment());
+        for i in 0..trigen.n_out_segment() {
+            let (marker, a, b) = trigen.out_segment(i);
+            println!("{:2} - {:2} => {}", a, b, marker);
+        }
+
+        assert_eq!(trigen.n_out_segment(), 4);
+        assert_eq!(trigen.out_segment(0), (-10, 0, 1));
+        assert_eq!(trigen.out_segment(1), (-20, 1, 2));
+        assert_eq!(trigen.out_segment(2), (-30, 2, 3));
+        assert_eq!(trigen.out_segment(3), (-40, 0, 3));
+
         Ok(())
     }
 
@@ -1119,21 +1203,40 @@ mod tests {
             .set_point(2, 1.0, 1.0)?
             .set_point(3, 0.0, 1.0)?;
         trigen
-            .set_segment(0, 0, 1)?
-            .set_segment(1, 1, 2)?
-            .set_segment(2, 2, 3)?
-            .set_segment(3, 3, 0)?;
+            .set_segment(0, -10, 0, 1)?
+            .set_segment(1, -20, 1, 2)?
+            .set_segment(2, -30, 2, 3)?
+            .set_segment(3, -40, 3, 0)?;
         trigen.generate_mesh(false, false, true, Some(0.1), None)?;
-        if false {
+
+        if GENERATE_FIGURES {
             let mut plot = Plot::new();
             trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/test_mesh_2_ok_steiner.svg")?;
         }
+
         assert_eq!(trigen.npoint(), 13);
         assert_eq!(trigen.ntriangle(), 16);
         assert_eq!(trigen.nnode(), 3);
+
+        println!("nsegment = {}", trigen.n_out_segment());
+        for i in 0..trigen.n_out_segment() {
+            let (marker, a, b) = trigen.out_segment(i);
+            println!("{:2} - {:2} => {}", a, b, marker);
+        }
+
+        assert_eq!(trigen.n_out_segment(), 8);
+        assert_eq!(trigen.out_segment(0), (-10, 1, 6));
+        assert_eq!(trigen.out_segment(1), (-20, 2, 9));
+        assert_eq!(trigen.out_segment(2), (-30, 3, 7));
+        assert_eq!(trigen.out_segment(3), (-40, 0, 5));
+        assert_eq!(trigen.out_segment(4), (-40, 3, 5));
+        assert_eq!(trigen.out_segment(5), (-10, 0, 6));
+        assert_eq!(trigen.out_segment(6), (-30, 2, 7));
+        assert_eq!(trigen.out_segment(7), (-20, 1, 9));
+
         Ok(())
     }
 
@@ -1158,13 +1261,13 @@ mod tests {
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
         trigen
-            .set_segment(0, 0, 1)?
-            .set_segment(1, 1, 2)?
-            .set_segment(2, 2, 0)?;
+            .set_segment(0, -10, 0, 1)?
+            .set_segment(1, -20, 1, 2)?
+            .set_segment(2, -30, 2, 0)?;
         trigen.generate_mesh(false, true, false, Some(0.25), None)?;
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
-        if false {
+        if GENERATE_FIGURES {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_draw_triangles_works.svg")?;
@@ -1185,7 +1288,7 @@ mod tests {
         assert_eq!(trigen.voronoi_npoint(), 4);
         let mut plot = Plot::new();
         trigen.draw_voronoi(&mut plot);
-        if false {
+        if GENERATE_FIGURES {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_draw_voronoi_works.svg")?;
@@ -1203,16 +1306,16 @@ mod tests {
             .set_point(3, 0.5, 0.5)?
             .set_region(0, 0.5, 0.2, 1, None)?;
         trigen
-            .set_segment(0, 0, 1)?
-            .set_segment(1, 1, 2)?
-            .set_segment(2, 2, 0)?;
+            .set_segment(0, -10, 0, 1)?
+            .set_segment(1, -20, 1, 2)?
+            .set_segment(2, -30, 2, 0)?;
         trigen.generate_mesh(false, true, false, Some(0.25), None)?;
         assert_eq!(trigen.ntriangle(), 2);
         assert_eq!(trigen.triangle_attribute(0), 1);
         assert_eq!(trigen.triangle_attribute(1), 1);
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
-        if false {
+        if GENERATE_FIGURES {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_mesh_3_works.svg")?;
@@ -1240,24 +1343,32 @@ mod tests {
             .set_region(1, 0.1, 0.9, 2, None)?
             .set_hole(0, 0.5, 0.5)?;
         trigen
-            .set_segment(0, 0, 1)?
-            .set_segment(1, 1, 2)?
-            .set_segment(2, 2, 3)?
-            .set_segment(3, 3, 0)?
-            .set_segment(4, 4, 5)?
-            .set_segment(5, 5, 6)?
-            .set_segment(6, 6, 7)?
-            .set_segment(7, 7, 4)?
-            .set_segment(8, 8, 9)?
-            .set_segment(9, 10, 11)?;
+            .set_segment(0, -10, 0, 1)?
+            .set_segment(1, 0, 1, 2)?
+            .set_segment(2, 0, 2, 3)?
+            .set_segment(3, 0, 3, 0)?
+            .set_segment(4, 0, 4, 5)?
+            .set_segment(5, 0, 5, 6)?
+            .set_segment(6, 0, 6, 7)?
+            .set_segment(7, 0, 7, 4)?
+            .set_segment(8, 0, 8, 9)?
+            .set_segment(9, 0, 10, 11)?;
         trigen.generate_mesh(false, true, true, None, None)?;
+
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, Some(12.0), Some(20.0), None);
-        if false {
+        if GENERATE_FIGURES {
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/triangle_mesh_4_works.svg")?;
         }
+
+        println!("nsegment = {}", trigen.n_out_segment());
+        for i in 0..trigen.n_out_segment() {
+            let (marker, a, b) = trigen.out_segment(i);
+            println!("{:2} - {:2} => {}", a, b, marker);
+        }
+
         assert_eq!(trigen.ntriangle(), 14);
         assert_eq!(trigen.triangle_attribute(0), 1);
         assert_eq!(trigen.triangle_attribute(12), 2);

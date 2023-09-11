@@ -23,7 +23,7 @@ void drop_trigen(struct ExtTrigen *trigen);
 
 int32_t set_point(struct ExtTrigen *trigen, int32_t index, double x, double y);
 
-int32_t set_segment(struct ExtTrigen *trigen, int32_t index, int32_t a, int32_t b);
+int32_t set_segment(struct ExtTrigen *trigen, int32_t index, int32_t marker, int32_t a, int32_t b);
 
 int32_t set_region(struct ExtTrigen *trigen, int32_t index, double x, double y, int32_t attribute, double max_area);
 
@@ -37,11 +37,15 @@ int32_t run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t quadr
 
 int32_t get_npoint(struct ExtTrigen *trigen);
 
+int32_t get_n_out_segment(struct ExtTrigen *trigen);
+
 int32_t get_ntriangle(struct ExtTrigen *trigen);
 
 int32_t get_ncorner(struct ExtTrigen *trigen);
 
 double get_point(struct ExtTrigen *trigen, int32_t index, int32_t dim);
+
+void get_out_segment(struct ExtTrigen *trigen, int32_t index, int32_t *marker, int32_t *a, int32_t *b);
 
 int32_t get_triangle_corner(struct ExtTrigen *trigen, int32_t index, int32_t corner);
 

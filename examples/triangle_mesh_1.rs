@@ -44,34 +44,34 @@ fn main() -> Result<(), StrError> {
 
     // the outer polyhedron
     trigen
-        .set_segment(0, 0, 1)?
-        .set_segment(1, 1, 2)?
-        .set_segment(2, 2, 3)?
-        .set_segment(3, 3, 4)?
-        .set_segment(4, 4, 5)?
-        .set_segment(5, 5, 6)?
-        .set_segment(6, 6, 7)?
-        .set_segment(7, 7, 0)?;
+        .set_segment(0, 0, 0, 1)?
+        .set_segment(1, 0, 1, 2)?
+        .set_segment(2, 0, 2, 3)?
+        .set_segment(3, 0, 3, 4)?
+        .set_segment(4, 0, 4, 5)?
+        .set_segment(5, 0, 5, 6)?
+        .set_segment(6, 0, 6, 7)?
+        .set_segment(7, 0, 7, 0)?;
     // the mouth
     trigen
-        .set_segment(8, 8, 9)?
-        .set_segment(9, 9, 10)?
-        .set_segment(10, 10, 11)?
-        .set_segment(11, 11, 8)?;
+        .set_segment(8, -10, 8, 9)?
+        .set_segment(9, -10, 9, 10)?
+        .set_segment(10, -10, 10, 11)?
+        .set_segment(11, -10, 11, 8)?;
     // the left eye
     trigen
-        .set_segment(12, 12, 13)?
-        .set_segment(13, 13, 14)?
-        .set_segment(14, 14, 15)?
-        .set_segment(15, 15, 12)?;
+        .set_segment(12, 0, 12, 13)?
+        .set_segment(13, 0, 13, 14)?
+        .set_segment(14, 0, 14, 15)?
+        .set_segment(15, 0, 15, 12)?;
     // the right eye
     trigen
-        .set_segment(16, 16, 17)?
-        .set_segment(17, 17, 18)?
-        .set_segment(18, 18, 19)?
-        .set_segment(19, 19, 16)?;
+        .set_segment(16, 0, 16, 17)?
+        .set_segment(17, 0, 17, 18)?
+        .set_segment(18, 0, 18, 19)?
+        .set_segment(19, 0, 19, 16)?;
     // two nostril segments
-    trigen.set_segment(20, 20, 21)?.set_segment(21, 22, 23)?;
+    trigen.set_segment(20, 0, 20, 21)?.set_segment(21, 0, 22, 23)?;
 
     // three holes
     trigen
@@ -81,6 +81,13 @@ fn main() -> Result<(), StrError> {
 
     // generate mesh without constraints
     trigen.generate_mesh(true, true, true, None, None)?;
+
+    // print segments
+    println!("nsegment = {}", trigen.n_out_segment());
+    for i in 0..trigen.n_out_segment() {
+        let (marker, a, b) = trigen.out_segment(i);
+        println!("{:2} - {:2} => {}", a, b, marker);
+    }
 
     // draw mesh
     let mut plot = Plot::new();

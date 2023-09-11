@@ -47,16 +47,16 @@ fn set_point_captures_some_errors() -> Result<(), StrError> {
 fn set_segment_captures_some_errors() -> Result<(), StrError> {
     let mut trigen = Trigen::new(3, None, None, None)?;
     assert_eq!(
-        trigen.set_segment(0, 0, 1).err(),
+        trigen.set_segment(0, -10, 0, 1).err(),
         Some("cannot set segment because the number of segments is None")
     );
     let mut trigen = Trigen::new(3, Some(3), None, None)?;
     assert_eq!(
-        trigen.set_segment(4, 0, 1).err(),
+        trigen.set_segment(4, -20, 0, 1).err(),
         Some("index of segment is out of bounds")
     );
     assert_eq!(
-        trigen.set_segment(0, 0, 4).err(),
+        trigen.set_segment(0, -30, 0, 4).err(),
         Some("id of segment point is out of bounds")
     );
     Ok(())
@@ -279,31 +279,31 @@ fn mesh() -> Result<(), StrError> {
     mesh.set_point(24, -50.0, 0.0)?.set_point(25, 50.0, 0.0)?;
 
     // the outer polyhedron
-    mesh.set_segment(0, 0, 1)?
-        .set_segment(1, 1, 2)?
-        .set_segment(2, 2, 3)?
-        .set_segment(3, 3, 4)?
-        .set_segment(4, 4, 5)?
-        .set_segment(5, 5, 6)?
-        .set_segment(6, 6, 7)?
-        .set_segment(7, 7, 0)?;
+    mesh.set_segment(0, 0, 0, 1)?
+        .set_segment(1, 0, 1, 2)?
+        .set_segment(2, 0, 2, 3)?
+        .set_segment(3, 0, 3, 4)?
+        .set_segment(4, 0, 4, 5)?
+        .set_segment(5, 0, 5, 6)?
+        .set_segment(6, 0, 6, 7)?
+        .set_segment(7, 0, 7, 0)?;
     // the mouth
-    mesh.set_segment(8, 8, 9)?
-        .set_segment(9, 9, 10)?
-        .set_segment(10, 10, 11)?
-        .set_segment(11, 11, 8)?;
+    mesh.set_segment(8, 0, 8, 9)?
+        .set_segment(9, 0, 9, 10)?
+        .set_segment(10, 0, 10, 11)?
+        .set_segment(11, 0, 11, 8)?;
     // the left eye
-    mesh.set_segment(12, 12, 13)?
-        .set_segment(13, 13, 14)?
-        .set_segment(14, 14, 15)?
-        .set_segment(15, 15, 12)?;
+    mesh.set_segment(12, 0, 12, 13)?
+        .set_segment(13, 0, 13, 14)?
+        .set_segment(14, 0, 14, 15)?
+        .set_segment(15, 0, 15, 12)?;
     // the right eye
-    mesh.set_segment(16, 16, 17)?
-        .set_segment(17, 17, 18)?
-        .set_segment(18, 18, 19)?
-        .set_segment(19, 19, 16)?;
+    mesh.set_segment(16, 0, 16, 17)?
+        .set_segment(17, 0, 17, 18)?
+        .set_segment(18, 0, 18, 19)?
+        .set_segment(19, 0, 19, 16)?;
     // two nostril segments
-    mesh.set_segment(20, 20, 21)?.set_segment(21, 22, 23)?;
+    mesh.set_segment(20, 0, 20, 21)?.set_segment(21, 0, 22, 23)?;
 
     // region
     mesh.set_region(0, 0.0, 0.0, 1, None)?;

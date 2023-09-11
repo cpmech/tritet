@@ -141,6 +141,12 @@ struct ExtTrigen *new_trigen(int32_t npoint, int32_t nsegment, int32_t nregion, 
             free(trigen);
             return NULL;
         }
+        trigen->input.segmentmarkerlist = (int32_t *)malloc(nsegment * sizeof(int32_t));
+        if (trigen->input.segmentmarkerlist == NULL) {
+            free_triangle_data(&trigen->input);
+            free(trigen);
+            return NULL;
+        }
         trigen->input.numberofsegments = nsegment;
     }
 
@@ -194,11 +200,11 @@ int32_t set_point(struct ExtTrigen *trigen, int32_t index, double x, double y) {
     return TRITET_SUCCESS;
 }
 
-int32_t set_segment(struct ExtTrigen *trigen, int32_t index, int32_t a, int32_t b) {
+int32_t set_segment(struct ExtTrigen *trigen, int32_t index, int32_t marker, int32_t a, int32_t b) {
     if (trigen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
-    if (trigen->input.segmentlist == NULL) {
+    if (trigen->input.segmentlist == NULL || trigen->input.segmentmarkerlist == NULL) {
         return TRITET_ERROR_NULL_SEGMENT_LIST;
     }
     if (index >= trigen->input.numberofsegments) {
@@ -209,6 +215,7 @@ int32_t set_segment(struct ExtTrigen *trigen, int32_t index, int32_t a, int32_t 
     }
     trigen->input.segmentlist[index * 2] = a;
     trigen->input.segmentlist[index * 2 + 1] = b;
+    trigen->input.segmentmarkerlist[index] = marker;
     return TRITET_SUCCESS;
 }
 
@@ -377,6 +384,13 @@ int32_t get_npoint(struct ExtTrigen *trigen) {
     return trigen->output.numberofpoints;
 }
 
+int32_t get_n_out_segment(struct ExtTrigen *trigen) {
+    if (trigen == NULL) {
+        return 0;
+    }
+    return trigen->output.numberofsegments;
+}
+
 int32_t get_ntriangle(struct ExtTrigen *trigen) {
     if (trigen == NULL) {
         return 0;
@@ -399,6 +413,20 @@ double get_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
         return trigen->output.pointlist[index * 2 + dim];
     } else {
         return 0.0;
+    }
+}
+
+void get_out_segment(struct ExtTrigen *trigen, int32_t index, int32_t *marker, int32_t *a, int32_t *b) {
+    *marker = 0;
+    *a = 0;
+    *b = 0;
+    if (trigen == NULL) {
+        return;
+    }
+    if (index < trigen->output.numberofsegments) {
+        *marker = trigen->output.segmentmarkerlist[index];
+        *a = trigen->output.segmentlist[index * 2];
+        *b = trigen->output.segmentlist[index * 2 + 1];
     }
 }
 

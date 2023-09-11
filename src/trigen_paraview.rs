@@ -190,9 +190,9 @@ mod tests {
             .set_point(1, 1.0, 0.0)?
             .set_point(2, 0.0, 1.0)?;
         trigen
-            .set_segment(0, 0, 1)?
-            .set_segment(1, 1, 2)?
-            .set_segment(2, 2, 0)?;
+            .set_segment(0, -10, 0, 1)?
+            .set_segment(1, -20, 1, 2)?
+            .set_segment(2, -30, 2, 0)?;
         trigen.generate_mesh(false, true, false, None, None)?;
         let file_path = "/tmp/tritet/test_trigen_write_vtu_o2.vtu";
         trigen.write_vtu(file_path)?;

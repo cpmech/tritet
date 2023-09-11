@@ -159,16 +159,16 @@ fn main() -> Result<(), StrError> {
 
     // set segments
     trigen
-        .set_segment(0, 0, 1)?
-        .set_segment(1, 1, 2)?
-        .set_segment(2, 2, 3)?
-        .set_segment(3, 3, 0)?
-        .set_segment(4, 4, 5)?
-        .set_segment(5, 5, 6)?
-        .set_segment(6, 6, 7)?
-        .set_segment(7, 7, 4)?
-        .set_segment(8, 8, 9)?
-        .set_segment(9, 10, 11)?;
+        .set_segment(0, -1, 0, 1)?
+        .set_segment(1, -1, 1, 2)?
+        .set_segment(2, -1, 2, 3)?
+        .set_segment(3, -1, 3, 0)?
+        .set_segment(4, -1, 4, 5)?
+        .set_segment(5, -1, 5, 6)?
+        .set_segment(6, -1, 6, 7)?
+        .set_segment(7, -1, 7, 4)?
+        .set_segment(8, -1, 8, 9)?
+        .set_segment(9, -1, 10, 11)?;
 
     // set regions
     trigen

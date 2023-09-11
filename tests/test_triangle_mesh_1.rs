@@ -18,26 +18,26 @@ fn test_triangle_mesh_1() -> Result<(), StrError> {
         .set_point(10, 2.0, 4.0)?
         .set_point(11, 4.0, 4.0)?;
     triangle
-        .set_segment(0, 0, 1)?
-        .set_segment(1, 1, 2)?
-        .set_segment(2, 0, 5)?
-        .set_segment(3, 1, 3)?
-        .set_segment(4, 1, 4)?
-        .set_segment(5, 2, 6)?
-        .set_segment(6, 3, 5)?
-        .set_segment(7, 4, 6)?
-        .set_segment(8, 5, 9)?
-        .set_segment(9, 5, 7)?
-        .set_segment(10, 3, 7)?
-        .set_segment(11, 4, 8)?
-        .set_segment(12, 6, 8)?
-        .set_segment(13, 6, 11)?
-        .set_segment(14, 7, 10)?
-        .set_segment(15, 8, 10)?
-        .set_segment(16, 9, 10)?
-        .set_segment(17, 10, 11)?
-        .set_segment(18, 3, 4)?
-        .set_segment(19, 7, 8)?;
+        .set_segment(0, 0, 0, 1)?
+        .set_segment(1, 0, 1, 2)?
+        .set_segment(2, 0, 0, 5)?
+        .set_segment(3, 0, 1, 3)?
+        .set_segment(4, 0, 1, 4)?
+        .set_segment(5, 0, 2, 6)?
+        .set_segment(6, 0, 3, 5)?
+        .set_segment(7, 0, 4, 6)?
+        .set_segment(8, 0, 5, 9)?
+        .set_segment(9, 0, 5, 7)?
+        .set_segment(10, 0, 3, 7)?
+        .set_segment(11, 0, 4, 8)?
+        .set_segment(12, 0, 6, 8)?
+        .set_segment(13, 0, 6, 11)?
+        .set_segment(14, 0, 7, 10)?
+        .set_segment(15, 0, 8, 10)?
+        .set_segment(16, 0, 9, 10)?
+        .set_segment(17, 0, 10, 11)?
+        .set_segment(18, 0, 3, 4)?
+        .set_segment(19, 0, 7, 8)?;
     triangle
         .set_region(0, 0.1, 0.1, 1, None)?
         .set_region(1, 2.0, 0.1, 2, None)?
