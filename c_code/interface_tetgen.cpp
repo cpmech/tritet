@@ -400,11 +400,12 @@ int32_t tet_out_n_marked_face(struct ExtTetgen *tetgen) {
     return static_cast<int>(tetgen->output.marked_faces.size());
 }
 
-void tet_out_marked_face(struct ExtTetgen *tetgen, int32_t index, int32_t *a, int32_t *b, int32_t *c, int32_t *marker) {
+void tet_out_marked_face(struct ExtTetgen *tetgen, int32_t index, int32_t *a, int32_t *b, int32_t *c, int32_t *marker, int32_t *cell) {
     *a = 0;
     *b = 0;
     *c = 0;
     *marker = 0;
+    *cell = 0;
     if (tetgen == NULL) {
         return;
     }
@@ -414,6 +415,7 @@ void tet_out_marked_face(struct ExtTetgen *tetgen, int32_t index, int32_t *a, in
         *b = marked_face.key[1];
         *c = marked_face.key[2];
         *marker = marked_face.marker;
+        *cell = marked_face.cell;
     } else {
         return;
     }

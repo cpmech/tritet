@@ -288,8 +288,9 @@ public:
   int numberoftrifaces;
 
   typedef struct {
-      int key[3];
-      int marker;
+      int key[3]; // sorted face key with three global point ids
+      int marker; // the marker inherited from the PLC
+      int cell; // the global ID of "a" tetrahedron touching this face
   } marked_face_t;
   std::vector<marked_face_t> marked_faces; // dorival
 

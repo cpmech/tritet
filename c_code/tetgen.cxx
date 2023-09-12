@@ -29205,17 +29205,15 @@ void tetgenmesh::outfaces(tetgenio* out)
                 faceid = shellmark(checkmark) - 1;
                 marker = in->facetmarkerlist[faceid];
 
-                // add marker to map // dorival
+                // add marked face to vector of marked faces // dorival
                 if (out != (tetgenio *) NULL) { // dorival
-                    int point_a = pointmark(torg) - shift; // dorival
-                    int point_b = pointmark(tdest) - shift; // dorival
-                    int point_c = pointmark(tapex) - shift; // dorival
-                    sort_3(&point_a, &point_b, &point_c); // dorival
                     tetgenio::marked_face_t marked_face; // dorival
-                    marked_face.key[0] = point_a; // dorival
-                    marked_face.key[1] = point_b; // dorival
-                    marked_face.key[2] = point_c; // dorival
+                    marked_face.key[0] = pointmark(torg) - shift; // dorival
+                    marked_face.key[1] = pointmark(tdest) - shift; // dorival
+                    marked_face.key[2] = pointmark(tapex) - shift; // dorival
                     marked_face.marker = marker; // dorival
+                    marked_face.cell = elemindex(tface.tet); // dorival
+                    sort_3(&marked_face.key[0], &marked_face.key[1], &marked_face.key[2]); // dorival
                     out->marked_faces.push_back(marked_face); // dorival
                 } // dorival
 
