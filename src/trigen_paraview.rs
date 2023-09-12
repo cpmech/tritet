@@ -102,6 +102,8 @@ impl Trigen {
         for _ in 0..ntriangle {
             write!(&mut buffer, "{} ", vtk_type).unwrap();
         }
+
+        // close Cells
         write!(
             &mut buffer,
             "\n</DataArray>\n\
@@ -109,6 +111,35 @@ impl Trigen {
         )
         .unwrap();
 
+        // data -- points
+        write!(&mut buffer, "<PointData Scalars=\"TheScalars\">\n").unwrap();
+        write!(
+            &mut buffer,
+            "<DataArray type=\"Int32\" Name=\"marker\" NumberOfComponents=\"1\" format=\"ascii\">\n"
+        )
+        .unwrap();
+        for index in 0..npoint {
+            let marker = self.out_point_marker(index);
+            write!(&mut buffer, "{} ", marker).unwrap();
+        }
+        write!(&mut buffer, "\n</DataArray>\n").unwrap();
+        write!(&mut buffer, "</PointData>\n").unwrap();
+
+        // data -- cells
+        write!(&mut buffer, "<CellData Scalars=\"TheScalars\">\n").unwrap();
+        write!(
+            &mut buffer,
+            "<DataArray type=\"Int32\" Name=\"attribute\" NumberOfComponents=\"1\" format=\"ascii\">\n"
+        )
+        .unwrap();
+        for index in 0..ntriangle {
+            let attribute = self.out_cell_attribute(index);
+            write!(&mut buffer, "{} ", attribute).unwrap();
+        }
+        write!(&mut buffer, "\n</DataArray>\n").unwrap();
+        write!(&mut buffer, "</CellData>\n").unwrap();
+
+        // close UnstructuredGrid
         write!(
             &mut buffer,
             "</Piece>\n\
@@ -174,6 +205,16 @@ mod tests {
 5 
 </DataArray>
 </Cells>
+<PointData Scalars="TheScalars">
+<DataArray type="Int32" Name="marker" NumberOfComponents="1" format="ascii">
+1 1 1 
+</DataArray>
+</PointData>
+<CellData Scalars="TheScalars">
+<DataArray type="Int32" Name="attribute" NumberOfComponents="1" format="ascii">
+0 
+</DataArray>
+</CellData>
 </Piece>
 </UnstructuredGrid>
 </VTKFile>
@@ -219,6 +260,16 @@ mod tests {
 22 
 </DataArray>
 </Cells>
+<PointData Scalars="TheScalars">
+<DataArray type="Int32" Name="marker" NumberOfComponents="1" format="ascii">
+-10 -10 -20 -10 -20 -30 
+</DataArray>
+</PointData>
+<CellData Scalars="TheScalars">
+<DataArray type="Int32" Name="attribute" NumberOfComponents="1" format="ascii">
+0 
+</DataArray>
+</CellData>
 </Piece>
 </UnstructuredGrid>
 </VTKFile>

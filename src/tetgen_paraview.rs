@@ -127,8 +127,6 @@ impl Tetgen {
         )
         .unwrap();
 
-        // data: marked faces
-
         // data -- points
         write!(&mut buffer, "<PointData Scalars=\"TheScalars\">\n").unwrap();
         write!(
