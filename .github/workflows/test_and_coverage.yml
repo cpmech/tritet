@@ -1,18 +1,13 @@
 name: Test & Coverage
-on: [pull_request, push]
+on: [pull_request]
 jobs:
   test_and_coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Install Libraries
         run: |
-          sudo apt-get update -y && sudo apt-get install -y build-essential liblapacke-dev libopenblas-dev python3-pip
-          sudo pip3 install matplotlib
-      - name: Install Rust
-        run: |
-          rustup toolchain install nightly --component llvm-tools-preview
-          rustup default nightly
+          sudo apt-get update -y && sudo apt-get install -y build-essential
       - name: Run tests
         run: |
           cargo test -- --nocapture
