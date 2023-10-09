@@ -7,14 +7,14 @@ fn main() -> Result<(), StrError> {
 
     // set points
     tetgen
-        .set_point(0, 0.0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0, 0.0)?
-        .set_point(2, 1.0, 1.0, 0.0)?
-        .set_point(3, 0.0, 1.0, 0.0)?
-        .set_point(4, 0.0, 0.0, 1.0)?
-        .set_point(5, 1.0, 0.0, 1.0)?
-        .set_point(6, 1.0, 1.0, 1.0)?
-        .set_point(7, 0.0, 1.0, 1.0)?;
+        .set_point(0, 0, 0.0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0, 0.0)?
+        .set_point(2, 0, 1.0, 1.0, 0.0)?
+        .set_point(3, 0, 0.0, 1.0, 0.0)?
+        .set_point(4, 0, 0.0, 0.0, 1.0)?
+        .set_point(5, 0, 1.0, 0.0, 1.0)?
+        .set_point(6, 0, 1.0, 1.0, 1.0)?
+        .set_point(7, 0, 0.0, 1.0, 1.0)?;
 
     // generate Delaunay triangulation
     tetgen.generate_delaunay(false)?;

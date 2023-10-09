@@ -5,12 +5,13 @@ pub type StrError = &'static str;
 
 mod constants;
 mod conversion;
-mod paraview;
 mod tetgen;
-mod triangle;
-pub use crate::paraview::*;
+mod tetgen_paraview;
+mod trigen;
+mod trigen_paraview;
 pub use crate::tetgen::*;
-pub use crate::triangle::*;
+pub use crate::tetgen_paraview::*;
+pub use crate::trigen::*;
 
 // run code from README file
 #[cfg(doctest)]

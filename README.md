@@ -50,34 +50,34 @@ Note: set `SAVE_FIGURE` to true to generate the figures.
 
 ```rust
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 10 points
-    let mut triangle = Triangle::new(10, None, None, None)?;
+    let mut trigen = Trigen::new(10, None, None, None)?;
 
     // set points
-    triangle
-        .set_point(0, 0.478554, 0.00869692)?
-        .set_point(1, 0.13928, 0.180603)?
-        .set_point(2, 0.578587, 0.760349)?
-        .set_point(3, 0.903726, 0.975904)?
-        .set_point(4, 0.0980015, 0.981755)?
-        .set_point(5, 0.133721, 0.348832)?
-        .set_point(6, 0.648071, 0.369534)?
-        .set_point(7, 0.230951, 0.558482)?
-        .set_point(8, 0.0307942, 0.459123)?
-        .set_point(9, 0.540745, 0.331184)?;
+    trigen
+        .set_point(0, 0, 0.478554, 0.00869692)?
+        .set_point(1, 0, 0.13928, 0.180603)?
+        .set_point(2, 0, 0.578587, 0.760349)?
+        .set_point(3, 0, 0.903726, 0.975904)?
+        .set_point(4, 0, 0.0980015, 0.981755)?
+        .set_point(5, 0, 0.133721, 0.348832)?
+        .set_point(6, 0, 0.648071, 0.369534)?
+        .set_point(7, 0, 0.230951, 0.558482)?
+        .set_point(8, 0, 0.0307942, 0.459123)?
+        .set_point(9, 0, 0.540745, 0.331184)?;
 
     // generate Delaunay triangulation
-    triangle.generate_delaunay(false)?;
+    trigen.generate_delaunay(false)?;
 
     // draw triangles
     if SAVE_FIGURE {
         let mut plot = Plot::new();
-        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         plot.set_equal_axes(true)
             .set_figure_size_points(600.0, 600.0)
             .save("/tmp/tritet/doc_triangle_delaunay_1.svg")?;
@@ -90,37 +90,36 @@ fn main() -> Result<(), StrError> {
 
 ### 2D Voronoi tessellation
 
-
 ```rust
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 10 points
-    let mut triangle = Triangle::new(10, None, None, None)?;
+    let mut trigen = Trigen::new(10, None, None, None)?;
 
     // set points
-    triangle
-        .set_point(0, 0.478554, 0.00869692)?
-        .set_point(1, 0.13928, 0.180603)?
-        .set_point(2, 0.578587, 0.760349)?
-        .set_point(3, 0.903726, 0.975904)?
-        .set_point(4, 0.0980015, 0.981755)?
-        .set_point(5, 0.133721, 0.348832)?
-        .set_point(6, 0.648071, 0.369534)?
-        .set_point(7, 0.230951, 0.558482)?
-        .set_point(8, 0.0307942, 0.459123)?
-        .set_point(9, 0.540745, 0.331184)?;
+    trigen
+        .set_point(0, 0, 0.478554, 0.00869692)?
+        .set_point(1, 0, 0.13928, 0.180603)?
+        .set_point(2, 0, 0.578587, 0.760349)?
+        .set_point(3, 0, 0.903726, 0.975904)?
+        .set_point(4, 0, 0.0980015, 0.981755)?
+        .set_point(5, 0, 0.133721, 0.348832)?
+        .set_point(6, 0, 0.648071, 0.369534)?
+        .set_point(7, 0, 0.230951, 0.558482)?
+        .set_point(8, 0, 0.0307942, 0.459123)?
+        .set_point(9, 0, 0.540745, 0.331184)?;
 
     // generate Voronoi tessellation
-    triangle.generate_voronoi(false)?;
+    trigen.generate_voronoi(false)?;
 
     // draw Voronoi diagram
     if SAVE_FIGURE {
         let mut plot = Plot::new();
-        triangle.draw_voronoi(&mut plot);
+        trigen.draw_voronoi(&mut plot);
         plot.set_equal_axes(true)
             .set_figure_size_points(600.0, 600.0)
             .save("/tmp/tritet/doc_triangle_voronoi_1.svg")?;
@@ -135,58 +134,57 @@ fn main() -> Result<(), StrError> {
 
 ```rust
 use plotpy::Plot;
-use tritet::{StrError, Triangle};
+use tritet::{StrError, Trigen};
 
 const SAVE_FIGURE: bool = false;
 
 fn main() -> Result<(), StrError> {
     // allocate data for 12 points, 10 segments, 2 regions, and 1 hole
-    let mut triangle = Triangle::new(12, Some(10), Some(2), Some(1))?;
+    let mut trigen = Trigen::new(12, Some(10), Some(2), Some(1))?;
 
     // set points
-    triangle
-        .set_point(0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0)?
-        .set_point(2, 1.0, 1.0)?
-        .set_point(3, 0.0, 1.0)?
-        .set_point(4, 0.2, 0.2)?
-        .set_point(5, 0.8, 0.2)?
-        .set_point(6, 0.8, 0.8)?
-        .set_point(7, 0.2, 0.8)?
-        .set_point(8, 0.0, 0.5)?
-        .set_point(9, 0.2, 0.5)?
-        .set_point(10, 0.8, 0.5)?
-        .set_point(11, 1.0, 0.5)?;
+    trigen
+        .set_point(0, 0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0)?
+        .set_point(2, 0, 1.0, 1.0)?
+        .set_point(3, 0, 0.0, 1.0)?
+        .set_point(4, 0, 0.2, 0.2)?
+        .set_point(5, 0, 0.8, 0.2)?
+        .set_point(6, 0, 0.8, 0.8)?
+        .set_point(7, 0, 0.2, 0.8)?
+        .set_point(8, 0, 0.0, 0.5)?
+        .set_point(9, 0, 0.2, 0.5)?
+        .set_point(10, 0, 0.8, 0.5)?
+        .set_point(11, 0, 1.0, 0.5)?;
 
     // set segments
-    triangle
-        .set_segment(0, 0, 1)?
-        .set_segment(1, 1, 2)?
-        .set_segment(2, 2, 3)?
-        .set_segment(3, 3, 0)?
-        .set_segment(4, 4, 5)?
-        .set_segment(5, 5, 6)?
-        .set_segment(6, 6, 7)?
-        .set_segment(7, 7, 4)?
-        .set_segment(8, 8, 9)?
-        .set_segment(9, 10, 11)?;
+    trigen
+        .set_segment(0, -1, 0, 1)?
+        .set_segment(1, -1, 1, 2)?
+        .set_segment(2, -1, 2, 3)?
+        .set_segment(3, -1, 3, 0)?
+        .set_segment(4, -1, 4, 5)?
+        .set_segment(5, -1, 5, 6)?
+        .set_segment(6, -1, 6, 7)?
+        .set_segment(7, -1, 7, 4)?
+        .set_segment(8, -1, 8, 9)?
+        .set_segment(9, -1, 10, 11)?;
 
     // set regions
-    triangle
-        .set_region(0, 0.1, 0.1, 1, None)?
-        .set_region(1, 0.1, 0.9, 2, None)?;
+    trigen
+        .set_region(0, 1, 0.1, 0.1, None)?
+        .set_region(1, 2, 0.1, 0.9, None)?;
 
     // set holes
-    triangle.set_hole(0, 0.5, 0.5)?;
+    trigen.set_hole(0, 0.5, 0.5)?;
 
     // generate o2 mesh without constraints
-    triangle.generate_mesh(false, true, None, None)?;
-    assert_eq!(triangle.ntriangle(), 14);
+    trigen.generate_mesh(false, true, false, None, None)?;
 
     // draw mesh
     if SAVE_FIGURE {
         let mut plot = Plot::new();
-        triangle.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         plot.set_equal_axes(true)
             .set_figure_size_points(600.0, 600.0)
             .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
@@ -211,14 +209,14 @@ fn main() -> Result<(), StrError> {
 
     // set points
     tetgen
-        .set_point(0, 0.0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0, 0.0)?
-        .set_point(2, 1.0, 1.0, 0.0)?
-        .set_point(3, 0.0, 1.0, 0.0)?
-        .set_point(4, 0.0, 0.0, 1.0)?
-        .set_point(5, 1.0, 0.0, 1.0)?
-        .set_point(6, 1.0, 1.0, 1.0)?
-        .set_point(7, 0.0, 1.0, 1.0)?;
+        .set_point(0, 0, 0.0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0, 0.0)?
+        .set_point(2, 0, 1.0, 1.0, 0.0)?
+        .set_point(3, 0, 0.0, 1.0, 0.0)?
+        .set_point(4, 0, 0.0, 0.0, 1.0)?
+        .set_point(5, 0, 1.0, 0.0, 1.0)?
+        .set_point(6, 0, 1.0, 1.0, 1.0)?
+        .set_point(7, 0, 0.0, 1.0, 1.0)?;
 
     // generate Delaunay triangulation
     tetgen.generate_delaunay(false)?;
@@ -243,7 +241,7 @@ Note: set `SAVE_VTU_FILE` to true to generate Paraview file.
 
 ```rust
 use plotpy::Plot;
-use tritet::{write_tet_vtu, StrError, Tetgen};
+use tritet::{StrError, Tetgen};
 
 const SAVE_VTU_FILE: bool = false;
 const SAVE_FIGURE: bool = false;
@@ -263,25 +261,25 @@ fn main() -> Result<(), StrError> {
 
     // inner cube
     tetgen
-        .set_point(0, 0.0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0, 0.0)?
-        .set_point(2, 1.0, 1.0, 0.0)?
-        .set_point(3, 0.0, 1.0, 0.0)?
-        .set_point(4, 0.0, 0.0, 1.0)?
-        .set_point(5, 1.0, 0.0, 1.0)?
-        .set_point(6, 1.0, 1.0, 1.0)?
-        .set_point(7, 0.0, 1.0, 1.0)?;
+        .set_point(0, 0, 0.0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0, 0.0)?
+        .set_point(2, 0, 1.0, 1.0, 0.0)?
+        .set_point(3, 0, 0.0, 1.0, 0.0)?
+        .set_point(4, 0, 0.0, 0.0, 1.0)?
+        .set_point(5, 0, 1.0, 0.0, 1.0)?
+        .set_point(6, 0, 1.0, 1.0, 1.0)?
+        .set_point(7, 0, 0.0, 1.0, 1.0)?;
 
     // outer cube
     tetgen
-        .set_point(8, -1.0, -1.0, -1.0)?
-        .set_point(9, 2.0, -1.0, -1.0)?
-        .set_point(10, 2.0, 2.0, -1.0)?
-        .set_point(11, -1.0, 2.0, -1.0)?
-        .set_point(12, -1.0, -1.0, 2.0)?
-        .set_point(13, 2.0, -1.0, 2.0)?
-        .set_point(14, 2.0, 2.0, 2.0)?
-        .set_point(15, -1.0, 2.0, 2.0)?;
+        .set_point(8,  0, -1.0, -1.0, -1.0)?
+        .set_point(9,  0, 2.0, -1.0, -1.0)?
+        .set_point(10, 0, 2.0, 2.0, -1.0)?
+        .set_point(11, 0, -1.0, 2.0, -1.0)?
+        .set_point(12, 0, -1.0, -1.0, 2.0)?
+        .set_point(13, 0, 2.0, -1.0, 2.0)?
+        .set_point(14, 0, 2.0, 2.0, 2.0)?
+        .set_point(15, 0, -1.0, 2.0, 2.0)?;
 
     // inner cube
     tetgen
@@ -348,7 +346,7 @@ fn main() -> Result<(), StrError> {
         .set_facet_point(11, 3, 8 + 7)?;
 
     // set region and hole
-    tetgen.set_region(0, -0.9, -0.9, -0.9, 1, None)?;
+    tetgen.set_region(0, 1, -0.9, -0.9, -0.9, None)?;
     tetgen.set_hole(0, 0.5, 0.5, 0.5)?;
 
     // generate mesh
@@ -356,7 +354,7 @@ fn main() -> Result<(), StrError> {
 
     // generate file for Paraview
     if SAVE_VTU_FILE {
-        write_tet_vtu(&tetgen, "/tmp/tritet/example_tetgen_mesh_1.vtu")?;
+        tetgen.write_vtu("/tmp/tritet/example_tetgen_mesh_1.vtu")?;
     }
 
     // draw edges of tetrahedra
@@ -372,3 +370,9 @@ fn main() -> Result<(), StrError> {
 ```
 
 ![example_tetgen_mesh_1.png](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_mesh_1.png)
+
+## Dev Tools
+
+```bash
+cargo install cargo-valgrind
+```

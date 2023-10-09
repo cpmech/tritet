@@ -1,5 +1,5 @@
 use plotpy::Plot;
-use tritet::{write_tet_vtu, StrError, Tetgen};
+use tritet::{StrError, Tetgen};
 
 fn main() -> Result<(), StrError> {
     // allocate data for 16 points and 12 facets
@@ -16,25 +16,25 @@ fn main() -> Result<(), StrError> {
 
     // inner cube
     tetgen
-        .set_point(0, 0.0, 0.0, 0.0)?
-        .set_point(1, 1.0, 0.0, 0.0)?
-        .set_point(2, 1.0, 1.0, 0.0)?
-        .set_point(3, 0.0, 1.0, 0.0)?
-        .set_point(4, 0.0, 0.0, 1.0)?
-        .set_point(5, 1.0, 0.0, 1.0)?
-        .set_point(6, 1.0, 1.0, 1.0)?
-        .set_point(7, 0.0, 1.0, 1.0)?;
+        .set_point(0, 0, 0.0, 0.0, 0.0)?
+        .set_point(1, 0, 1.0, 0.0, 0.0)?
+        .set_point(2, 0, 1.0, 1.0, 0.0)?
+        .set_point(3, 0, 0.0, 1.0, 0.0)?
+        .set_point(4, 0, 0.0, 0.0, 1.0)?
+        .set_point(5, 0, 1.0, 0.0, 1.0)?
+        .set_point(6, 0, 1.0, 1.0, 1.0)?
+        .set_point(7, 0, 0.0, 1.0, 1.0)?;
 
     // outer cube
     tetgen
-        .set_point(8, -1.0, -1.0, -1.0)?
-        .set_point(9, 2.0, -1.0, -1.0)?
-        .set_point(10, 2.0, 2.0, -1.0)?
-        .set_point(11, -1.0, 2.0, -1.0)?
-        .set_point(12, -1.0, -1.0, 2.0)?
-        .set_point(13, 2.0, -1.0, 2.0)?
-        .set_point(14, 2.0, 2.0, 2.0)?
-        .set_point(15, -1.0, 2.0, 2.0)?;
+        .set_point(8, 0, -1.0, -1.0, -1.0)?
+        .set_point(9, 0, 2.0, -1.0, -1.0)?
+        .set_point(10, 0, 2.0, 2.0, -1.0)?
+        .set_point(11, 0, -1.0, 2.0, -1.0)?
+        .set_point(12, 0, -1.0, -1.0, 2.0)?
+        .set_point(13, 0, 2.0, -1.0, 2.0)?
+        .set_point(14, 0, 2.0, 2.0, 2.0)?
+        .set_point(15, 0, -1.0, 2.0, 2.0)?;
 
     // inner cube
     tetgen
@@ -101,14 +101,14 @@ fn main() -> Result<(), StrError> {
         .set_facet_point(11, 3, 8 + 7)?;
 
     // set region and hole
-    tetgen.set_region(0, -0.9, -0.9, -0.9, 1, None)?;
+    tetgen.set_region(0, 1, -0.9, -0.9, -0.9, None)?;
     tetgen.set_hole(0, 0.5, 0.5, 0.5)?;
 
     // generate mesh
     tetgen.generate_mesh(false, false, None, None)?;
 
     // generate file for Paraview
-    write_tet_vtu(&tetgen, "/tmp/tritet/example_tetgen_mesh_1.vtu")?;
+    tetgen.write_vtu("/tmp/tritet/example_tetgen_mesh_1.vtu")?;
 
     // draw edges of tetrahedra
     let mut plot = Plot::new();
