@@ -12,7 +12,7 @@ categories = ["mathematics", "science"]
 keywords = ["2D", "3D", "mesh", "geometry"]
 
 [dependencies]
-plotpy = { path = "../plotpy", version = "0.4" }
+plotpy = "0.5"
 once_cell = "1.12.0"
 
 [build-dependencies]
