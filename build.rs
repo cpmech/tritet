@@ -25,6 +25,7 @@ fn main() {
         .file("c_code/triangle.c")
         .file("c_code/tricall_report.c")
         .file("c_code/interface_triangle.c")
+        .define("NO_TIMER", None)
         .compile("c_code_interface_triangle");
     cc::Build::new()
         .cpp(true)
