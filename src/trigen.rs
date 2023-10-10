@@ -953,6 +953,13 @@ impl Trigen {
                 max[dim] = f64::max(max[dim], x[dim]);
             }
         }
+        let mut gap = vec![0.0; 2];
+        for dim in 0..2 {
+            gap[dim] = 0.05 * (max[dim] - min[dim]);
+            gap[dim] = 0.05 * (max[dim] - min[dim]);
+            min[dim] -= gap[dim];
+            max[dim] += gap[dim];
+        }
         let mut canvas = Canvas::new();
         canvas.polycurve_begin();
         for e in 0..self.out_voronoi_nedge() {
@@ -992,6 +999,13 @@ impl Trigen {
                         max[1] = f64::max(max[1], yb);
                         canvas.polycurve_add(xa, ya, PolyCode::MoveTo);
                         canvas.polycurve_add(xb, yb, PolyCode::LineTo);
+                    } else {
+                        canvas.polycurve_add(xa, ya, PolyCode::MoveTo);
+                        if dx == 0.0 {
+                            canvas.polycurve_add(xa, ya + dy * gap[1], PolyCode::LineTo);
+                        } else if dy == 0.0 {
+                            canvas.polycurve_add(xa + dx * gap[0], ya, PolyCode::LineTo);
+                        }
                     }
                 }
             }
@@ -1153,14 +1167,39 @@ mod tests {
 
     #[test]
     fn voronoi_1_works() -> Result<(), StrError> {
-        let mut trigen = Trigen::new(3, None, None, None)?;
+        let mut trigen = Trigen::new(5, None, None, None)?;
         trigen
             .set_point(0, 0, 0.0, 0.0)?
             .set_point(1, 0, 1.0, 0.0)?
-            .set_point(2, 0, 0.0, 1.0)?;
+            .set_point(2, 0, 0.0, 1.0)?
+            .set_point(3, 0, 1.0, 1.0)?
+            .set_point(4, 0, 0.5, 0.5)?;
         trigen.generate_voronoi(false)?;
-        assert_eq!(trigen.out_npoint(), 3);
-        assert_eq!(trigen.out_ncell(), 1);
+        if SAVE_FIGURE {
+            let mut plot = Plot::new();
+            trigen.draw_voronoi(&mut plot);
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/voronoi_1_works.svg")?;
+        }
+        for i in 0..trigen.out_voronoi_npoint() {
+            println!(
+                "{}: {:?}, {:?}",
+                i,
+                trigen.out_voronoi_point(i, 0),
+                trigen.out_voronoi_point(i, 1)
+            );
+        }
+        for e in 0..trigen.out_voronoi_nedge() {
+            println!(
+                "{}: {:?} => {:?}",
+                e,
+                trigen.out_voronoi_edge_point_a(e),
+                trigen.out_voronoi_edge_point_b(e)
+            );
+        }
+        assert_eq!(trigen.out_npoint(), 5);
+        assert_eq!(trigen.out_ncell(), 4);
         assert_eq!(trigen.out_cell_npoint(), 3);
         assert_eq!(trigen.out_point(0, 0), 0.0);
         assert_eq!(trigen.out_point(0, 1), 0.0);
@@ -1168,24 +1207,47 @@ mod tests {
         assert_eq!(trigen.out_point(1, 1), 0.0);
         assert_eq!(trigen.out_point(2, 0), 0.0);
         assert_eq!(trigen.out_point(2, 1), 1.0);
-        assert_eq!(trigen.out_voronoi_npoint(), 1);
-        assert_eq!(trigen.out_voronoi_point(0, 0), 0.5);
+        assert_eq!(trigen.out_point(3, 0), 1.0);
+        assert_eq!(trigen.out_point(3, 1), 1.0);
+        assert_eq!(trigen.out_point(4, 0), 0.5);
+        assert_eq!(trigen.out_point(4, 1), 0.5);
+        assert_eq!(trigen.out_voronoi_npoint(), 4);
+        assert_eq!(trigen.out_voronoi_point(0, 0), 0.0);
         assert_eq!(trigen.out_voronoi_point(0, 1), 0.5);
-        assert_eq!(trigen.out_voronoi_nedge(), 3);
+        assert_eq!(trigen.out_voronoi_point(1, 0), 1.0);
+        assert_eq!(trigen.out_voronoi_point(1, 1), 0.5);
+        assert_eq!(trigen.out_voronoi_point(2, 0), 0.5);
+        assert_eq!(trigen.out_voronoi_point(2, 1), 0.0);
+        assert_eq!(trigen.out_voronoi_point(3, 0), 0.5);
+        assert_eq!(trigen.out_voronoi_point(3, 1), 1.0);
+        assert_eq!(trigen.out_voronoi_nedge(), 8);
         assert_eq!(trigen.out_voronoi_edge_point_a(0), 0);
         assert_eq!(
             format!("{:?}", trigen.out_voronoi_edge_point_b(0)),
-            "Direction(0.0, -1.0)"
+            "Direction(-1.0, 0.0)"
         );
         assert_eq!(trigen.out_voronoi_edge_point_a(1), 0);
-        assert_eq!(
-            format!("{:?}", trigen.out_voronoi_edge_point_b(1)),
-            "Direction(1.0, 1.0)"
-        );
+        assert_eq!(format!("{:?}", trigen.out_voronoi_edge_point_b(1)), "Index(2)");
         assert_eq!(trigen.out_voronoi_edge_point_a(2), 0);
+        assert_eq!(format!("{:?}", trigen.out_voronoi_edge_point_b(2)), "Index(3)");
+        assert_eq!(trigen.out_voronoi_edge_point_a(3), 1);
+        assert_eq!(format!("{:?}", trigen.out_voronoi_edge_point_b(3)), "Index(2)");
+        assert_eq!(trigen.out_voronoi_edge_point_a(4), 1);
         assert_eq!(
-            format!("{:?}", trigen.out_voronoi_edge_point_b(2)),
-            "Direction(-1.0, 0.0)"
+            format!("{:?}", trigen.out_voronoi_edge_point_b(4)),
+            "Direction(1.0, 0.0)"
+        );
+        assert_eq!(trigen.out_voronoi_edge_point_a(5), 1);
+        assert_eq!(format!("{:?}", trigen.out_voronoi_edge_point_b(5)), "Index(3)");
+        assert_eq!(trigen.out_voronoi_edge_point_a(6), 2);
+        assert_eq!(
+            format!("{:?}", trigen.out_voronoi_edge_point_b(6)),
+            "Direction(0.0, -1.0)"
+        );
+        assert_eq!(trigen.out_voronoi_edge_point_a(7), 3);
+        assert_eq!(
+            format!("{:?}", trigen.out_voronoi_edge_point_b(7)),
+            "Direction(0.0, 1.0)"
         );
         Ok(())
     }
