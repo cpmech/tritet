@@ -18,7 +18,7 @@ void tet_drop_tetgen(struct ExtTetgen *tetgen) {
     delete tetgen;
 }
 
-struct ExtTetgen *tet_new_tetgen(int npoint, int nfacet, int const *facet_npoint, int nregion, int nhole) {
+struct ExtTetgen *tet_new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *facet_npoint, int32_t nregion, int32_t nhole) {
     if (npoint < 4) {
         return NULL;
     }
@@ -46,7 +46,7 @@ struct ExtTetgen *tet_new_tetgen(int npoint, int nfacet, int const *facet_npoint
     }
 
     // point markers
-    tetgen->input.pointmarkerlist = new (std::nothrow) int[npoint];
+    tetgen->input.pointmarkerlist = new (std::nothrow) int32_t[npoint];
     if (tetgen->input.pointmarkerlist == NULL) {
         tet_drop_tetgen(tetgen);
         return NULL;
@@ -60,9 +60,9 @@ struct ExtTetgen *tet_new_tetgen(int npoint, int nfacet, int const *facet_npoint
             tet_drop_tetgen(tetgen);
             return NULL;
         }
-        tetgen->input.facetmarkerlist = new (std::nothrow) int[nfacet];
-        const int NUM_POLY = 1;
-        for (int index = 0; index < nfacet; index++) {
+        tetgen->input.facetmarkerlist = new (std::nothrow) int32_t[nfacet];
+        const int32_t NUM_POLY = 1;
+        for (int32_t index = 0; index < nfacet; index++) {
             // facet polygon
             tetgenio::facet *fac = &tetgen->input.facetlist[index];
             fac->polygonlist = new (std::nothrow) tetgenio::polygon[NUM_POLY];
@@ -76,7 +76,7 @@ struct ExtTetgen *tet_new_tetgen(int npoint, int nfacet, int const *facet_npoint
             // facet polygon vertices
             size_t nvertex = facet_npoint[index];
             tetgenio::polygon *gon = &fac->polygonlist[0];
-            gon->vertexlist = new (std::nothrow) int[nvertex];
+            gon->vertexlist = new (std::nothrow) int32_t[nvertex];
             if (gon->vertexlist == NULL) {
                 tet_drop_tetgen(tetgen);
                 return NULL;
@@ -110,7 +110,7 @@ struct ExtTetgen *tet_new_tetgen(int npoint, int nfacet, int const *facet_npoint
     return tetgen;
 }
 
-int tet_set_point(struct ExtTetgen *tetgen, int index, int marker, double x, double y, double z) {
+int32_t tet_set_point(struct ExtTetgen *tetgen, int32_t index, int32_t marker, double x, double y, double z) {
     if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -128,7 +128,7 @@ int tet_set_point(struct ExtTetgen *tetgen, int index, int marker, double x, dou
     return TRITET_SUCCESS;
 }
 
-int tet_set_facet_point(struct ExtTetgen *tetgen, int index, int m, int p) {
+int32_t tet_set_facet_point(struct ExtTetgen *tetgen, int32_t index, int32_t m, int32_t p) {
     if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -159,7 +159,7 @@ int tet_set_facet_point(struct ExtTetgen *tetgen, int index, int m, int p) {
     return TRITET_SUCCESS;
 }
 
-int tet_set_facet_marker(struct ExtTetgen *tetgen, int index, int marker) {
+int32_t tet_set_facet_marker(struct ExtTetgen *tetgen, int32_t index, int32_t marker) {
     if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -175,7 +175,7 @@ int tet_set_facet_marker(struct ExtTetgen *tetgen, int index, int marker) {
     return TRITET_SUCCESS;
 }
 
-int tet_set_region(struct ExtTetgen *tetgen, int index, int attribute, double x, double y, double z, double max_volume) {
+int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, int32_t attribute, double x, double y, double z, double max_volume) {
     if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -194,7 +194,7 @@ int tet_set_region(struct ExtTetgen *tetgen, int index, int attribute, double x,
     return TRITET_SUCCESS;
 }
 
-int tet_set_hole(struct ExtTetgen *tetgen, int index, double x, double y, double z) {
+int32_t tet_set_hole(struct ExtTetgen *tetgen, int32_t index, double x, double y, double z) {
     if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -211,7 +211,7 @@ int tet_set_hole(struct ExtTetgen *tetgen, int index, double x, double y, double
     return TRITET_SUCCESS;
 }
 
-int tet_run_delaunay(struct ExtTetgen *tetgen, int verbose) {
+int32_t tet_run_delaunay(struct ExtTetgen *tetgen, int32_t verbose) {
     if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -229,7 +229,7 @@ int tet_run_delaunay(struct ExtTetgen *tetgen, int verbose) {
     }
     try {
         tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
-    } catch (int status) {
+    } catch (int32_t status) {
         printf("status = %d\n", status); // TODO
     } catch (...) {
         return 1; // TODO
@@ -238,7 +238,7 @@ int tet_run_delaunay(struct ExtTetgen *tetgen, int verbose) {
     return TRITET_SUCCESS;
 }
 
-int tet_run_tetrahedralize(struct ExtTetgen *tetgen, int verbose, int o2, double global_max_volume, double global_min_angle) {
+int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_t o2, double global_max_volume, double global_min_angle) {
     if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -301,7 +301,7 @@ int tet_run_tetrahedralize(struct ExtTetgen *tetgen, int verbose, int o2, double
     }
     if (global_max_volume > 0.0) {
         char buf[32];
-        int n = snprintf(buf, 32, "a%.15f", global_max_volume);
+        int32_t n = snprintf(buf, 32, "a%.15f", global_max_volume);
         if (n >= 32) {
             return TRITET_ERROR_STRING_CONCAT;
         }
@@ -309,7 +309,7 @@ int tet_run_tetrahedralize(struct ExtTetgen *tetgen, int verbose, int o2, double
     }
     if (global_min_angle > 0.0) {
         char buf[32];
-        int n = snprintf(buf, 32, "q%.15f", global_min_angle);
+        int32_t n = snprintf(buf, 32, "q%.15f", global_min_angle);
         if (n >= 32) {
             return TRITET_ERROR_STRING_CONCAT;
         }
@@ -319,7 +319,7 @@ int tet_run_tetrahedralize(struct ExtTetgen *tetgen, int verbose, int o2, double
     }
     try {
         tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
-    } catch (int status) {
+    } catch (int32_t status) {
         printf("status = %d\n", status); // TODO
     } catch (...) {
         return 1; // TODO
@@ -328,28 +328,28 @@ int tet_run_tetrahedralize(struct ExtTetgen *tetgen, int verbose, int o2, double
     return TRITET_SUCCESS;
 }
 
-int tet_out_npoint(struct ExtTetgen *tetgen) {
+int32_t tet_out_npoint(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return 0;
     }
     return tetgen->output.numberofpoints;
 }
 
-int tet_out_ncell(struct ExtTetgen *tetgen) {
+int32_t tet_out_ncell(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return 0;
     }
     return tetgen->output.numberoftetrahedra;
 }
 
-int tet_out_cell_npoint(struct ExtTetgen *tetgen) {
+int32_t tet_out_cell_npoint(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return 0;
     }
     return tetgen->output.numberofcorners;
 }
 
-double tet_out_point(struct ExtTetgen *tetgen, int index, int dim) {
+double tet_out_point(struct ExtTetgen *tetgen, int32_t index, int32_t dim) {
     if (tetgen == NULL) {
         return 0.0;
     }
@@ -360,7 +360,7 @@ double tet_out_point(struct ExtTetgen *tetgen, int index, int dim) {
     }
 }
 
-int tet_out_point_marker(struct ExtTetgen *tetgen, int index) {
+int32_t tet_out_point_marker(struct ExtTetgen *tetgen, int32_t index) {
     if (tetgen == NULL) {
         return 0;
     }
@@ -371,7 +371,7 @@ int tet_out_point_marker(struct ExtTetgen *tetgen, int index) {
     }
 }
 
-int tet_out_cell_point(struct ExtTetgen *tetgen, int index, int corner) {
+int32_t tet_out_cell_point(struct ExtTetgen *tetgen, int32_t index, int32_t corner) {
     if (tetgen == NULL) {
         return 0;
     }
@@ -382,7 +382,7 @@ int tet_out_cell_point(struct ExtTetgen *tetgen, int index, int corner) {
     }
 }
 
-int tet_out_cell_attribute(struct ExtTetgen *tetgen, int index) {
+int32_t tet_out_cell_attribute(struct ExtTetgen *tetgen, int32_t index) {
     if (tetgen == NULL) {
         return 0;
     }
@@ -393,14 +393,14 @@ int tet_out_cell_attribute(struct ExtTetgen *tetgen, int index) {
     }
 }
 
-int tet_out_n_marked_face(struct ExtTetgen *tetgen) {
+int32_t tet_out_n_marked_face(struct ExtTetgen *tetgen) {
     if (tetgen == NULL) {
         return 0;
     }
     return static_cast<int>(tetgen->output.marked_faces.size());
 }
 
-void tet_out_marked_face(struct ExtTetgen *tetgen, int index, int *a, int *b, int *c, int *marker, int *cell) {
+void tet_out_marked_face(struct ExtTetgen *tetgen, int32_t index, int32_t *a, int32_t *b, int32_t *c, int32_t *marker, int32_t *cell) {
     *a = 0;
     *b = 0;
     *c = 0;
