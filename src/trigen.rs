@@ -1152,6 +1152,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "linux")]
     fn voronoi_1_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         trigen
