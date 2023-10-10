@@ -1257,10 +1257,10 @@ mod tests {
         assert_eq!(trigen.out_ncell(), 4);
         assert_eq!(trigen.out_cell_npoint(), 3);
 
-        println!("point markers");
-        for i in 0..trigen.out_npoint() {
-            println!("{} => {}", i, trigen.out_point_marker(i));
-        }
+        // println!("point markers");
+        // for i in 0..trigen.out_npoint() {
+        //     println!("{} => {}", i, trigen.out_point_marker(i));
+        // }
 
         assert_eq!(trigen.out_point_marker(0), -100);
         assert_eq!(trigen.out_point_marker(1), -200);
@@ -1268,13 +1268,13 @@ mod tests {
         assert_eq!(trigen.out_point_marker(3), -400);
         assert_eq!(trigen.out_point_marker(4), 0);
 
-        println!("segments");
-        for i in 0..trigen.out_nsegment() {
-            let a = trigen.out_segment_point(i, 0);
-            let b = trigen.out_segment_point(i, 1);
-            let marker = trigen.out_segment_marker(i);
-            println!("{:2} - {:2} => {}", a, b, marker);
-        }
+        // println!("segments");
+        // for i in 0..trigen.out_nsegment() {
+        //     let a = trigen.out_segment_point(i, 0);
+        //     let b = trigen.out_segment_point(i, 1);
+        //     let marker = trigen.out_segment_marker(i);
+        //     println!("{:2} - {:2} => {}", a, b, marker);
+        // }
 
         let mut sides0 = vec![trigen.out_segment_point(0, 0), trigen.out_segment_point(0, 1)];
         let mut sides1 = vec![trigen.out_segment_point(1, 0), trigen.out_segment_point(1, 1)];
@@ -1323,10 +1323,10 @@ mod tests {
         assert_eq!(trigen.out_ncell(), 16);
         assert_eq!(trigen.out_cell_npoint(), 3);
 
-        println!("point markers");
-        for i in 0..trigen.out_npoint() {
-            println!("{} => {}", i, trigen.out_point_marker(i));
-        }
+        // println!("point markers");
+        // for i in 0..trigen.out_npoint() {
+        //     println!("{} => {}", i, trigen.out_point_marker(i));
+        // }
 
         assert_eq!(trigen.out_point_marker(0), -100);
         assert_eq!(trigen.out_point_marker(1), -200);
@@ -1342,13 +1342,13 @@ mod tests {
         assert_eq!(trigen.out_point_marker(11), 0);
         assert_eq!(trigen.out_point_marker(12), 0);
 
-        println!("segments");
-        for i in 0..trigen.out_nsegment() {
-            let a = trigen.out_segment_point(i, 0);
-            let b = trigen.out_segment_point(i, 1);
-            let marker = trigen.out_segment_marker(i);
-            println!("{:2} - {:2} => {}", a, b, marker);
-        }
+        // println!("segments");
+        // for i in 0..trigen.out_nsegment() {
+        //     let a = trigen.out_segment_point(i, 0);
+        //     let b = trigen.out_segment_point(i, 1);
+        //     let marker = trigen.out_segment_marker(i);
+        //     println!("{:2} - {:2} => {}", a, b, marker);
+        // }
 
         let mut sides0 = vec![trigen.out_segment_point(0, 0), trigen.out_segment_point(0, 1)];
         let mut sides1 = vec![trigen.out_segment_point(1, 0), trigen.out_segment_point(1, 1)];
