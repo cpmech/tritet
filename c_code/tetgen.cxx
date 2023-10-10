@@ -10868,9 +10868,9 @@ void tetgenmesh::brio_multiscale_sort(point* vertexarray, int arraysize,
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-unsigned long tetgenmesh::randomnation(unsigned int choices)
+ULONG tetgenmesh::randomnation(unsigned int choices)
 {
-  unsigned long newrandom;
+  ULONG newrandom;
 
   if (choices >= 714025l) {
     newrandom = (randomseed * 1366l + 150889l) % 714025l;
@@ -26959,9 +26959,9 @@ void tetgenmesh::optimizemesh()
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-void tetgenmesh::printfcomma(unsigned long n)
+void tetgenmesh::printfcomma(ULONG n)
 {
-  unsigned long n2 = 0;
+  ULONG n2 = 0;
   int scale = 1;
   while (n >= 1000) {
     n2 = n2 + scale * (n % 1000);
@@ -27911,10 +27911,10 @@ void tetgenmesh::qualitystatistics()
   REAL tetaspect, tetradius;
   REAL smalldiangle, bigdiangle;
   REAL smallfaangle, bigfaangle;
-  unsigned long radiustable[12];
-  unsigned long aspecttable[16];
-  unsigned long dihedangletable[18];
-  unsigned long faceangletable[18];
+  ULONG radiustable[12];
+  ULONG aspecttable[16];
+  ULONG dihedangletable[18];
+  ULONG faceangletable[18];
   int indx[4];
   int radiusindex;
   int aspectindex;
@@ -28301,7 +28301,7 @@ void tetgenmesh::memorystatistics()
   }
 
   // Calculate the total memory (in bytes) used by storing meshes.
-  unsigned long totalmeshmemory = 0l, totalt2shmemory = 0l;
+  ULONG totalmeshmemory = 0l, totalt2shmemory = 0l;
   totalmeshmemory = points->maxitems * points->itembytes +
                     tetrahedrons->maxitems * tetrahedrons->itembytes;
   if (b->plc || b->refine) {
@@ -28311,7 +28311,7 @@ void tetgenmesh::memorystatistics()
                        tet2segpool->maxitems * tet2segpool->itembytes);
   }
 
-  unsigned long totalalgomemory = 0l;
+  ULONG totalalgomemory = 0l;
   totalalgomemory = cavetetlist->totalmemory + cavebdrylist->totalmemory +
                     caveoldtetlist->totalmemory + 
                     flippool->maxitems * flippool->itembytes;
