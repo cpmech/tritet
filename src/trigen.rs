@@ -993,10 +993,6 @@ impl Trigen {
                     if m > 0.0 {
                         let xb = xa + m * dx;
                         let yb = ya + m * dy;
-                        min[0] = f64::min(min[0], xb);
-                        max[0] = f64::max(max[0], xb);
-                        min[1] = f64::min(min[1], yb);
-                        max[1] = f64::max(max[1], yb);
                         canvas.polycurve_add(xa, ya, PolyCode::MoveTo);
                         canvas.polycurve_add(xb, yb, PolyCode::LineTo);
                     } else {

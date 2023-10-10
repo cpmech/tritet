@@ -115,7 +115,7 @@ fn main() -> Result<(), StrError> {
     let mut plot = Plot::new();
     trigen.draw_voronoi(&mut plot);
     plot.set_equal_axes(true)
-        .set_range(-1.0, 1.0, -1.0, 1.0)
+        .set_range(-1.05, 1.05, -1.05, 1.05)
         .set_figure_size_points(600.0, 600.0)
         .save("/tmp/tritet/example_triangle_voronoi_1.svg")?;
     Ok(())
