@@ -374,7 +374,7 @@ fn main() -> Result<(), StrError> {
 }
 ```
 
-![example_tetgen_mesh_1.png](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_mesh_1.png)
+![example_tetgen_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_mesh_1.svg)
 
 ## <a name="developers"></a> For developers
 
