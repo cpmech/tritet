@@ -1,37 +1,42 @@
 # Triangle and tetrahedron mesh generators
 
 [![codecov](https://codecov.io/gh/cpmech/tritet/branch/main/graph/badge.svg?token=2ALVRVWJ5W)](https://codecov.io/gh/cpmech/tritet)
+[![Test & Coverage](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml)
+[![Windows & macOS](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml)
 
-This project presents a Rust code to generate triangle and tetrahedron meshes by calling
-[Triangle](https://www.cs.cmu.edu/~quake/triangle.html) and
-[Tetgen (1.4)](http://tetgen.org/).
+## Contents
 
-A critical aspect of this crate is that all the data structures accessed by the C-code
-are allocated on the "C-side" by (carefully) using "malloc/new." 😅
-We then make use of [Valgrind](https://valgrind.org/) and tests to make sure that all is (hopefully) well.
+* [Introduction](#introduction)
+* [Installation](#installation)
+* [Setting Cargo.toml](#cargo)
+* [Examples](#examples)
+* [For developers](#developers)
 
-The code should work fine in multithreaded applications (not exhaustively verified, though!).
-See, for example, the comprehensive tests in 
-[mem_check_triangle_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_triangle_build.rs)
-and
-[mem_check_tetgen_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_tetgen_build.rs)
+## <a name="introduction"></a> Introduction
 
-The resulting Rust interface to Triangle and Tetgen is a lightweight, low-level set of functions.
-However, other projects could use this interface to make higher-level functions.
+This crate implements Triangle and Tetrahedron mesh generators by wrapping the best tools around, namely, [Triangle](https://www.cs.cmu.edu/~quake/triangle.html) and [Tetgen](http://tetgen.org/).
 
-For example, this crate is used by [Gemlab: Geometry, meshes, and numerical integration for finite element analyses](https://github.com/cpmech/gemlab).
+Here, all the data structures accessed by the C/C++ codes are allocated on the "C-side" by (carefully) using "malloc/new." 😅 We then make use of [Valgrind](https://valgrind.org/) and tests to make sure that there are no leaks. In this way, there is no performance loss of the C-code while enabling the convenience of Rust.
 
-## Documentation
+The resulting Rust interface to Triangle and Tetgen is somewhat low-level. However, other projects could use this interface to make higher-level functions.
 
-[Tritet documentation on docs.rs](https://docs.rs/tritet)
+The code works in multithreaded applications---not exhaustively verified but tested. See, for example, the comprehensive tests in [mem_check_triangle_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_triangle_build.rs) and [mem_check_tetgen_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_tetgen_build.rs)
 
-## Installation
+A higher-level crate is available for mesh generation (and more): [Gemlab: Geometry, meshes, and numerical integration for finite element analyses](https://github.com/cpmech/gemlab).
+
+See the documentation for further information:
+
+- [Tritet documentation](https://docs.rs/tritet) - Contains the API reference and examples
+
+## <a name="installation"></a> Installation
 
 Install some libraries:
 
 ```bash
 sudo apt install build-essential
 ```
+
+## <a name="cargo"></a> Setting Cargo.toml
 
 [![Crates.io](https://img.shields.io/crates/v/tritet.svg)](https://crates.io/crates/tritet)
 
@@ -42,7 +47,7 @@ sudo apt install build-essential
 tritet = "*"
 ```
 
-## Examples
+## <a name="examples"></a> Examples
 
 Note: set `SAVE_FIGURE` to true to generate the figures.
 
@@ -371,8 +376,16 @@ fn main() -> Result<(), StrError> {
 
 ![example_tetgen_mesh_1.png](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_mesh_1.png)
 
-## Dev Tools
+## <a name="developers"></a> For developers
+
+Install cargo-valgrind:
 
 ```bash
 cargo install cargo-valgrind
+```
+
+Then check for memory leaks (none ;-):
+
+```bash
+bash memcheck.bash
 ```
