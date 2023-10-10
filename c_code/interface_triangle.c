@@ -486,7 +486,7 @@ int32_t tri_out_voronoi_npoint(struct ExtTrigen *trigen) {
     return trigen->voronoi.numberofpoints;
 }
 
-int32_t tri_out_voronoi_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
+double tri_out_voronoi_point(struct ExtTrigen *trigen, int32_t index, int32_t dim) {
     if (trigen == NULL) {
         return 0.0;
     }

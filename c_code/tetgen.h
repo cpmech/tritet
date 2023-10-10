@@ -53,28 +53,12 @@
 
 #include <vector> // dorival
 
-// The types 'intptr_t' and 'uintptr_t' are signed and unsigned integer types,
-//   respectively. They are guaranteed to be the same width as a pointer.
-//   They are defined in <stdint.h> by the C99 Standard. However, Microsoft 
-//   Visual C++ 2003 -- 2008 (Visual C++ 7.1 - 9) doesn't ship with this header
-//   file. In such case, we can define them by ourself. 
-// Update (learned from Stack Overflow): Visual Studio 2010 and Visual C++ 2010
-//   Express both have stdint.h
-
-// The following piece of code was provided by Steven Johnson (MIT). Define the
-//   symbol _MSC_VER if you are using Microsoft Visual C++. Moreover, define 
-//   the _WIN64 symbol if you are running TetGen on Win64 systems.
-
-#ifdef _MSC_VER // Microsoft Visual C++
-#  ifdef _WIN64
-     typedef __int64 intptr_t;
-     typedef unsigned __int64 uintptr_t;
-#  else // not _WIN64
-     typedef int intptr_t;
-     typedef unsigned int uintptr_t;
-#  endif
-#else // not Visual C++
-#  include <stdint.h>
+// dorival
+#ifdef _MSC_VER
+#define ULONG ptrdiff_t
+#else
+#include <stdint.h>
+#define ULONG unsigned long
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -997,7 +981,7 @@ public:
     int toparraylen;
     char **toparray;
     long objects;
-    unsigned long totalmemory;
+    ULONG totalmemory;
 
     void restart();
     void poolinit(int sizeofobject, int log2objperblk);
@@ -1335,7 +1319,7 @@ public:
   int autofliplinklevel;        // The increase of link levels, default is 1.
   int useinsertradius;       // Save the insertion radius for Steiner points.
   long samples;               // Number of random samples for point location.
-  unsigned long randomseed;                    // Current random number seed.
+  ULONG randomseed;                    // Current random number seed.
   REAL cosmaxdihed, cosmindihed;    // The cosine values of max/min dihedral.
   REAL cossmtdihed;     // The cosine value of a bad dihedral to be smoothed.
   REAL cosslidihed;      // The cosine value of the max dihedral of a sliver.
@@ -1358,7 +1342,7 @@ public:
   long flip14count, flip26count, flipn2ncount;
   long flip23count, flip32count, flip44count, flip41count;
   long flip31count, flip22count;
-  unsigned long totalworkmemory;      // Total memory used by working arrays.
+  ULONG totalworkmemory;      // Total memory used by working arrays.
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1749,7 +1733,7 @@ public:
   void brio_multiscale_sort(point*,int,int threshold,REAL ratio,int* depth);
 
   // Point location.
-  unsigned long randomnation(unsigned int choices);
+  ULONG randomnation(unsigned int choices);
   void randomsample(point searchpt, triface *searchtet);
   enum locateresult locate(point searchpt, triface *searchtet);
 
@@ -2046,7 +2030,7 @@ public:
   int checkconforming(int);
 
   //  Mesh statistics.
-  void printfcomma(unsigned long n);
+  void printfcomma(ULONG n);
   void qualitystatistics();
   void memorystatistics();
   void statistics();
