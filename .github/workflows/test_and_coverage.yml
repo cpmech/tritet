@@ -10,7 +10,7 @@ jobs:
           sudo apt-get update -y && sudo apt-get install -y build-essential
       - name: Run tests
         run: |
-          cargo test -- --nocapture
+          RUST_BACKTRACE=1 cargo test -- --nocapture
       - name: Install cargo-llvm-cov
         run: |
           curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
