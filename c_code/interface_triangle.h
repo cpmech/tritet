@@ -57,7 +57,7 @@ int32_t tri_out_cell_attribute(struct ExtTrigen *trigen, int32_t index);
 
 int32_t tri_out_voronoi_npoint(struct ExtTrigen *trigen);
 
-int32_t tri_out_voronoi_point(struct ExtTrigen *trigen, int32_t index, int32_t dim);
+double tri_out_voronoi_point(struct ExtTrigen *trigen, int32_t index, int32_t dim);
 
 int32_t tri_out_voronoi_nedge(struct ExtTrigen *trigen);
 
