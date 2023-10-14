@@ -44,6 +44,6 @@ int32_t tet_out_cell_attribute(struct ExtTetgen *tetgen, int32_t index);
 
 int32_t tet_out_n_marked_face(struct ExtTetgen *tetgen);
 
-void tet_out_marked_face(struct ExtTetgen *tetgen, int32_t index, int32_t *a, int32_t *b, int32_t *c, int32_t *marker, int32_t *cell);
+void tet_out_marked_face(struct ExtTetgen *tetgen, int32_t index, int32_t *points_len_6, int32_t *marker, int32_t *cell);
 
 #endif // INTERFACE_TETGEN_H

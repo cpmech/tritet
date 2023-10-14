@@ -34,6 +34,9 @@ impl Tetgen {
             constants::VTK_QUADRATIC_TETRA
         };
 
+        let mut face_points = [0; 6];
+        let n_face_point = if nnode == 4 { 3 } else { 6 };
+
         let mut buffer = String::new();
 
         // header
@@ -84,8 +87,10 @@ impl Tetgen {
             }
         }
         for index in 0..n_marked_faces {
-            let (a, b, c, _, _) = self.out_marked_face(index);
-            write!(&mut buffer, "{} {} {} ", a, b, c).unwrap();
+            self.out_marked_face(index, &mut face_points);
+            for m in 0..n_face_point {
+                write!(&mut buffer, "{} ", face_points[m]).unwrap();
+            }
         }
 
         // elements: offsets
@@ -101,7 +106,7 @@ impl Tetgen {
             write!(&mut buffer, "{} ", offset).unwrap();
         }
         for _ in 0..n_marked_faces {
-            offset += 3;
+            offset += n_face_point;
             write!(&mut buffer, "{} ", offset).unwrap();
         }
 
@@ -153,7 +158,7 @@ impl Tetgen {
             write!(&mut buffer, "{} ", attribute).unwrap();
         }
         for index in 0..n_marked_faces {
-            let (_, _, _, marker, _) = self.out_marked_face(index);
+            let (marker, _) = self.out_marked_face(index, &mut face_points);
             write!(&mut buffer, "{} ", marker).unwrap();
         }
         write!(&mut buffer, "\n</DataArray>\n").unwrap();
@@ -313,7 +318,7 @@ mod tests {
 </Points>
 <Cells>
 <DataArray type="Int32" Name="connectivity" format="ascii">
-0 3 7 2 0 7 4 6 5 0 4 6 0 7 6 2 5 0 6 1 6 0 2 1 2 3 7 0 2 3 0 3 7 4 6 7 0 4 7 4 5 6 0 4 5 2 6 7 1 5 6 0 1 5 0 1 2 1 2 6 
+0 3 7 2 0 7 4 6 5 0 4 6 0 7 6 2 5 0 6 1 6 0 2 1 2 7 3 3 0 2 3 7 0 6 4 7 7 4 0 6 5 4 0 4 5 2 6 7 1 5 6 0 5 1 1 2 0 1 6 2 
 </DataArray>
 <DataArray type="Int32" Name="offsets" format="ascii">
 4 8 12 16 20 24 27 30 33 36 39 42 45 48 51 54 57 60 

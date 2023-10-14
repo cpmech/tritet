@@ -400,20 +400,18 @@ int32_t tet_out_n_marked_face(struct ExtTetgen *tetgen) {
     return static_cast<int>(tetgen->output.marked_faces.size());
 }
 
-void tet_out_marked_face(struct ExtTetgen *tetgen, int32_t index, int32_t *a, int32_t *b, int32_t *c, int32_t *marker, int32_t *cell) {
-    *a = 0;
-    *b = 0;
-    *c = 0;
-    *marker = 0;
-    *cell = 0;
+void tet_out_marked_face(struct ExtTetgen *tetgen, int32_t index, int32_t *points_len_6, int32_t *marker, int32_t *cell) {
     if (tetgen == NULL) {
+        *marker = 0;
+        *cell = 0;
         return;
     }
     if (index >= 0 && index < static_cast<int>(tetgen->output.marked_faces.size())) {
         auto marked_face = tetgen->output.marked_faces[index];
-        *a = marked_face.key[0];
-        *b = marked_face.key[1];
-        *c = marked_face.key[2];
+        int npoint = tetgen->output.numberofcorners == 10 ? 6 : 3;
+        for (int i = 0; i < npoint; i++) {
+            points_len_6[i] = marked_face.points[i];
+        }
         *marker = marked_face.marker;
         *cell = marked_face.cell;
     } else {

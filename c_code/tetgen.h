@@ -271,12 +271,14 @@ public:
   int *adjtetlist;
   int numberoftrifaces;
 
+  // dorival ///////////////////////////////////////////////////////////////////////////
   typedef struct {
-      int key[3]; // sorted face key with three global point ids
+      int points[6]; // global IDs of points; 3 or 6 points (if o2)
       int marker; // the marker inherited from the PLC
       int cell; // the global ID of "a" tetrahedron touching this face
   } marked_face_t;
   std::vector<marked_face_t> marked_faces; // dorival
+  // dorival ///////////////////////////////////////////////////////////////////////////
 
   // 'edgelist':  An array of edge endpoints.  The first edge's endpoints
   //   are at indices [0] and [1], followed by the remaining edges.

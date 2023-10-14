@@ -45,9 +45,7 @@ extern "C" {
     fn tet_out_marked_face(
         tetgen: *mut ExtTetgen,
         index: i32,
-        a: *mut i32,
-        b: *mut i32,
-        c: *mut i32,
+        points_len_6: *mut i32,
         marker: *mut i32,
         cell: *mut i32,
     );
@@ -637,33 +635,44 @@ impl Tetgen {
     ///
     /// # Output
     ///
-    /// Returns `(a, b, c, marker, cell)`, where:
+    /// Returns:
     ///
-    /// * `(a, b, c)` -- is a sorted list of global point ids
+    /// * `points` -- (len = 6) the global IDs of the points on the face; 3 or 6 (if o2)
+    ///   **Note:** The points are ordered as in the figure below; but the face normals
+    ///   are **not** inward or outward, i.e., the face normals are random.
+    ///
+    /// ```text
+    ///     NODES
+    ///       2
+    ///      / \     The middle nodes are
+    ///     /   \    only generated if the
+    ///    5     4   quadratic flag is true
+    ///   /       \
+    ///  /         \
+    /// 0-----3-----1
+    /// ```
+    ///
+    /// Also returns `(marker, cell)`, where:
+    ///
     /// * `marker` -- is the marker associated with the face
     /// * `cell` -- is the global ID of the cell touching this face
     ///
     /// # Warning
     ///
     /// This function will return zero values if `index` is out of range.
-    pub fn out_marked_face(&self, index: usize) -> (usize, usize, usize, i32, usize) {
-        let mut a: i32 = 0;
-        let mut b: i32 = 0;
-        let mut c: i32 = 0;
+    pub fn out_marked_face(&self, index: usize, points: &mut [i32; 6]) -> (i32, usize) {
         let mut marker: i32 = 0;
         let mut cell: i32 = 0;
         unsafe {
             tet_out_marked_face(
                 self.ext_tetgen,
                 to_i32(index),
-                &mut a,
-                &mut b,
-                &mut c,
+                points.as_mut_ptr(),
                 &mut marker,
                 &mut cell,
             );
         }
-        (a as usize, b as usize, c as usize, marker, cell as usize)
+        (marker, cell as usize)
     }
 
     /// Draws wireframe representing the edges of tetrahedra
@@ -993,14 +1002,14 @@ mod tests {
     fn generate_mesh_works_1() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(8, Some(vec![4, 4, 4, 4, 4, 4]), Some(1), None)?;
         tetgen
-            .set_point(0, -100, 0.0, 0.0, 0.0)?
-            .set_point(1, -200, 1.0, 0.0, 0.0)?
-            .set_point(2, -300, 1.0, 1.0, 0.0)?
-            .set_point(3, -400, 0.0, 1.0, 0.0)?
-            .set_point(4, -500, 0.0, 0.0, 1.0)?
-            .set_point(5, -600, 1.0, 0.0, 1.0)?
-            .set_point(6, -700, 1.0, 1.0, 1.0)?
-            .set_point(7, -800, 0.0, 1.0, 1.0)?;
+            .set_point(0, -1, 0.0, 0.0, 0.0)?
+            .set_point(1, -2, 1.0, 0.0, 0.0)?
+            .set_point(2, -3, 1.0, 1.0, 0.0)?
+            .set_point(3, -4, 0.0, 1.0, 0.0)?
+            .set_point(4, -5, 0.0, 0.0, 1.0)?
+            .set_point(5, -6, 1.0, 0.0, 1.0)?
+            .set_point(6, -7, 1.0, 1.0, 1.0)?
+            .set_point(7, -8, 0.0, 1.0, 1.0)?;
         tetgen
             .set_facet_point(0, 0, 0)?
             .set_facet_point(0, 1, 4)?
@@ -1033,11 +1042,11 @@ mod tests {
             .set_facet_point(5, 3, 7)?; // +z
         tetgen
             .set_facet_marker(0, -10)? // -x
-            .set_facet_marker(1, -20)? // +x
-            .set_facet_marker(2, -30)? // -y
-            .set_facet_marker(3, -40)? // +y
-            .set_facet_marker(4, -50)? // -z
-            .set_facet_marker(5, -60)?; // +z
+            .set_facet_marker(1, 10)? // +x
+            .set_facet_marker(2, -20)? // -y
+            .set_facet_marker(3, 20)? // +y
+            .set_facet_marker(4, -30)? // -z
+            .set_facet_marker(5, 30)?; // +z
 
         tetgen.set_region(0, 1, 0.5, 0.5, 0.5, None)?;
         tetgen.generate_mesh(false, false, None, None)?;
@@ -1053,14 +1062,14 @@ mod tests {
 
         assert_eq!(tetgen.out_ncell(), 6);
         assert_eq!(tetgen.out_npoint(), 8);
-        assert_eq!(tetgen.out_point_marker(0), -100);
-        assert_eq!(tetgen.out_point_marker(1), -200);
-        assert_eq!(tetgen.out_point_marker(2), -300);
-        assert_eq!(tetgen.out_point_marker(3), -400);
-        assert_eq!(tetgen.out_point_marker(4), -500);
-        assert_eq!(tetgen.out_point_marker(5), -600);
-        assert_eq!(tetgen.out_point_marker(6), -700);
-        assert_eq!(tetgen.out_point_marker(7), -800);
+        assert_eq!(tetgen.out_point_marker(0), -1);
+        assert_eq!(tetgen.out_point_marker(1), -2);
+        assert_eq!(tetgen.out_point_marker(2), -3);
+        assert_eq!(tetgen.out_point_marker(3), -4);
+        assert_eq!(tetgen.out_point_marker(4), -5);
+        assert_eq!(tetgen.out_point_marker(5), -6);
+        assert_eq!(tetgen.out_point_marker(6), -7);
+        assert_eq!(tetgen.out_point_marker(7), -8);
 
         let z4 = [0, 1, 2, 3];
 
@@ -1077,27 +1086,50 @@ mod tests {
         assert_eq!(pp4, &[5, 0, 6, 1]);
         assert_eq!(pp5, &[6, 0, 2, 1]);
 
-        assert_eq!(tetgen.out_n_marked_face(), 12);
-        let mut marked_faces: Vec<_> = (0..12).map(|i| tetgen.out_marked_face(i)).collect();
-        marked_faces.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        struct Face {
+            key: [i32; 3],
+            points: [i32; 6],
+            marker: i32,
+        }
 
-        // for marked_face in &marked_faces {
-        // println!("{:?}", marked_face);
-        // }
+        let mut marked_faces: Vec<_> = (0..12)
+            .map(|i| {
+                let mut face = Face {
+                    key: [0; 3],
+                    points: [0; 6],
+                    marker: 0,
+                };
+                (face.marker, _) = tetgen.out_marked_face(i, &mut face.points);
+                face.key[0] = face.points[0];
+                face.key[1] = face.points[1];
+                face.key[2] = face.points[2];
+                face.key.sort();
+                face
+            })
+            .collect();
+        marked_faces.sort_by(|a, b| a.key.partial_cmp(&b.key).unwrap());
 
-        assert_eq!(marked_faces[0], (0, 1, 2, -50, 5)); // -z
-        assert_eq!(marked_faces[1], (0, 1, 5, -30, 4)); // -y
-        assert_eq!(marked_faces[2], (0, 2, 3, -50, 0)); // -z
-        assert_eq!(marked_faces[3], (0, 3, 7, -10, 0,)); // -x
-        assert_eq!(marked_faces[4], (0, 4, 5, -30, 2)); // -y
-        assert_eq!(marked_faces[5], (0, 4, 7, -10, 1)); // -x
-        assert_eq!(marked_faces[6], (1, 2, 6, -20, 5)); // +x
-        assert_eq!(marked_faces[7], (1, 5, 6, -20, 4)); // +x
-        assert_eq!(marked_faces[8], (2, 3, 7, -40, 0)); // +y
-        assert_eq!(marked_faces[9], (2, 6, 7, -40, 3)); // +y
-        assert_eq!(marked_faces[10], (4, 5, 6, -60, 2)); // +z
-        assert_eq!(marked_faces[11], (4, 6, 7, -60, 1)); // +z
+        // key, points, marker
+        let correct = [
+            ([0, 1, 2], [1, 2, 0, 0, 0, 0], -30),
+            ([0, 1, 5], [0, 5, 1, 0, 0, 0], -20),
+            ([0, 2, 3], [3, 0, 2, 0, 0, 0], -30),
+            ([0, 3, 7], [3, 7, 0, 0, 0, 0], -10),
+            ([0, 4, 5], [0, 4, 5, 0, 0, 0], -20),
+            ([0, 4, 7], [7, 4, 0, 0, 0, 0], -10),
+            ([1, 2, 6], [1, 6, 2, 0, 0, 0], 10),
+            ([1, 5, 6], [1, 5, 6, 0, 0, 0], 10),
+            ([2, 3, 7], [2, 7, 3, 0, 0, 0], 20),
+            ([2, 6, 7], [2, 6, 7, 0, 0, 0], 20),
+            ([4, 5, 6], [6, 5, 4, 0, 0, 0], 30),
+            ([4, 6, 7], [6, 4, 7, 0, 0, 0], 30),
+        ];
 
+        for i in 0..12 {
+            assert_eq!(marked_faces[i].key, correct[i].0);
+            assert_eq!(marked_faces[i].points, correct[i].1);
+            assert_eq!(marked_faces[i].marker, correct[i].2);
+        }
         Ok(())
     }
 
@@ -1259,11 +1291,11 @@ mod tests {
             .set_facet_point(5, 3, 7)?; // +z
         tetgen
             .set_facet_marker(0, -10)? // -x
-            .set_facet_marker(1, -20)? // +x
-            .set_facet_marker(2, -30)? // -y
-            .set_facet_marker(3, -40)? // +y
-            .set_facet_marker(4, -50)? // -z
-            .set_facet_marker(5, -60)?; // +z
+            .set_facet_marker(1, 10)? // +x
+            .set_facet_marker(2, -20)? // -y
+            .set_facet_marker(3, 20)? // +y
+            .set_facet_marker(4, -30)? // -z
+            .set_facet_marker(5, 30)?; // +z
 
         tetgen.set_region(0, 1, 0.5, 0.5, 0.5, None)?;
         tetgen.generate_mesh(false, true, None, None)?;
@@ -1271,33 +1303,57 @@ mod tests {
         let mut plot = Plot::new();
         tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
         if SAVE_FIGURE {
-            tetgen.write_vtu("/tmp/tritet/tetgen_test_mesh_1.vtu")?;
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
-                .save("/tmp/tritet/tetgen_test_mesh_1.svg")?;
+                .save("/tmp/tritet/tetgen_test_marked_faces_o2.svg")?;
         }
 
         assert_eq!(tetgen.out_n_marked_face(), 12);
-        let mut marked_faces: Vec<_> = (0..12).map(|i| tetgen.out_marked_face(i)).collect();
-        marked_faces.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        for marked_face in &marked_faces {
-            println!("{:?}", marked_face);
+        struct Face {
+            key: [i32; 3],
+            points: [i32; 6],
+            marker: i32,
         }
 
-        assert_eq!(marked_faces[0], (0, 1, 2, -50, 5)); // -z
-        assert_eq!(marked_faces[1], (0, 1, 5, -30, 4)); // -y
-        assert_eq!(marked_faces[2], (0, 2, 3, -50, 0)); // -z
-        assert_eq!(marked_faces[3], (0, 3, 7, -10, 0,)); // -x
-        assert_eq!(marked_faces[4], (0, 4, 5, -30, 2)); // -y
-        assert_eq!(marked_faces[5], (0, 4, 7, -10, 1)); // -x
-        assert_eq!(marked_faces[6], (1, 2, 6, -20, 5)); // +x
-        assert_eq!(marked_faces[7], (1, 5, 6, -20, 4)); // +x
-        assert_eq!(marked_faces[8], (2, 3, 7, -40, 0)); // +y
-        assert_eq!(marked_faces[9], (2, 6, 7, -40, 3)); // +y
-        assert_eq!(marked_faces[10], (4, 5, 6, -60, 2)); // +z
-        assert_eq!(marked_faces[11], (4, 6, 7, -60, 1)); // +z
+        let mut marked_faces: Vec<_> = (0..12)
+            .map(|i| {
+                let mut face = Face {
+                    key: [0; 3],
+                    points: [0; 6],
+                    marker: 0,
+                };
+                (face.marker, _) = tetgen.out_marked_face(i, &mut face.points);
+                face.key[0] = face.points[0];
+                face.key[1] = face.points[1];
+                face.key[2] = face.points[2];
+                face.key.sort();
+                face
+            })
+            .collect();
+        marked_faces.sort_by(|a, b| a.key.partial_cmp(&b.key).unwrap());
 
+        // key, points, marker
+        let correct = [
+            ([0, 1, 2], [1, 2, 0, 26, 9, 25], -30),
+            ([0, 1, 5], [0, 5, 1, 20, 24, 25], -20),
+            ([0, 2, 3], [3, 0, 2, 10, 9, 12], -30),
+            ([0, 3, 7], [3, 7, 0, 11, 13, 10], -10),
+            ([0, 4, 5], [0, 4, 5, 18, 21, 20], -20),
+            ([0, 4, 7], [7, 4, 0, 16, 18, 13], -10),
+            ([1, 2, 6], [1, 6, 2, 23, 22, 26], 10),
+            ([1, 5, 6], [1, 5, 6, 24, 19, 23], 10),
+            ([2, 3, 7], [2, 7, 3, 8, 11, 12], 20),
+            ([2, 6, 7], [2, 6, 7, 22, 17, 8], 20),
+            ([4, 5, 6], [6, 5, 4, 19, 21, 14], 30),
+            ([4, 6, 7], [6, 4, 7, 14, 16, 17], 30),
+        ];
+
+        for i in 0..12 {
+            assert_eq!(marked_faces[i].key, correct[i].0);
+            assert_eq!(marked_faces[i].points, correct[i].1);
+            assert_eq!(marked_faces[i].marker, correct[i].2);
+        }
         Ok(())
     }
 }
