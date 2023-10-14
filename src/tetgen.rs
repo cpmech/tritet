@@ -660,6 +660,37 @@ impl Tetgen {
     /// # Warning
     ///
     /// This function will return zero values if `index` is out of range.
+    ///
+    /// # Examples
+    ///
+    /// The following code snippet illustrates how to collect all marked faces.
+    /// Each face is identified by a key with 3 sorted indices (global point ids).
+    ///
+    /// ```text
+    /// struct Face {
+    ///     key: [i32; 3],
+    ///     points: [i32; 6],
+    ///     marker: i32,
+    /// }
+    ///
+    /// let mut marked_faces: Vec<_> = (0..12)
+    ///     .map(|i| {
+    ///         let mut face = Face {
+    ///             key: [0; 3],
+    ///             points: [0; 6],
+    ///             marker: 0,
+    ///         };
+    ///         (face.marker, _) = tetgen.out_marked_face(i, &mut face.points);
+    ///         face.key[0] = face.points[0];
+    ///         face.key[1] = face.points[1];
+    ///         face.key[2] = face.points[2];
+    ///         face.key.sort();
+    ///         face
+    ///     })
+    ///     .collect();
+    ///
+    /// marked_faces.sort_by(|a, b| a.key.partial_cmp(&b.key).unwrap());
+    /// ```
     pub fn out_marked_face(&self, index: usize, points: &mut [i32; 6]) -> (i32, usize) {
         let mut marker: i32 = 0;
         let mut cell: i32 = 0;
