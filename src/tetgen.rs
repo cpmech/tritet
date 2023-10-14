@@ -244,6 +244,9 @@ impl Tetgen {
     }
 
     /// Sets the point coordinates
+    ///
+    /// **Note:** TetGen automatically assigns the marker 1 for points on the boundary.
+    /// Thus, we cannot use marker = 1.
     pub fn set_point(&mut self, index: usize, marker: i32, x: f64, y: f64, z: f64) -> Result<&mut Self, StrError> {
         unsafe {
             let status = tet_set_point(self.ext_tetgen, to_i32(index), marker, x, y, z);
@@ -472,6 +475,8 @@ impl Tetgen {
     /// * `o2` -- Generates the middle nodes; e.g., nnode = 10
     /// * `global_max_volume` -- The maximum volume constraint for all generated tetrahedra
     /// * `global_min_angle` -- The minimum angle constraint is given in degrees (the default minimum angle is TODO degrees)
+    ///
+    /// **Note:** TetGen automatically assigns the marker 1 for points on the boundary.
     pub fn generate_mesh(
         &self,
         verbose: bool,
