@@ -694,7 +694,7 @@ impl Tetgen {
                 .set_bbox(true)
                 .set_bbox_facecolor("white")
                 .set_bbox_alpha(0.8)
-                .set_bbox_style("circle");
+                .set_bbox_style("round,pad=0.15");
             if let Some(fsz) = fontsize_point_ids {
                 point_ids.set_fontsize(fsz);
             }
@@ -780,7 +780,13 @@ impl Tetgen {
                 let x = self.out_point(p, 0);
                 let y = self.out_point(p, 1);
                 let z = self.out_point(p, 2);
-                point_ids.draw_3d(x, y, z, format!("{}", p).as_str());
+                let m = self.out_point_marker(p);
+                let msg = if m != 0 {
+                    format!("{}({})", p, m)
+                } else {
+                    format!("{}", p)
+                };
+                point_ids.draw_3d(x, y, z, &msg);
             }
         }
         plot.add(&canvas);
@@ -1206,6 +1212,92 @@ mod tests {
         assert_eq!(tetgen.out_point_marker(0), -100);
         assert_eq!(tetgen.out_point_marker(1), -200);
         assert_eq!(tetgen.out_point_marker(2), -300);
+        Ok(())
+    }
+
+    #[test]
+    fn marked_faces_o2_works() -> Result<(), StrError> {
+        let mut tetgen = Tetgen::new(8, Some(vec![4, 4, 4, 4, 4, 4]), Some(1), None)?;
+        tetgen
+            .set_point(0, -1, 0.0, 0.0, 0.0)?
+            .set_point(1, -2, 1.0, 0.0, 0.0)?
+            .set_point(2, -3, 1.0, 1.0, 0.0)?
+            .set_point(3, -4, 0.0, 1.0, 0.0)?
+            .set_point(4, -5, 0.0, 0.0, 1.0)?
+            .set_point(5, -6, 1.0, 0.0, 1.0)?
+            .set_point(6, -7, 1.0, 1.0, 1.0)?
+            .set_point(7, -8, 0.0, 1.0, 1.0)?;
+        tetgen
+            .set_facet_point(0, 0, 0)?
+            .set_facet_point(0, 1, 4)?
+            .set_facet_point(0, 2, 7)?
+            .set_facet_point(0, 3, 3)?; // -x
+        tetgen
+            .set_facet_point(1, 0, 1)?
+            .set_facet_point(1, 1, 2)?
+            .set_facet_point(1, 2, 6)?
+            .set_facet_point(1, 3, 5)?; // +x
+        tetgen
+            .set_facet_point(2, 0, 0)?
+            .set_facet_point(2, 1, 1)?
+            .set_facet_point(2, 2, 5)?
+            .set_facet_point(2, 3, 4)?; // -y
+        tetgen
+            .set_facet_point(3, 0, 2)?
+            .set_facet_point(3, 1, 3)?
+            .set_facet_point(3, 2, 7)?
+            .set_facet_point(3, 3, 6)?; // +y
+        tetgen
+            .set_facet_point(4, 0, 0)?
+            .set_facet_point(4, 1, 3)?
+            .set_facet_point(4, 2, 2)?
+            .set_facet_point(4, 3, 1)?; // -z
+        tetgen
+            .set_facet_point(5, 0, 4)?
+            .set_facet_point(5, 1, 5)?
+            .set_facet_point(5, 2, 6)?
+            .set_facet_point(5, 3, 7)?; // +z
+        tetgen
+            .set_facet_marker(0, -10)? // -x
+            .set_facet_marker(1, -20)? // +x
+            .set_facet_marker(2, -30)? // -y
+            .set_facet_marker(3, -40)? // +y
+            .set_facet_marker(4, -50)? // -z
+            .set_facet_marker(5, -60)?; // +z
+
+        tetgen.set_region(0, 1, 0.5, 0.5, 0.5, None)?;
+        tetgen.generate_mesh(false, true, None, None)?;
+
+        let mut plot = Plot::new();
+        tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+        if SAVE_FIGURE {
+            tetgen.write_vtu("/tmp/tritet/tetgen_test_mesh_1.vtu")?;
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/tetgen_test_mesh_1.svg")?;
+        }
+
+        assert_eq!(tetgen.out_n_marked_face(), 12);
+        let mut marked_faces: Vec<_> = (0..12).map(|i| tetgen.out_marked_face(i)).collect();
+        marked_faces.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+        for marked_face in &marked_faces {
+            println!("{:?}", marked_face);
+        }
+
+        assert_eq!(marked_faces[0], (0, 1, 2, -50, 5)); // -z
+        assert_eq!(marked_faces[1], (0, 1, 5, -30, 4)); // -y
+        assert_eq!(marked_faces[2], (0, 2, 3, -50, 0)); // -z
+        assert_eq!(marked_faces[3], (0, 3, 7, -10, 0,)); // -x
+        assert_eq!(marked_faces[4], (0, 4, 5, -30, 2)); // -y
+        assert_eq!(marked_faces[5], (0, 4, 7, -10, 1)); // -x
+        assert_eq!(marked_faces[6], (1, 2, 6, -20, 5)); // +x
+        assert_eq!(marked_faces[7], (1, 5, 6, -20, 4)); // +x
+        assert_eq!(marked_faces[8], (2, 3, 7, -40, 0)); // +y
+        assert_eq!(marked_faces[9], (2, 6, 7, -40, 3)); // +y
+        assert_eq!(marked_faces[10], (4, 5, 6, -60, 2)); // +z
+        assert_eq!(marked_faces[11], (4, 6, 7, -60, 1)); // +z
+
         Ok(())
     }
 }
