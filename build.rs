@@ -7,6 +7,7 @@ fn main() {
         .flag("-Wno-sign-compare")
         .flag("-Wno-unused-parameter")
         .flag("-Wno-unused-but-set-variable")
+        .flag("-Wno-maybe-uninitialized")
         .compile("c_code_interface_triangle");
     cc::Build::new()
         .cpp(true)
@@ -16,6 +17,7 @@ fn main() {
         .flag("-Wno-int-to-pointer-cast")
         .flag("-Wno-unused-parameter")
         .flag("-Wno-unused-but-set-variable")
+        .flag("-Wno-maybe-uninitialized")
         .compile("c_code_interface_tetgen");
 }
 

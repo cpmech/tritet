@@ -342,7 +342,6 @@ int32_t tri_run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t q
     // * `o2` -- generates second-order elements with six nodes each
     // * `Y` -- prohibits the insertion of Steiner points on the mesh boundary
     char command[128];
-    // strcpy(command, "pzAY");
     strcpy(command, "pzA");
     if (verbose == TRITET_FALSE) {
         strcat(command, "Q");
