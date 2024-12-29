@@ -10,7 +10,6 @@ mod tetgen_paraview;
 mod trigen;
 mod trigen_paraview;
 pub use crate::tetgen::*;
-pub use crate::tetgen_paraview::*;
 pub use crate::trigen::*;
 
 // run code from README file
