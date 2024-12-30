@@ -1305,7 +1305,7 @@ mod tests {
     }
 
     #[test]
-    fn handle_assert_1() -> Result<(), StrError> {
+    fn handle_coplanar_points() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         tetgen.set_point(0, 0, -1.0, 0.0, 0.0)?; // z=0
         tetgen.set_point(1, 0, 0.0, 0.0, 0.0)?; // z=0
