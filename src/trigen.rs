@@ -1,4 +1,4 @@
-use crate::constants;
+use crate::constants::{handle_status, TRITET_TO_TRIANGLE,LIGHT_COLORS};
 use crate::conversion::to_i32;
 use crate::StrError;
 use plotpy::{Canvas, Curve, Plot, PolyCode, Text};
@@ -347,18 +347,7 @@ impl Trigen {
     pub fn set_point(&mut self, index: usize, marker: i32, x: f64, y: f64) -> Result<&mut Self, StrError> {
         unsafe {
             let status = tri_set_point(self.ext_trigen, to_i32(index), marker, x, y);
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: found NULL point list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_POINT_INDEX {
-                    return Err("index of point is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         if index == self.npoint - 1 {
             self.all_points_set = true;
@@ -391,21 +380,7 @@ impl Trigen {
         };
         unsafe {
             let status = tri_set_segment(self.ext_trigen, to_i32(index), marker, to_i32(a), to_i32(b));
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_SEGMENT_LIST {
-                    return Err("INTERNAL ERROR: found NULL segment list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_SEGMENT_INDEX {
-                    return Err("index of segment is out of bounds");
-                }
-                if status == constants::TRITET_ERROR_INVALID_SEGMENT_POINT_ID {
-                    return Err("id of segment point is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         if index == nsegment - 1 {
             self.all_segments_set = true;
@@ -442,18 +417,7 @@ impl Trigen {
         };
         unsafe {
             let status = tri_set_region(self.ext_trigen, to_i32(index), to_i32(attribute), x, y, area_constraint);
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_REGION_LIST {
-                    return Err("INTERNAL ERROR: found NULL region list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_REGION_INDEX {
-                    return Err("index of region is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         if index == nregion - 1 {
             self.all_regions_set = true;
@@ -477,18 +441,7 @@ impl Trigen {
         };
         unsafe {
             let status = tri_set_hole(self.ext_trigen, to_i32(index), x, y);
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_HOLE_LIST {
-                    return Err("INTERNAL ERROR: found NULL hole list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_HOLE_INDEX {
-                    return Err("index of hole is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         if index == nhole - 1 {
             self.all_holes_set = true;
@@ -509,15 +462,7 @@ impl Trigen {
         }
         unsafe {
             let status = tri_run_delaunay(self.ext_trigen, if verbose { 1 } else { 0 });
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: found NULL point list");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         Ok(())
     }
@@ -533,15 +478,7 @@ impl Trigen {
         }
         unsafe {
             let status = tri_run_voronoi(self.ext_trigen, if verbose { 1 } else { 0 });
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: found NULL point list");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         Ok(())
     }
@@ -586,21 +523,7 @@ impl Trigen {
                 max_area,
                 min_angle,
             );
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: found NULL point list");
-                }
-                if status == constants::TRITET_ERROR_NULL_SEGMENT_LIST {
-                    return Err("INTERNAL ERROR: list of segments must be defined first");
-                }
-                if status == constants::TRITET_ERROR_STRING_CONCAT {
-                    return Err("INTERNAL ERROR: cannot write string with commands for Triangle");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         Ok(())
     }
@@ -725,7 +648,7 @@ impl Trigen {
     /// This function will return 0 if `index` or `m` is out of range.
     pub fn out_cell_point(&self, index: usize, m: usize) -> usize {
         unsafe {
-            let corner = constants::TRITET_TO_TRIANGLE[m];
+            let corner = TRITET_TO_TRIANGLE[m];
             tri_out_cell_point(self.ext_trigen, to_i32(index), to_i32(corner)) as usize
         }
     }
@@ -858,7 +781,7 @@ impl Trigen {
         let mut max = vec![f64::MIN; 2];
         let mut colors: HashMap<usize, &'static str> = HashMap::new();
         let mut index_color = 0;
-        let clr = constants::LIGHT_COLORS;
+        let clr = LIGHT_COLORS;
         for tri in 0..n_triangle {
             let attribute = self.out_cell_attribute(tri);
             let color = match colors.get(&attribute) {

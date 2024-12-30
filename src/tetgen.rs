@@ -1,4 +1,4 @@
-use crate::constants;
+use crate::constants::{handle_status, DARK_COLORS, TRITET_TO_TETGEN};
 use crate::conversion::to_i32;
 use crate::StrError;
 use plotpy::{Canvas, Plot, Text};
@@ -250,18 +250,7 @@ impl Tetgen {
     pub fn set_point(&mut self, index: usize, marker: i32, x: f64, y: f64, z: f64) -> Result<&mut Self, StrError> {
         unsafe {
             let status = tet_set_point(self.ext_tetgen, to_i32(index), marker, x, y, z);
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: found NULL point list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_POINT_INDEX {
-                    return Err("index of point is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         if index == self.npoint - 1 {
             self.all_points_set = true;
@@ -285,30 +274,7 @@ impl Tetgen {
         };
         unsafe {
             let status = tet_set_facet_point(self.ext_tetgen, to_i32(index), to_i32(m), to_i32(p));
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_FACET_LIST {
-                    return Err("INTERNAL ERROR: found NULL facet list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_FACET_INDEX {
-                    return Err("index of facet is out of bounds");
-                }
-                if status == constants::TRITET_ERROR_NULL_FACET_POLYGON_LIST {
-                    return Err("INTERNAL ERROR: found NULL facet polygon list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_FACET_NUM_POLYGON {
-                    return Err("INTERNAL ERROR: found invalid facet number of polygon");
-                }
-                if status == constants::TRITET_ERROR_INVALID_FACET_POINT_INDEX {
-                    return Err("index of facet point is out of bounds");
-                }
-                if status == constants::TRITET_ERROR_INVALID_FACET_POINT_ID {
-                    return Err("id of facet point is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         if index == 0 && m == 0 {
             self.facet_point_set_count = 0;
@@ -333,18 +299,7 @@ impl Tetgen {
         };
         unsafe {
             let status = tet_set_facet_marker(self.ext_tetgen, to_i32(index), marker);
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_FACET_LIST {
-                    return Err("INTERNAL ERROR: found NULL facet list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_FACET_INDEX {
-                    return Err("index of facet is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         Ok(self)
     }
@@ -386,18 +341,7 @@ impl Tetgen {
                 z,
                 volume_constraint,
             );
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_REGION_LIST {
-                    return Err("INTERNAL ERROR: found NULL region list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_REGION_INDEX {
-                    return Err("index of region is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         if index == nregion - 1 {
             self.all_regions_set = true;
@@ -422,18 +366,7 @@ impl Tetgen {
         };
         unsafe {
             let status = tet_set_hole(self.ext_tetgen, to_i32(index), x, y, z);
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_HOLE_LIST {
-                    return Err("INTERNAL ERROR: found NULL hole list");
-                }
-                if status == constants::TRITET_ERROR_INVALID_HOLE_INDEX {
-                    return Err("index of hole is out of bounds");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         if index == nhole - 1 {
             self.all_holes_set = true;
@@ -454,15 +387,7 @@ impl Tetgen {
         }
         unsafe {
             let status = tet_run_delaunay(self.ext_tetgen, if verbose { 1 } else { 0 });
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: found NULL point list");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         Ok(())
     }
@@ -506,21 +431,7 @@ impl Tetgen {
                 max_volume,
                 min_angle,
             );
-            if status != constants::TRITET_SUCCESS {
-                if status == constants::TRITET_ERROR_NULL_DATA {
-                    return Err("INTERNAL ERROR: found NULL data");
-                }
-                if status == constants::TRITET_ERROR_NULL_POINT_LIST {
-                    return Err("INTERNAL ERROR: found NULL point list");
-                }
-                if status == constants::TRITET_ERROR_NULL_FACET_LIST {
-                    return Err("INTERNAL ERROR: list of facets must be defined first");
-                }
-                if status == constants::TRITET_ERROR_STRING_CONCAT {
-                    return Err("INTERNAL ERROR: cannot write string with commands for Tetgen");
-                }
-                return Err("INTERNAL ERROR: some error occurred");
-            }
+            handle_status(status)?;
         }
         Ok(())
     }
@@ -609,7 +520,7 @@ impl Tetgen {
     /// This function will return 0 if `index` or `m` is out of range.
     pub fn out_cell_point(&self, index: usize, m: usize) -> usize {
         unsafe {
-            let corner = constants::TRITET_TO_TETGEN[m];
+            let corner = TRITET_TO_TETGEN[m];
             tet_out_cell_point(self.ext_tetgen, to_i32(index), to_i32(corner)) as usize
         }
     }
@@ -772,7 +683,7 @@ impl Tetgen {
         let mut max = vec![f64::MIN; 3];
         let mut colors: HashMap<usize, &'static str> = HashMap::new();
         let mut index_color = 0;
-        let clr = constants::DARK_COLORS;
+        let clr = DARK_COLORS;
         for tet in 0..ntet {
             let attribute = self.out_cell_attribute(tet);
             let color = match colors.get(&attribute) {
@@ -1390,6 +1301,20 @@ mod tests {
             assert_eq!(marked_faces[i].points, correct[i].1);
             assert_eq!(marked_faces[i].marker, correct[i].2);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn handle_coplanar_points() -> Result<(), StrError> {
+        let mut tetgen = Tetgen::new(4, None, None, None)?;
+        tetgen.set_point(0, 0, -1.0, 0.0, 0.0)?; // z=0
+        tetgen.set_point(1, 0, 0.0, 0.0, 0.0)?; // z=0
+        tetgen.set_point(2, 0, 1.0, 0.0, 0.0)?; // z=0
+        tetgen.set_point(3, 0, 0.0, 1.0, 0.0)?; // z=0, thus, all points are coplanar
+        assert_eq!(
+            tetgen.generate_delaunay(false).err(),
+            Some("TetGen failed: points are probably coplanar")
+        );
         Ok(())
     }
 }
