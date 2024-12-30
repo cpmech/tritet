@@ -1,3 +1,5 @@
+use crate::StrError;
+
 pub(crate) const TRITET_SUCCESS: i32 = 0;
 
 pub(crate) const TRITET_ERROR_NULL_DATA: i32 = 10;
@@ -19,6 +21,74 @@ pub(crate) const TRITET_ERROR_INVALID_FACET_POINT_INDEX: i32 = 6000;
 pub(crate) const TRITET_ERROR_INVALID_FACET_POINT_ID: i32 = 7000;
 pub(crate) const TRITET_ERROR_INVALID_REGION_INDEX: i32 = 8000;
 pub(crate) const TRITET_ERROR_INVALID_HOLE_INDEX: i32 = 9000;
+
+pub(crate) const TRITET_ERROR_TETGEN_FAIL: i32 = 10000;
+
+pub(crate) fn handle_status(status: i32) -> Result<(), StrError> {
+    if status == TRITET_SUCCESS {
+        return Ok(());
+    }
+
+    if status == TRITET_ERROR_NULL_DATA {
+        return Err("INTERNAL ERROR: found NULL data");
+    }
+    if status == TRITET_ERROR_STRING_CONCAT {
+        return Err("INTERNAL ERROR: cannot write string with commands for TetGen");
+    }
+
+    if status == TRITET_ERROR_NULL_POINT_LIST {
+        return Err("INTERNAL ERROR: found NULL point list");
+    }
+    if status == TRITET_ERROR_NULL_SEGMENT_LIST {
+        return Err("INTERNAL ERROR: found NULL segment list");
+    }
+    if status == TRITET_ERROR_NULL_FACET_LIST {
+        return Err("INTERNAL ERROR: found NULL facet list");
+    }
+    if status == TRITET_ERROR_NULL_FACET_POLYGON_LIST {
+        return Err("INTERNAL ERROR: found NULL facet polygon list");
+    }
+    if status == TRITET_ERROR_NULL_REGION_LIST {
+        return Err("INTERNAL ERROR: found NULL region list");
+    }
+    if status == TRITET_ERROR_NULL_HOLE_LIST {
+        return Err("INTERNAL ERROR: found NULL hole list");
+    }
+
+    if status == TRITET_ERROR_INVALID_POINT_INDEX {
+        return Err("index of point is out of bounds");
+    }
+    if status == TRITET_ERROR_INVALID_SEGMENT_INDEX {
+        return Err("index of segment is out of bounds");
+    }
+    if status == TRITET_ERROR_INVALID_SEGMENT_POINT_ID {
+        return Err("id of segment point is out of bounds");
+    }
+    if status == TRITET_ERROR_INVALID_FACET_INDEX {
+        return Err("index of facet is out of bounds");
+    }
+    if status == TRITET_ERROR_INVALID_FACET_NUM_POLYGON {
+        return Err("INTERNAL ERROR: found invalid facet number of polygon");
+    }
+    if status == TRITET_ERROR_INVALID_FACET_POINT_INDEX {
+        return Err("index of facet point is out of bounds");
+    }
+    if status == TRITET_ERROR_INVALID_FACET_POINT_ID {
+        return Err("id of facet point is out of bounds");
+    }
+    if status == TRITET_ERROR_INVALID_REGION_INDEX {
+        return Err("index of region is out of bounds");
+    }
+    if status == TRITET_ERROR_INVALID_HOLE_INDEX {
+        return Err("index of hole is out of bounds");
+    }
+
+    if status == TRITET_ERROR_TETGEN_FAIL {
+        return Err("TetGen failed: points are probably coplanar");
+    }
+
+    return Err("INTERNAL ERROR: some error occurred");
+}
 
 /// Maps indices used in this library (tritet) to indices used in Triangle
 ///
