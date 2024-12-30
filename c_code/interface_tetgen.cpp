@@ -228,7 +228,10 @@ int32_t tet_run_delaunay(struct ExtTetgen *tetgen, int32_t verbose) {
         strcat(command, "Q");
     }
     try {
-        tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
+        int status = tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
+        if (status != 0) {
+            return TRITET_ERROR_TETGEN_FAIL;
+        }
     } catch (int32_t status) {
         printf("status = %d\n", status); // TODO
     } catch (...) {
@@ -318,7 +321,10 @@ int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_
         strcat(command, "q");
     }
     try {
-        tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
+        int status = tetrahedralize(command, &tetgen->input, &tetgen->output, NULL, NULL);
+        if (status != 0) {
+            return TRITET_ERROR_TETGEN_FAIL;
+        }
     } catch (int32_t status) {
         printf("status = %d\n", status); // TODO
     } catch (...) {

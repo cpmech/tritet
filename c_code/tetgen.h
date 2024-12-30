@@ -793,7 +793,7 @@ public:
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-void exactinit(int, int, int, REAL, REAL, REAL);
+int exactinit(int, int, int, REAL, REAL, REAL);
 REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd);
 REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe);
 REAL orient4d(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe,
@@ -2226,11 +2226,11 @@ public:
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out, 
+int tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out, 
                     tetgenio *addin = NULL, tetgenio *bgmin = NULL);
 
 #ifdef TETLIBRARY
-void tetrahedralize(char const *switches, tetgenio *in, tetgenio *out,
+int tetrahedralize(char const *switches, tetgenio *in, tetgenio *out,
                     tetgenio *addin = NULL, tetgenio *bgmin = NULL,
                     char const *outfilename=NULL); // dorival
 #endif // #ifdef TETLIBRARY

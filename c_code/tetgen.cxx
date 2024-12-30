@@ -30875,9 +30875,12 @@ void tetgenmesh::outmesh2vtk(char* ofilename)
 // - Write the output files and print the statistics.                        //
 // - Check the consistency of the mesh (-C).                                 //
 //                                                                           //
+//  Dorival:                                                                 //
+//   Returns 1 if errors are found                                           //
+//   Returns 0 if OK                                                         //
 ///////////////////////////////////////////////////////////////////////////////
 
-void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
+int tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
                     tetgenio *addin, tetgenio *bgmin)
 {
   #ifdef DORIDEBUG
@@ -30953,8 +30956,12 @@ void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
   m.initializepools();
   m.transfernodes();
 
-  exactinit(b->verbose, b->noexact, b->nostaticfilter,
+  int status = exactinit(b->verbose, b->noexact, b->nostaticfilter,
             m.xmax - m.xmin, m.ymax - m.ymin, m.zmax - m.zmin);
+
+  if (status != 0) {
+    return 1; // dorival: error found
+  }
 
   tv[1] = clock();
 
@@ -31001,7 +31008,7 @@ void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
         m.outsubfaces(out);
       }
 
-      return;
+      return 0; // dorival: OK: no errors found
     }
   }
 
@@ -31265,6 +31272,8 @@ void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
   if (!b->quiet) {
     m.statistics();
   }
+
+  return 0; // dorival: OK: no errors found
 }
 
 #ifndef TETLIBRARY
@@ -31285,7 +31294,7 @@ int main(int argc, char *argv[])
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-void tetrahedralize(char const *switches, tetgenio *in, tetgenio *out, 
+int tetrahedralize(char const *switches, tetgenio *in, tetgenio *out, 
                     tetgenio *addin, tetgenio *bgmin,
                     char const *outfilename) // dorival
 
@@ -31321,9 +31330,9 @@ void tetrahedralize(char const *switches, tetgenio *in, tetgenio *out,
     bgmin.load_tetmesh(b.bgmeshfilename, (int) b.object);
   }
 
-  tetrahedralize(&b, &in, NULL, &addin, &bgmin);
+  int status = tetrahedralize(&b, &in, NULL, &addin, &bgmin);
 
-  return 0;
+  return status; // dorival
 
 #else // with TETLIBRARY
 
@@ -31336,7 +31345,9 @@ void tetrahedralize(char const *switches, tetgenio *in, tetgenio *out,
       strcpy(b.outfilename, outfilename); // dorival
   } // dorival
 
-  tetrahedralize(&b, in, out, addin, bgmin);
+  int status = tetrahedralize(&b, in, out, addin, bgmin);
+
+  return status; // dorival
 
 #endif // not TETLIBRARY
 }

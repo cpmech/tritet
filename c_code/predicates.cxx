@@ -125,7 +125,6 @@
 
 // dorival / gemlab #include "tetgen.h"            // Defines the symbol REAL (float or double).
 #define REAL double // dorival / gemlab
-#include <assert.h>  // dorival / gemlab
 
 #ifdef USE_CGAL_PREDICATES
   #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -540,9 +539,13 @@ int test_double(int verbose)
 /*                                                                           */
 /*  Don't change this routine unless you fully understand it.                */
 /*                                                                           */
+/*  Dorival:                                                                 */
+/*   Returns 1 if errors are found                                           */
+/*   Returns 0 if OK                                                         */
+/*                                                                           */
 /*****************************************************************************/
 
-void exactinit(int verbose, int noexact, int nofilter, REAL maxx, REAL maxy, 
+int exactinit(int verbose, int noexact, int nofilter, REAL maxx, REAL maxy, 
                REAL maxz)
 {
   REAL half;
@@ -630,11 +633,18 @@ void exactinit(int verbose, int noexact, int nofilter, REAL maxx, REAL maxy,
   // Calculate the two static filters for orient3d() and insphere() tests.
   // Added by H. Si, 2012-08-23.
 
-  // Sort maxx < maxy < maxz. Re-use 'half' for swapping.
-  assert(maxx > 0);
-  assert(maxy > 0);
-  assert(maxz > 0);
+  // dorival: make sure the points are not coplanar
+  if (!(maxx > 0)) {
+    return 1; // error
+  }
+  if (!(maxy > 0)) {
+    return 1; // error
+  }
+  if (!(maxz > 0)) {
+    return 1; // error
+  }
 
+  // Sort maxx < maxy < maxz. Re-use 'half' for swapping.
   if (maxx > maxz) {
     half = maxx; maxx = maxz; maxz = half;
   }
@@ -648,6 +658,7 @@ void exactinit(int verbose, int noexact, int nofilter, REAL maxx, REAL maxy,
   o3dstaticfilter = 5.1107127829973299e-15 * maxx * maxy * maxz;
   ispstaticfilter = 1.2466136531027298e-13 * maxx * maxy * maxz * (maxz * maxz);
 
+  return 0; // dorival: OK: no errors found
 }
 
 /*****************************************************************************/
