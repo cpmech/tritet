@@ -1,7 +1,6 @@
 # Triangle and tetrahedron mesh generators
 
-[![codecov](https://codecov.io/gh/cpmech/tritet/branch/main/graph/badge.svg?token=2ALVRVWJ5W)](https://codecov.io/gh/cpmech/tritet)
-[![Test & Coverage](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml)
+[![Test](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml)
 [![Windows & macOS](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml)
 
 ## Contents
