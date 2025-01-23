@@ -82,6 +82,33 @@ fn main() -> Result<(), StrError> {
     // generate mesh without constraints
     trigen.generate_mesh(true, true, true, None, None)?;
 
+    // print the results
+    println!("Number of points           = {}", trigen.out_npoint());
+    println!("Number of cells            = {}", trigen.out_ncell());
+    println!("Number of points in a cell = {}\n", trigen.out_cell_npoint());
+    let ndim = 2;
+    for index in 0..trigen.out_npoint() {
+        print!("Point {}: (", index);
+        for d in 0..ndim {
+            if d > 0 {
+                print!(", ");
+            }
+            print!("{}", trigen.out_point(index, d));
+        }
+        println!(")");
+    }
+    println!();
+    for index in 0..trigen.out_ncell() {
+        print!("Cell {} ({}): (", index, trigen.out_cell_attribute(index));
+        for m in 0..trigen.out_cell_npoint() {
+            if m > 0 {
+                print!(", ");
+            }
+            print!("{}", trigen.out_cell_point(index, m));
+        }
+        println!(")");
+    }
+
     // draw mesh
     let mut plot = Plot::new();
     trigen.draw_triangles(&mut plot, true, false, false, false, None, None, None);
