@@ -7,9 +7,12 @@ mod constants;
 mod conversion;
 mod tetgen;
 mod tetgen_paraview;
+#[cfg(feature = "trigen")]
 mod trigen;
+#[cfg(feature = "trigen")]
 mod trigen_paraview;
 pub use crate::tetgen::*;
+#[cfg(feature = "trigen")]
 pub use crate::trigen::*;
 
 // run code from README file
