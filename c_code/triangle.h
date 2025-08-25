@@ -248,6 +248,12 @@
 /*                                                                           */
 /*****************************************************************************/
 
+/* Dorival: Place this here to avoid complications with different compilers. */
+#include <inttypes.h>
+#define REAL double
+#define ANSI_DECLARATORS
+#define VOID int32_t
+
 struct triangulateio {
   REAL *pointlist;                                               /* In / out */
   REAL *pointattributelist;                                      /* In / out */

@@ -2,6 +2,7 @@
 
 [![Test](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml)
 [![Windows & macOS](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml)
+[![Test on Arch Linux](https://github.com/cpmech/tritet/actions/workflows/test_on_arch_linux.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_on_arch_linux.yml)
 
 ## Contents
 
