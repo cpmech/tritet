@@ -3,13 +3,7 @@
 
 #include <inttypes.h>
 
-#define REAL double
-#define ANSI_DECLARATORS
-#define VOID int32_t
 #include "triangle.h"
-#undef REAL
-#undef ANSI_DECLARATORS
-#undef VOID
 
 struct ExtTrigen {
     struct triangulateio input;

@@ -1,6 +1,6 @@
 [package]
 name = "tritet"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 license = "MIT"
 description = "Triangle and tetrahedron mesh generators"
@@ -12,8 +12,8 @@ categories = ["mathematics", "science"]
 keywords = ["2D", "3D", "mesh", "geometry"]
 
 [dependencies]
-plotpy = "1.10"
-once_cell = "1.20"
+plotpy = "1.13"
+once_cell = "1.21"
 
 [build-dependencies]
 cc = "1.2"

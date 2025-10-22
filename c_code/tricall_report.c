@@ -1,13 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define REAL double
-#define ANSI_DECLARATORS
-#define VOID int
 #include "triangle.h"
-#undef REAL
-#undef ANSI_DECLARATORS
-#undef VOID
 
 void report(struct triangulateio *io,
             int markers,

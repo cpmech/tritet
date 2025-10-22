@@ -1,0 +1,34 @@
+FROM archlinux:base-devel
+
+# initialize
+RUN pacman -Sy go git --noconfirm
+
+# set user
+RUN useradd -G wheel -m user
+RUN echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN chown -R user:wheel /usr/local/src/
+USER user
+WORKDIR /usr/local/src/
+
+# install yay
+RUN git clone https://aur.archlinux.org/yay.git
+RUN cd yay && makepkg -si --noconfirm
+RUN sudo rm -f \
+      /var/cache/pacman/pkg/* \
+      /var/lib/pacman/sync/* \
+      /README \
+      /etc/pacman.d/mirrorlist.pacnew
+
+# install libraries
+RUN yay -Y --gendb --noconfirm && yay -Y --devel --save
+
+# install rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+ENV PATH="/home/user/.cargo/bin:${PATH}"
+
+# copy files
+COPY --chown=user:user . tritet
+WORKDIR tritet
+
+# run tests
+RUN cargo test

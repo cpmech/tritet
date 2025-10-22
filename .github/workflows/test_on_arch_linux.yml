@@ -1,0 +1,14 @@
+name: Test on Arch Linux
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  test_on_arch_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build docker image
+        run: |
+          bash zscripts/docker-build-image.bash arch

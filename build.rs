@@ -10,6 +10,7 @@ fn main() {
                 .flag("-Wno-unused-parameter")
                 .flag("-Wno-unused-but-set-variable")
                 .flag("-Wno-maybe-uninitialized")
+                .flag("-Wno-old-style-definition")
                 .compile("c_code_interface_triangle");
         }
     }
