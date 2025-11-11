@@ -359,6 +359,8 @@ int32_t tri_run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t q
             return TRITET_ERROR_STRING_CONCAT;
         }
         strcat(command, buf);
+    } else {
+        strcat(command, "a");
     }
     if (global_min_angle > 0.0) {
         char buf[32];
