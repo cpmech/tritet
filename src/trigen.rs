@@ -1,5 +1,6 @@
 use crate::constants::{handle_status, LIGHT_COLORS, TRITET_TO_TRIANGLE};
 use crate::conversion::to_i32;
+use crate::InputDataTriMesh;
 use crate::StrError;
 use plotpy::{Canvas, Curve, Plot, PolyCode, Text};
 use std::collections::HashMap;
@@ -283,6 +284,28 @@ impl Drop for Trigen {
 }
 
 impl Trigen {
+    /// Allocates a new instance from input data
+    pub fn from_input_data(data: &InputDataTriMesh) -> Result<Self, StrError> {
+        let npoint = data.points.len();
+        let nsegment = data.segments.len();
+        let nregion = data.regions.len();
+        let nhole = data.holes.len();
+        let mut trigen = Trigen::new(npoint, Some(nsegment), Some(nregion), Some(nhole))?;
+        for (i, p) in data.points.iter().enumerate() {
+            trigen.set_point(i, p.0, p.1, p.2)?;
+        }
+        for (i, s) in data.segments.iter().enumerate() {
+            trigen.set_segment(i, s.0, s.1, s.2)?;
+        }
+        for (i, r) in data.regions.iter().enumerate() {
+            trigen.set_region(i, r.0, r.1, r.2, r.3)?;
+        }
+        for (i, h) in data.holes.iter().enumerate() {
+            trigen.set_hole(i, h.0, h.1)?;
+        }
+        Ok(trigen)
+    }
+
     /// Allocates a new instance
     ///
     /// # Input
@@ -412,7 +435,7 @@ impl Trigen {
     pub fn set_region(
         &mut self,
         index: usize,
-        attribute: usize,
+        attribute: i32,
         x: f64,
         y: f64,
         max_area: Option<f64>,
@@ -426,7 +449,7 @@ impl Trigen {
             None => -1.0,
         };
         unsafe {
-            let status = tri_set_region(self.ext_trigen, to_i32(index), to_i32(attribute), x, y, area_constraint);
+            let status = tri_set_region(self.ext_trigen, to_i32(index), attribute, x, y, area_constraint);
             handle_status(status)?;
         }
         if index == nregion - 1 {
@@ -500,7 +523,8 @@ impl Trigen {
     /// * `verbose` -- Prints Triangle's messages to the console
     /// * `quadratic` -- Generates the middle nodes; e.g., nnode = 6
     /// * `allow_new_points_on_bry:bool` -- Allow the insertion of new (Steiner) points on the boundary
-    /// * `global_max_area` -- The maximum area constraint for all generated triangles
+    /// * `global_max_area` -- The maximum area constraint for all generated triangles. Note, this option
+    ///   will override any region-specific area constraints set via [Trigen::set_region].
     /// * `global_min_angle` -- The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
     pub fn generate_mesh(
         &self,
@@ -950,6 +974,7 @@ impl Trigen {
 #[cfg(test)]
 mod tests {
     use super::Trigen;
+    use crate::InputDataTriMesh;
     use crate::{StrError, VoronoiEdgePoint};
     use plotpy::Plot;
 
@@ -1502,6 +1527,55 @@ mod tests {
         assert_eq!(trigen.out_ncell(), 14);
         assert_eq!(trigen.out_cell_attribute(0), 111);
         assert_eq!(trigen.out_cell_attribute(12), 222);
+        Ok(())
+    }
+
+    #[test]
+    fn from_input_data_works() -> Result<(), StrError> {
+        let data = InputDataTriMesh {
+            points: vec![
+                (0, 0.0, 0.0),
+                (0, 1.0, 0.0),
+                (0, 1.0, 1.0),
+                (0, 0.0, 1.0),
+                (0, 0.2, 0.2),
+                (0, 0.8, 0.2),
+                (0, 0.8, 0.8),
+                (0, 0.2, 0.8),
+                (0, 0.0, 0.5),
+                (0, 0.2, 0.5),
+                (0, 0.8, 0.5),
+                (0, 1.0, 0.5),
+            ],
+            segments: vec![
+                (-1, 0, 1),
+                (-1, 1, 2),
+                (-1, 2, 3),
+                (-1, 3, 0),
+                (-1, 4, 5),
+                (-1, 5, 6),
+                (-1, 6, 7),
+                (-1, 7, 4),
+                (-1, 8, 9),
+                (-1, 10, 11),
+            ],
+            holes: vec![(0.5, 0.5)],
+            regions: vec![(1, 0.1, 0.1, None), (2, 0.1, 0.9, Some(0.001))],
+        };
+        let trigen = Trigen::from_input_data(&data)?;
+
+        trigen.generate_mesh(true, false, true, None, None)?;
+        assert_eq!(trigen.out_npoint(), 305);
+        assert_eq!(trigen.out_ncell(), 525);
+
+        if SAVE_FIGURE {
+            let mut plot = Plot::new();
+            trigen.draw_triangles(&mut plot, false, false, false, false, None, None, None);
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/test_from_input_data_works.svg")?;
+        }
+
         Ok(())
     }
 }
