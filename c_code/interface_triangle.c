@@ -269,6 +269,9 @@ int32_t tri_run_delaunay(struct ExtTrigen *trigen, int32_t verbose) {
         return TRITET_ERROR_NULL_POINT_LIST;
     }
 
+    // clear previous data
+    free_triangle_data(&trigen->output);
+
     // Triangulate the points
     // Switches:
     // * `z` -- number everything from zero (z)
@@ -298,6 +301,9 @@ int32_t tri_run_voronoi(struct ExtTrigen *trigen, int32_t verbose) {
     if (trigen->input.pointlist == NULL) {
         return TRITET_ERROR_NULL_POINT_LIST;
     }
+
+    // clear previous data
+    free_triangle_data(&trigen->output);
 
     // Triangulate the points
     // Switches:
@@ -332,6 +338,9 @@ int32_t tri_run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t q
     if (trigen->input.segmentlist == NULL) {
         return TRITET_ERROR_NULL_SEGMENT_LIST;
     }
+
+    // clear previous data
+    free_triangle_data(&trigen->output);
 
     // Generate mesh
     // Switches:
