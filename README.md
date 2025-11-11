@@ -1,18 +1,23 @@
-# Triangle and tetrahedron mesh generators
+# Triangle and tetrahedron mesh generators <!-- omit from toc --> 
 
 [![Test](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml)
 [![Windows & macOS](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml)
 [![Test on Arch Linux](https://github.com/cpmech/tritet/actions/workflows/test_on_arch_linux.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_on_arch_linux.yml)
 
-## Contents
+## Contents <!-- omit from toc --> 
 
-* [Introduction](#introduction)
-* [Installation](#installation)
-* [Setting Cargo.toml](#cargo)
-* [Examples](#examples)
-* [For developers](#developers)
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Setting Cargo.toml](#setting-cargotoml)
+- [Examples](#examples)
+  - [2D Delaunay triangulation](#2d-delaunay-triangulation)
+  - [2D Voronoi tessellation](#2d-voronoi-tessellation)
+  - [2D mesh generation](#2d-mesh-generation)
+- [3D Delaunay triangulation](#3d-delaunay-triangulation)
+- [3D mesh generation](#3d-mesh-generation)
+- [For developers](#for-developers)
 
-## <a name="introduction"></a> Introduction
+## Introduction
 
 This crate implements Triangle and Tetrahedron mesh generators by wrapping the best tools around, namely, [Triangle](https://www.cs.cmu.edu/~quake/triangle.html) and [Tetgen](http://tetgen.org/).
 
@@ -28,7 +33,7 @@ See the documentation for further information:
 
 - [Tritet documentation](https://docs.rs/tritet) - Contains the API reference and examples
 
-## <a name="installation"></a> Installation
+## Installation
 
 Install some libraries:
 
@@ -36,7 +41,7 @@ Install some libraries:
 sudo apt install build-essential
 ```
 
-## <a name="cargo"></a> Setting Cargo.toml
+## Setting Cargo.toml
 
 [![Crates.io](https://img.shields.io/crates/v/tritet.svg)](https://crates.io/crates/tritet)
 
@@ -47,7 +52,7 @@ sudo apt install build-essential
 tritet = "*"
 ```
 
-## <a name="examples"></a> Examples
+## Examples
 
 Note: set `SAVE_FIGURE` to true to generate the figures.
 
@@ -376,7 +381,7 @@ fn main() -> Result<(), StrError> {
 
 ![example_tetgen_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_mesh_1.svg)
 
-## <a name="developers"></a> For developers
+## For developers
 
 Install cargo-valgrind:
 
