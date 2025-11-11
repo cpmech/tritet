@@ -15,6 +15,7 @@
   - [2D mesh generation](#2d-mesh-generation)
 - [3D Delaunay triangulation](#3d-delaunay-triangulation)
 - [3D mesh generation](#3d-mesh-generation)
+- [Definitions for Triangle (By J. R. Shewchuk)](#definitions-for-triangle-by-j-r-shewchuk)
 - [For developers](#for-developers)
 
 ## Introduction
@@ -380,6 +381,50 @@ fn main() -> Result<(), StrError> {
 ```
 
 ![example_tetgen_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_mesh_1.svg)
+
+## Definitions for Triangle (By J. R. Shewchuk)
+
+This section is part of the text written by J. R. Shewchuk in [Triangle](https://www.cs.cmu.edu/~quake/triangle.html). The figures in this section are also Copyright by J. R. Shewchuk.
+
+A Delaunay triangulation (Figure 1) of a vertex set (Figure 2) is a triangulation of the vertex set with the property that no vertex in the vertex set falls in the interior of the circumcircle (circle that passes through all three vertices) of any triangle in the triangulation.
+
+**Figure 1**. Delaunay triangulation:
+
+![Delaunay triangulation](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/dots.1.ele.gif)
+
+**Figure 2**. Vertex set (cloud of points):
+
+![Vertex set (cloud of points).](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/dots.node.gif)
+
+A Voronoi diagram (Figure 3) of a vertex set is a subdivision of the plane into polygonal regions (some of which may be infinite), where each region is the set of points in the plane that are closer to some input vertex than to any other input vertex. (The Voronoi diagram is the geometric dual of the Delaunay triangulation.)
+
+**Figure 3**. Voronoi diagram:
+
+![Voronoi diagram.](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/dots.1.v.edge.gif)
+
+A Planar Straight Line Graph (**PSLG**, Figure 4) is a collection of vertices and segments. Segments are edges whose endpoints are vertices in the PSLG, and whose presence in any mesh generated from the PSLG is enforced.
+
+**Figure 4**. Planar Straight Line Graph (PSLG):
+
+![Planar Straight Line Graph (PSLG).](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/A.poly.gif)
+
+A constrained Delaunay triangulation of a PSLG (Figure 5) is similar to a Delaunay triangulation, but each PSLG segment is present as a single edge in the triangulation. A constrained Delaunay triangulation is not truly a Delaunay triangulation. Some of its triangles might not be Delaunay, but they are all constrained Delaunay.
+
+**Figure 5**. Constrained Delaunay triangulation of a PSLG:
+
+![Constrained Delaunay triangulation of a PSLG.](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/A.constrain.gif)
+
+A conforming Delaunay triangulation (CDT, Figure 6) of a PSLG is a true Delaunay triangulation in which each PSLG segment may have been subdivided into several edges by the insertion of additional vertices, called Steiner points. Steiner points are necessary to allow the segments to exist in the mesh while maintaining the Delaunay property. Steiner points are also inserted to meet constraints on the minimum angle and maximum triangle area.
+
+**Figure 6**. Conforming Delaunay triangulation (CDT):
+
+![Conforming Delaunay triangulation (CDT)](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/A.conform.gif)
+
+A constrained conforming Delaunay triangulation (CCDT, Figure 7) of a PSLG is a constrained Delaunay triangulation that includes Steiner points. It usually takes fewer vertices to make a good-quality CCDT than a good-quality CDT, because the triangles do not need to be Delaunay (although they still must be constrained Delaunay).
+
+**Figure 7**. Constrained conforming Delaunay triangulation (CCDT):
+
+![Constrained conforming Delaunay triangulation (CCDT)](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/A.ccdt.gif)
 
 ## For developers
 
