@@ -1,4 +1,4 @@
-use crate::constants::{handle_status, TRITET_TO_TRIANGLE,LIGHT_COLORS};
+use crate::constants::{handle_status, LIGHT_COLORS, TRITET_TO_TRIANGLE};
 use crate::conversion::to_i32;
 use crate::StrError;
 use plotpy::{Canvas, Curve, Plot, PolyCode, Text};
@@ -55,6 +55,16 @@ pub enum VoronoiEdgePoint {
 }
 
 /// Implements high-level functions to call Shewchuk's Triangle C-Code
+///
+/// The input of Trigen is either a cloud of points or a Planar Straight Line Graph (PSLG)
+/// (see definitions below and also in the README file). The cloud of points is used for Voronoi
+/// tesselation whereas the PSLG is used for mesh generation. The setting up of the input data is
+/// done via the following member functions:
+///
+/// * [Trigen::set_point] -- sets the point coordinates
+/// * [Trigen::set_segment] -- sets the segment endpoint IDs
+/// * [Trigen::set_region] -- marks a region within the PSLG
+/// * [Trigen::set_hole] -- marks a hole within the PSLG
 ///
 /// **Note:** All indices are are zero-based.
 ///
