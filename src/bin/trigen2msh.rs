@@ -2,13 +2,13 @@ use plotpy::Plot;
 use std::path::Path;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use tritet::{InputDataTetMesh, StrError, Tetgen};
+use tritet::{InputDataTriMesh, StrError, Trigen};
 
 /// Command line options
 #[derive(Debug, StructOpt)]
 #[structopt(
-    name = "tetgen_mesh",
-    about = "Generate tetrahedral mesh using TetGen and export as MSH and VTU"
+    name = "trigen2msh",
+    about = "Generate triangular mesh using Trigen and export as MSH and VTU"
 )]
 struct Options {
     /// Input JSON file
@@ -30,11 +30,11 @@ struct Options {
     #[structopt(short, long)]
     svg_figure: bool,
 
-    /// Global maximum volume for tetrahedra
+    /// Global maximum volume (area) for triangles
     #[structopt(short = "v", long)]
-    max_volume: Option<f64>,
+    max_area: Option<f64>,
 
-    /// Global minimum angle between faces of tetrahedra
+    /// Global minimum angle between faces of triangles
     #[structopt(short = "a", long)]
     min_angle: Option<f64>,
 }
@@ -45,7 +45,7 @@ fn main() -> Result<(), StrError> {
 
     // load input data from JSON file
     let in_path = Path::new(&options.input);
-    let input_data = InputDataTetMesh::read_json(&in_path)?;
+    let input_data = InputDataTriMesh::read_json(&in_path)?;
     let fn_stem = in_path
         .file_stem()
         .ok_or("cannot get file stem")?
@@ -53,27 +53,27 @@ fn main() -> Result<(), StrError> {
         .ok_or("cannot convert file stem to str")?;
 
     // allocate generator from input data
-    let tetgen = Tetgen::from_input_data(&input_data)?;
+    let trigen = Trigen::from_input_data(&input_data)?;
 
     // generate mesh
     let verbose = options.verbose;
     let o2 = options.o2;
-    tetgen.generate_mesh(verbose, o2, options.max_volume, options.min_angle)?;
+    trigen.generate_mesh(verbose, o2, true, options.max_area, options.min_angle)?;
 
     // write MSH file
     let path_msh = format!("{}/{}.msh", options.out_dir, fn_stem);
-    tetgen.write_msh(&path_msh)?;
+    trigen.write_msh(&path_msh)?;
     println!("\nGenerated MSH file: {}/{}.msh", options.out_dir, fn_stem);
 
     // write VTU file
     let path_vtu = format!("{}/{}.vtu", options.out_dir, fn_stem);
-    tetgen.write_vtu(&path_vtu)?;
+    trigen.write_vtu(&path_vtu)?;
     println!("Generated VTU file: {}/{}.vtu", options.out_dir, fn_stem);
 
     // write SVG file with wireframe
     if options.svg_figure {
         let mut plot = Plot::new();
-        tetgen.draw_wireframe(&mut plot, true, false, false, false, None, None, None);
+        trigen.draw_triangles(&mut plot, true, false, false, false, None, None, None);
         plot.set_equal_axes(true)
             .set_figure_size_points(800.0, 800.0)
             .save(&format!("{}/{}.svg", options.out_dir, fn_stem))?;
