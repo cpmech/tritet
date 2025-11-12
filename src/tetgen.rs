@@ -157,7 +157,7 @@ extern "C" {
 /// }
 /// ```
 ///
-/// The above example can also be implemented using InputDataTetMesh as follows:
+/// The above example can also be implemented using [InputDataTetMesh] as follows:
 ///
 /// ```
 /// use plotpy::Plot;

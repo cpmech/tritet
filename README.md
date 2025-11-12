@@ -12,9 +12,11 @@
 - [Examples](#examples)
   - [2D Delaunay triangulation](#2d-delaunay-triangulation)
   - [2D Voronoi tessellation](#2d-voronoi-tessellation)
-  - [2D mesh generation](#2d-mesh-generation)
+  - [2D mesh generation using input data structure](#2d-mesh-generation-using-input-data-structure)
+  - [2D mesh generation using setup functions](#2d-mesh-generation-using-setup-functions)
 - [3D Delaunay triangulation](#3d-delaunay-triangulation)
-- [3D mesh generation](#3d-mesh-generation)
+- [3D mesh generation using the input data structure](#3d-mesh-generation-using-the-input-data-structure)
+- [3D mesh generation using setup functions](#3d-mesh-generation-using-setup-functions)
 - [Definitions for Triangle (By J. R. Shewchuk)](#definitions-for-triangle-by-j-r-shewchuk)
 - [For developers](#for-developers)
 
@@ -141,7 +143,72 @@ fn main() -> Result<(), StrError> {
 
 ![doc_triangle_voronoi_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_voronoi_1.svg)
 
-### 2D mesh generation
+### 2D mesh generation using input data structure
+
+```rust
+use plotpy::Plot;
+use tritet::{InputDataTriMesh, StrError, Trigen};
+
+const SAVE_FIGURE: bool = false;
+
+fn main() -> Result<(), StrError> {
+    // set input data
+    let input_data = InputDataTriMesh {
+        points: vec![
+            (0, 0.0, 0.0), // boundary marker, x, y
+            (0, 1.0, 0.0),
+            (0, 1.0, 1.0),
+            (0, 0.0, 1.0),
+            (0, 0.2, 0.2),
+            (0, 0.8, 0.2),
+            (0, 0.8, 0.8),
+            (0, 0.2, 0.8),
+            (0, 0.0, 0.5),
+            (0, 0.2, 0.5),
+            (0, 0.8, 0.5),
+            (0, 1.0, 0.5),
+        ],
+        segments: vec![
+            (-1, 0, 1), // boundary marker, point indices
+            (-1, 1, 2),
+            (-1, 2, 3),
+            (-1, 3, 0),
+            (-1, 4, 5),
+            (-1, 5, 6),
+            (-1, 6, 7),
+            (-1, 7, 4),
+            (-1, 8, 9),
+            (-1, 10, 11),
+        ],
+        holes: vec![
+            (0.5, 0.5), // x, y
+        ],
+        regions: vec![
+            (1, 0.1, 0.1, None), // attribute, x, y, max area
+            (2, 0.1, 0.9, None),
+        ],
+    };
+
+    // allocate generator from input data
+    let trigen = Trigen::from_input_data(&input_data)?;
+
+    // generate o2 mesh without constraints
+    trigen.generate_mesh(false, true, false, None, None)?;
+    assert_eq!(trigen.out_ncell(), 12);
+
+    // draw mesh
+    if SAVE_FIGURE {
+        let mut plot = Plot::new();
+        trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        plot.set_equal_axes(true)
+            .set_figure_size_points(600.0, 600.0)
+            .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
+    }
+    Ok(())
+}
+```
+
+### 2D mesh generation using setup functions
 
 ```rust
 use plotpy::Plot;
@@ -246,7 +313,56 @@ fn main() -> Result<(), StrError> {
 
 ![example_tetgen_delaunay_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_delaunay_1.svg)
 
-## 3D mesh generation
+## 3D mesh generation using the input data structure
+
+```rust
+use plotpy::Plot;
+use tritet::{InputDataTetMesh, StrError, Tetgen};
+
+const SAVE_FIGURE: bool = false;
+
+fn main() -> Result<(), StrError> {
+    // set input data
+    let input_data = InputDataTetMesh {
+        points: vec![
+            (0, 0.0, 1.0, 0.0), // marker, x, y, z
+            (0, 0.0, 0.0, 0.0),
+            (0, 1.0, 1.0, 0.0),
+            (0, 0.0, 1.0, 1.0),
+        ],
+        facets: vec![
+            (0, vec![0, 2, 1]), // marker, point indices
+            (0, vec![0, 1, 3]),
+            (0, vec![0, 3, 2]),
+            (0, vec![1, 2, 3]),
+        ],
+        holes: vec![],                           // no holes
+        regions: vec![(1, 0.1, 0.9, 0.1, None)], // region marker, x, y, z, max volume
+    };
+
+    // allocate generator from input data
+    let tetgen = Tetgen::from_input_data(&input_data)?;
+
+    // generate mesh
+    let global_max_volume = Some(0.5);
+    tetgen.generate_mesh(false, false, global_max_volume, None)?;
+
+    // draw edges of tetrahedra
+    if SAVE_FIGURE {
+        let mut plot = Plot::new();
+        tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+        plot.set_equal_axes(true)
+            .set_figure_size_points(600.0, 600.0)
+            .save("/tmp/tritet/doc_tetgen_mesh_2.svg")?;
+    }
+
+    assert_eq!(tetgen.out_ncell(), 7);
+    assert_eq!(tetgen.out_npoint(), 10);
+    Ok(())
+}
+```
+
+## 3D mesh generation using setup functions
 
 Note: set `SAVE_VTU_FILE` to true to generate Paraview file.
 
