@@ -10,13 +10,13 @@
 - [Installation](#installation)
 - [Setting Cargo.toml](#setting-cargotoml)
 - [Examples](#examples)
+  - [Mesh generation using JSON input files](#mesh-generation-using-json-input-files)
   - [2D Delaunay triangulation](#2d-delaunay-triangulation)
   - [2D Voronoi tessellation](#2d-voronoi-tessellation)
   - [2D mesh generation using input data structure](#2d-mesh-generation-using-input-data-structure)
   - [2D mesh generation using setup functions](#2d-mesh-generation-using-setup-functions)
-- [3D Delaunay triangulation](#3d-delaunay-triangulation)
-- [3D mesh generation using the input data structure](#3d-mesh-generation-using-the-input-data-structure)
-- [3D mesh generation using setup functions](#3d-mesh-generation-using-setup-functions)
+  - [3D Delaunay triangulation](#3d-delaunay-triangulation)
+  - [3D mesh generation using the input data structure](#3d-mesh-generation-using-the-input-data-structure)
 - [Definitions for Triangle (By J. R. Shewchuk)](#definitions-for-triangle-by-j-r-shewchuk)
 - [For developers](#for-developers)
 
@@ -58,6 +58,98 @@ tritet = "*"
 ## Examples
 
 Note: set `SAVE_FIGURE` to true to generate the figures.
+
+### Mesh generation using JSON input files
+
+Tritet contains two executables to generate meshes:
+
+1. `trigen_mesh` to generate quality triangle meshes with boundary markers and volume and angle constraints
+2. `tetgen_mesh` to generate quality tetrahedral meshes with boundary markers and volume and angle constraints
+
+Below is a JSON input for `trigen_mesh`:
+
+```json
+{
+  "points": [
+    [0, 0.0, 0.0],
+    [0, 1.0, 0.0],
+    [0, 1.0, 1.0],
+    [0, 0.0, 1.0],
+    [0, 0.2, 0.2],
+    [0, 0.8, 0.2],
+    [0, 0.8, 0.8],
+    [0, 0.2, 0.8],
+    [0, 0.0, 0.5],
+    [0, 0.2, 0.5],
+    [0, 0.8, 0.5],
+    [0, 1.0, 0.5]
+  ],
+  "segments": [
+    [-1,  0,  1],
+    [-1,  1,  2],
+    [-1,  2,  3],
+    [-1,  3,  0],
+    [-1,  4,  5],
+    [-1,  5,  6],
+    [-1,  6,  7],
+    [-1,  7,  4],
+    [-1,  8,  9],
+    [-1, 10, 11]
+  ],
+  "holes": [
+    [0.5, 0.5]
+  ],
+  "regions": [
+    [1, 0.1, 0.1, null],
+    [2, 0.1, 0.9, null]
+  ]
+}
+```
+
+Which can be used as follows:
+
+```bash
+cargo run --bin trigen_mesh -- data/input/example_tri_input.json /tmp/tritet -s -v0.01
+```
+
+Where `-s` indicates SVG file generation (if Python/Matplotlib is available; otherwise an error arises),
+and `v0.01` indicates an area (volume) constraint of 0.01. The output is shown below:
+
+![example_tri_input.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tri_input.svg)
+
+Below is a JSON input for `tetgen_mesh`:
+
+```json
+{
+  "points": [
+    [0, 0.0, 1.0, 0.0],
+    [0, 0.0, 0.0, 0.0],
+    [0, 1.0, 1.0, 0.0],
+    [0, 0.0, 1.0, 1.0]
+  ],
+  "facets": [
+    [0, [0, 2, 1]],
+    [0, [0, 1, 3]],
+    [0, [0, 3, 2]],
+    [0, [1, 2, 3]]
+  ],
+  "holes": [],
+  "regions": [
+    [1, 0.1, 0.9, 0.1, null]
+  ]
+}
+```
+
+Which can be used as follows:
+
+```bash
+cargo run --bin tetgen_mesh -- data/input/example_tet_input.json /tmp/tritet -s -v0.1
+```
+
+Where `-s` indicates SVG file generation (if Python/Matplotlib is available; otherwise an error arises),
+and `v0.1` indicates an volume constraint of 0.1. The output is shown below:
+
+![example_tet_input.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tet_input.svg)
 
 ### 2D Delaunay triangulation
 
@@ -273,7 +365,7 @@ fn main() -> Result<(), StrError> {
 
 ![doc_triangle_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_mesh_1.svg)
 
-## 3D Delaunay triangulation
+### 3D Delaunay triangulation
 
 ```rust
 use plotpy::Plot;
@@ -313,7 +405,7 @@ fn main() -> Result<(), StrError> {
 
 ![example_tetgen_delaunay_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_delaunay_1.svg)
 
-## 3D mesh generation using the input data structure
+### 3D mesh generation using the input data structure
 
 ```rust
 use plotpy::Plot;
@@ -362,7 +454,7 @@ fn main() -> Result<(), StrError> {
 }
 ```
 
-## 3D mesh generation using setup functions
+#g## 3D mesh generation using setup functions
 
 Note: set `SAVE_VTU_FILE` to true to generate Paraview file.
 
