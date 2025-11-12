@@ -762,8 +762,8 @@ impl Trigen {
     /// # Warning
     ///
     /// This function will return 0 if the `index` is out of range.
-    pub fn out_cell_attribute(&self, index: usize) -> usize {
-        unsafe { tri_out_cell_attribute(self.ext_trigen, to_i32(index)) as usize }
+    pub fn out_cell_attribute(&self, index: usize) -> i32 {
+        unsafe { tri_out_cell_attribute(self.ext_trigen, to_i32(index)) }
     }
 
     /// Returns the number of points of the Voronoi tessellation
@@ -883,7 +883,7 @@ impl Trigen {
         let mut xatt = vec![0.0; 2];
         let mut min = vec![f64::MAX; 2];
         let mut max = vec![f64::MIN; 2];
-        let mut colors: HashMap<usize, &'static str> = HashMap::new();
+        let mut colors: HashMap<i32, &'static str> = HashMap::new();
         let mut index_color = 0;
         let clr = LIGHT_COLORS;
         for tri in 0..n_triangle {

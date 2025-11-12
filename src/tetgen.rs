@@ -606,8 +606,8 @@ impl Tetgen {
     /// # Warning
     ///
     /// This function will return 0 if `index` is out of range.
-    pub fn out_cell_attribute(&self, index: usize) -> usize {
-        unsafe { tet_out_cell_attribute(self.ext_tetgen, to_i32(index)) as usize }
+    pub fn out_cell_attribute(&self, index: usize) -> i32 {
+        unsafe { tet_out_cell_attribute(self.ext_tetgen, to_i32(index)) }
     }
 
     /// Returns the number of marked faces
@@ -753,7 +753,7 @@ impl Tetgen {
         let mut xatt = vec![0.0; 3];
         let mut min = vec![f64::MAX; 3];
         let mut max = vec![f64::MIN; 3];
-        let mut colors: HashMap<usize, &'static str> = HashMap::new();
+        let mut colors: HashMap<i32, &'static str> = HashMap::new();
         let mut index_color = 0;
         let clr = DARK_COLORS;
         for tet in 0..ntet {
