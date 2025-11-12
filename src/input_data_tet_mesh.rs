@@ -8,6 +8,28 @@ use std::path::Path;
 /// Holds the input data for tetrahedral mesh generation using Tetgen.
 ///
 /// The input of Tetgen is a Piecewise Linear Complex (PLC)
+///
+/// # Examples
+///
+/// ```
+/// # use tritet::InputDataTetMesh;
+/// let data = InputDataTetMesh {
+///     points: vec![
+///         (0, 0.0, 1.0, 0.0),
+///         (0, 0.0, 0.0, 0.0),
+///         (0, 1.0, 1.0, 0.0),
+///         (0, 0.0, 1.0, 1.0),
+///     ],
+///     facets: vec![
+///         (0, vec![0, 2, 1]),
+///         (0, vec![0, 1, 3]),
+///         (0, vec![0, 3, 2]),
+///         (0, vec![1, 2, 3]),
+///     ],
+///     holes: vec![],
+///     regions: vec![(1, 0.1, 0.9, 0.1, None)],
+/// };
+/// ```
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct InputDataTetMesh {
     /// List of points

@@ -9,6 +9,42 @@ use std::path::Path;
 ///
 /// The input of Trigen (Triangle) is a Planar Straight Line Graph (PSLG).
 /// See the definitions #[derive(Clone, Debug, Deserialize, Serialize)]in the README file.
+///
+/// # Examples
+///
+/// ```
+/// # use tritet::InputDataTriMesh;
+/// let data = InputDataTriMesh {
+///     points: vec![
+///         (0, 0.0, 0.0),
+///         (0, 1.0, 0.0),
+///         (0, 1.0, 1.0),
+///         (0, 0.0, 1.0),
+///         (0, 0.2, 0.2),
+///         (0, 0.8, 0.2),
+///         (0, 0.8, 0.8),
+///         (0, 0.2, 0.8),
+///         (0, 0.0, 0.5),
+///         (0, 0.2, 0.5),
+///         (0, 0.8, 0.5),
+///         (0, 1.0, 0.5),
+///     ],
+///     segments: vec![
+///         (-1, 0, 1),
+///         (-1, 1, 2),
+///         (-1, 2, 3),
+///         (-1, 3, 0),
+///         (-1, 4, 5),
+///         (-1, 5, 6),
+///         (-1, 6, 7),
+///         (-1, 7, 4),
+///         (-1, 8, 9),
+///         (-1, 10, 11),
+///     ],
+///     holes: vec![(0.5, 0.5)],
+///     regions: vec![(1, 0.1, 0.1, None), (2, 0.1, 0.9, None)],
+/// };
+/// ```
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct InputDataTriMesh {
     /// List of points
