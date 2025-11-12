@@ -4,6 +4,11 @@ use crate::InputDataTetMesh;
 use crate::StrError;
 use plotpy::{Canvas, Plot, Text};
 use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::fmt::Write;
+use std::fs::{self, File};
+use std::io::Write as IoWrite;
+use std::path::Path;
 
 #[repr(C)]
 pub(crate) struct ExtTetgen {
@@ -826,6 +831,94 @@ impl Tetgen {
             plot.set_range_3d(min[0], max[0], min[1], max[1], min[2], max[2]);
         }
     }
+
+    /// Writes gemlab "msh" file
+    ///
+    /// # File format
+    ///
+    /// The text file format includes three sections:
+    ///
+    /// 1. The header with the space dimension (`ndim`), number of points (`npoint`), and number of cells (`ncell`);
+    /// 2. The points list where each line contains the `id` of the point, which must be **equal to the position** in the list,
+    ///    followed by the `x` and `y` (and `z`) coordinates;
+    /// 3. The cells list where each line contains the `id` of the cell, which must be **equal to the position** in the list,
+    ///    the attribute (`att`) of the cell, the `kind` of the cell, followed by the IDs of the points that define the cell (connectivity).
+    ///
+    /// The text file looks like this (the hash tag indicates a comment/the mesh below is just an example which won't work):
+    ///
+    /// ```text
+    /// # header
+    /// # ndim npoint ncell
+    ///      3      8     5
+    ///
+    /// # points
+    /// # id marker x y z
+    ///    0 0 0.0 0.0 0.0
+    ///    1 0 0.5 0.0 1.0
+    ///    2 0 1.0 0.0 2.0
+    /// # ... more points should follow
+    ///
+    /// # cells
+    /// # id attribute kind point_ids...
+    ///    0 1 tet4 0 1 3 2
+    ///    1 1 tet4 1 4 6 5
+    /// ```
+    ///
+    /// # Input
+    ///
+    /// * `full_path` -- may be a String, &str, or Path
+    pub fn write_msh_file<P>(&self, full_path: &P) -> Result<(), StrError>
+    where
+        P: AsRef<OsStr> + ?Sized,
+    {
+        // check
+        let npoint = self.out_npoint();
+        let ncell = self.out_ncell();
+        if npoint < 1 || ncell < 1 {
+            return Err("mesh is empty: cannot write msh file");
+        }
+
+        // write to buffer
+        let mut f = String::new();
+        write!(f, "# header\n").unwrap();
+        write!(f, "# ndim npoint ncell\n").unwrap();
+        write!(f, "3 {} {}\n", npoint, ncell).unwrap();
+        write!(f, "\n# points\n").unwrap();
+        write!(f, "# id marker x y z\n").unwrap();
+        for i in 0..npoint {
+            let a = self.out_point_marker(i);
+            let x = self.out_point(i, 0);
+            let y = self.out_point(i, 1);
+            let z = self.out_point(i, 2);
+            write!(f, "{} {} {:?} {:?} {:?}\n", i, a, x, y, z).unwrap();
+        }
+        write!(f, "\n# cells\n").unwrap();
+        write!(f, "# id attribute kind points\n").unwrap();
+        let mut b = String::new();
+        for i in 0..ncell {
+            let a = self.out_cell_attribute(i);
+            let k = if self.out_cell_npoint() == 10 { "tet10" } else { "tet4" };
+            b.clear();
+            for m in 0..self.out_cell_npoint() {
+                write!(b, " {}", self.out_cell_point(i, m)).unwrap();
+            }
+            write!(f, "{} {} {}{}\n", i, a, k, b).unwrap();
+        }
+
+        // create directory
+        let path = Path::new(full_path);
+        if let Some(p) = path.parent() {
+            fs::create_dir_all(p).map_err(|_| "cannot create directory")?;
+        }
+
+        // write file
+        let mut file = File::create(path).map_err(|_| "cannot create file")?;
+        file.write_all(f.as_bytes()).map_err(|_| "cannot write file")?;
+
+        // force sync
+        file.sync_all().map_err(|_| "cannot sync file")?;
+        Ok(())
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -835,6 +928,7 @@ mod tests {
     use super::Tetgen;
     use crate::{InputDataTetMesh, StrError};
     use plotpy::Plot;
+    use std::fs;
 
     const SAVE_FIGURE: bool = false;
 
@@ -1399,30 +1493,12 @@ mod tests {
                 (-8, 0.0, 1.0, 1.0),
             ],
             facets: vec![
-                (
-                    -10,
-                    vec![0, 4, 7, 3], // -x
-                ),
-                (
-                    10,
-                    vec![1, 2, 6, 5], //  +x
-                ),
-                (
-                    -20,
-                    vec![0, 1, 5, 4], // -y
-                ),
-                (
-                    20,
-                    vec![2, 3, 7, 6], // +y
-                ),
-                (
-                    -30,
-                    vec![0, 3, 2, 1], // -z
-                ),
-                (
-                    30,
-                    vec![4, 5, 6, 7], // +z
-                ),
+                (-10, vec![0, 4, 7, 3]), // -x
+                (10, vec![1, 2, 6, 5]),  //  +x
+                (-20, vec![0, 1, 5, 4]), // -y
+                (20, vec![2, 3, 7, 6]),  // +y
+                (-30, vec![0, 3, 2, 1]), // -z
+                (30, vec![4, 5, 6, 7]),  // +z
             ],
             holes: vec![],
             regions: vec![(1, 0.5, 0.5, 0.5, None)],
@@ -1510,6 +1586,74 @@ mod tests {
             assert_eq!(marked_faces[i].points, correct[i].1);
             assert_eq!(marked_faces[i].marker, correct[i].2);
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn tet_write_msh_file_works() -> Result<(), StrError> {
+        let data = InputDataTetMesh {
+            points: vec![
+                (-1, 0.0, 0.0, 0.0),
+                (-2, 1.0, 0.0, 0.0),
+                (-3, 1.0, 1.0, 0.0),
+                (-4, 0.0, 1.0, 0.0),
+                (-5, 0.0, 0.0, 1.0),
+                (-6, 1.0, 0.0, 1.0),
+                (-7, 1.0, 1.0, 1.0),
+                (-8, 0.0, 1.0, 1.0),
+            ],
+            facets: vec![
+                (-10, vec![0, 4, 7, 3]), // -x
+                (10, vec![1, 2, 6, 5]),  //  +x
+                (-20, vec![0, 1, 5, 4]), // -y
+                (20, vec![2, 3, 7, 6]),  // +y
+                (-30, vec![0, 3, 2, 1]), // -z
+                (30, vec![4, 5, 6, 7]),  // +z
+            ],
+            holes: vec![],
+            regions: vec![(1, 0.5, 0.5, 0.5, None)],
+        };
+
+        let tetgen = Tetgen::from_input_data(&data)?;
+        tetgen.generate_mesh(false, false, None, None)?;
+
+        if SAVE_FIGURE {
+            let mut plot = Plot::new();
+            tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/test_tet_write_msh_file_works.svg")?;
+        }
+
+        let file_path = "/tmp/tritet/test_tet_write_msh_file_works.msh";
+        tetgen.write_msh_file(file_path)?;
+        let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;
+        let correct = "# header\n\
+                       # ndim npoint ncell\n\
+                       3 8 6\n\
+                       \n\
+                       # points\n\
+                       # id marker x y z\n\
+                       0 -1 0.0 0.0 0.0\n\
+                       1 -2 1.0 0.0 0.0\n\
+                       2 -3 1.0 1.0 0.0\n\
+                       3 -4 0.0 1.0 0.0\n\
+                       4 -5 0.0 0.0 1.0\n\
+                       5 -6 1.0 0.0 1.0\n\
+                       6 -7 1.0 1.0 1.0\n\
+                       7 -8 0.0 1.0 1.0\n\
+                       \n\
+                       # cells\n\
+                       # id attribute kind points\n\
+                       0 1 tet4 0 3 7 2\n\
+                       1 1 tet4 0 7 4 6\n\
+                       2 1 tet4 5 0 4 6\n\
+                       3 1 tet4 0 7 6 2\n\
+                       4 1 tet4 5 0 6 1\n\
+                       5 1 tet4 6 0 2 1\n\
+                       ";
+        assert_eq!(contents, correct);
 
         Ok(())
     }

@@ -1722,7 +1722,7 @@ mod tests {
         };
         let trigen = Trigen::from_input_data(&data)?;
 
-        trigen.generate_mesh(true, false, true, None, None)?;
+        trigen.generate_mesh(false, false, true, None, None)?;
         assert_eq!(trigen.out_npoint(), 305);
         assert_eq!(trigen.out_ncell(), 525);
 
@@ -1748,7 +1748,7 @@ mod tests {
         let trigen = Trigen::from_input_data(&data)?;
         trigen.generate_mesh(false, false, true, Some(0.45), None)?;
 
-        if true {
+        if SAVE_FIGURE {
             let mut plot = Plot::new();
             trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
             plot.set_equal_axes(true)
@@ -1760,28 +1760,26 @@ mod tests {
         trigen.write_msh_file(file_path)?;
 
         let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;
-        assert_eq!(
-            contents,
-            "# header\n\
-             # ndim npoint ncell\n\
-             2 5 4\n\
-             \n\
-             # points\n\
-             # id marker x y\n\
-             0 -1 0.0 0.0\n\
-             1 -1 1.0 0.0\n\
-             2 -1 1.0 1.0\n\
-             3 -1 0.0 1.0\n\
-             4 0 0.5 0.5\n\
-             \n\
-             # cells\n\
-             # id attribute kind points\n\
-             0 1 tri3 1 2 4\n\
-             1 1 tri3 3 0 4\n\
-             2 1 tri3 4 2 3\n\
-             3 1 tri3 0 1 4\n\
-             "
-        );
+        let correct = "# header\n\
+                       # ndim npoint ncell\n\
+                       2 5 4\n\
+                       \n\
+                       # points\n\
+                       # id marker x y\n\
+                       0 -1 0.0 0.0\n\
+                       1 -1 1.0 0.0\n\
+                       2 -1 1.0 1.0\n\
+                       3 -1 0.0 1.0\n\
+                       4 0 0.5 0.5\n\
+                       \n\
+                       # cells\n\
+                       # id attribute kind points\n\
+                       0 1 tri3 1 2 4\n\
+                       1 1 tri3 3 0 4\n\
+                       2 1 tri3 4 2 3\n\
+                       3 1 tri3 0 1 4\n\
+                       ";
+        assert_eq!(contents, correct);
 
         Ok(())
     }
