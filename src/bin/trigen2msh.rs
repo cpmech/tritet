@@ -8,7 +8,7 @@ use tritet::{InputDataTriMesh, StrError, Trigen};
 #[derive(Debug, StructOpt)]
 #[structopt(
     name = "trigen2msh",
-    about = "Generate triangular mesh using Trigen and export as MSH and VTU"
+    about = "Generate mesh of triangles and export it as MSH (Gemlab) and VTU (ParaView)"
 )]
 struct Options {
     /// Input JSON file

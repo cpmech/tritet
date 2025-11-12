@@ -8,7 +8,7 @@ use tritet::{InputDataTetMesh, StrError, Tetgen};
 #[derive(Debug, StructOpt)]
 #[structopt(
     name = "tetgen2msh",
-    about = "Generate tetrahedral mesh using TetGen and export as MSH and VTU"
+    about = "Generate mesh of tetrahedra and export it as MSH (Gemlab) and VTU (ParaView)"
 )]
 struct Options {
     /// Input JSON file
