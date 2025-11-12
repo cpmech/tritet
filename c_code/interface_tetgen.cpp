@@ -309,6 +309,8 @@ int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_
             return TRITET_ERROR_STRING_CONCAT;
         }
         strcat(command, buf);
+    } else {
+        strcat(command, "a");
     }
     if (global_min_angle > 0.0) {
         char buf[32];
