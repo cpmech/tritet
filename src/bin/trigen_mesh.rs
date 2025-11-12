@@ -1,60 +1,78 @@
 use plotpy::Plot;
+use std::path::Path;
+use std::path::PathBuf;
+use structopt::StructOpt;
 use tritet::{InputDataTriMesh, StrError, Trigen};
 
-const SAVE_FIGURE: bool = false;
+/// Command line options
+#[derive(Debug, StructOpt)]
+#[structopt(
+    name = "trigen_mesh",
+    about = "Generate triangular mesh using Trigen (Triangle) and export to VTU format"
+)]
+struct Options {
+    /// Input JSON file
+    #[structopt(parse(from_os_str))]
+    input: PathBuf,
+
+    /// Output directory
+    out_dir: String,
+
+    /// Verbose mode
+    #[structopt(short = "V", long)]
+    verbose: bool,
+
+    /// Generate second order tetrahedra
+    #[structopt(short, long)]
+    o2: bool,
+
+    /// Generate SVG figure with the wireframe of the mesh
+    #[structopt(short, long)]
+    svg_figure: bool,
+
+    /// Global maximum volume (area) for triangles
+    #[structopt(short = "v", long)]
+    max_area: Option<f64>,
+
+    /// Global minimum angle between faces of triangles
+    #[structopt(short = "a", long)]
+    min_angle: Option<f64>,
+}
 
 fn main() -> Result<(), StrError> {
-    // set input data
-    let input_data = InputDataTriMesh {
-        points: vec![
-            (0, 0.0, 0.0), // boundary marker, x, y
-            (0, 1.0, 0.0),
-            (0, 1.0, 1.0),
-            (0, 0.0, 1.0),
-            (0, 0.2, 0.2),
-            (0, 0.8, 0.2),
-            (0, 0.8, 0.8),
-            (0, 0.2, 0.8),
-            (0, 0.0, 0.5),
-            (0, 0.2, 0.5),
-            (0, 0.8, 0.5),
-            (0, 1.0, 0.5),
-        ],
-        segments: vec![
-            (-1, 0, 1), // boundary marker, point indices
-            (-1, 1, 2),
-            (-1, 2, 3),
-            (-1, 3, 0),
-            (-1, 4, 5),
-            (-1, 5, 6),
-            (-1, 6, 7),
-            (-1, 7, 4),
-            (-1, 8, 9),
-            (-1, 10, 11),
-        ],
-        holes: vec![
-            (0.5, 0.5), // x, y
-        ],
-        regions: vec![
-            (1, 0.1, 0.1, None), // attribute, x, y, max area
-            (2, 0.1, 0.9, None),
-        ],
-    };
+    // parse options
+    let options = Options::from_args();
+
+    // load input data from JSON file
+    let in_path = Path::new(&options.input);
+    let input_data = InputDataTriMesh::read_json(&in_path)?;
+    let fn_stem = in_path
+        .file_stem()
+        .ok_or("cannot get file stem")?
+        .to_str()
+        .ok_or("cannot convert file stem to str")?;
 
     // allocate generator from input data
     let trigen = Trigen::from_input_data(&input_data)?;
 
-    // generate o2 mesh without constraints
-    trigen.generate_mesh(false, true, false, None, None)?;
-    assert_eq!(trigen.out_ncell(), 12);
+    // generate mesh
+    let verbose = options.verbose;
+    let o2 = options.o2;
+    trigen.generate_mesh(verbose, o2, true, options.max_area, options.min_angle)?;
 
-    // draw mesh
-    if SAVE_FIGURE {
+    // write SVG file with wireframe
+    if options.svg_figure {
         let mut plot = Plot::new();
-        trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        trigen.draw_triangles(&mut plot, true, false, false, false, None, None, None);
         plot.set_equal_axes(true)
-            .set_figure_size_points(600.0, 600.0)
-            .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
+            .set_figure_size_points(800.0, 800.0)
+            .save(&format!("{}/{}.svg", options.out_dir, fn_stem))?;
+        println!("\nGenerated SVG file: {}/{}.svg", options.out_dir, fn_stem);
     }
+
+    // write VTU file
+    let path_vtu = format!("{}/{}.vtu", options.out_dir, fn_stem);
+    trigen.write_vtu(&path_vtu)?;
+    println!("\nGenerated VTU file: {}/{}.vtu", options.out_dir, fn_stem);
     Ok(())
 }
