@@ -5,11 +5,13 @@ pub type StrError = &'static str;
 
 mod constants;
 mod conversion;
+mod input_data_tet_mesh;
 mod input_data_tri_mesh;
 mod tetgen;
 mod tetgen_paraview;
 mod trigen;
 mod trigen_paraview;
+pub use crate::input_data_tet_mesh::*;
 pub use crate::input_data_tri_mesh::*;
 pub use crate::tetgen::*;
 pub use crate::trigen::*;

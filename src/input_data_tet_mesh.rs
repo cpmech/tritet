@@ -5,35 +5,34 @@ use std::fs::{self, File};
 use std::io::BufReader;
 use std::path::Path;
 
-/// Holds the input data for triangle mesh generation using Trigen.
+/// Holds the input data for tetrahedral mesh generation using Tetgen.
 ///
-/// The input of Trigen (Triangle) is a Planar Straight Line Graph (PSLG).
-/// See the definitions #[derive(Clone, Debug, Deserialize, Serialize)]in the README file.
+/// The input of Tetgen is a Piecewise Linear Complex (PLC)
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct InputDataTriMesh {
+pub struct InputDataTetMesh {
     /// List of points
     ///
-    /// Each point is defined by a boundary marker and its x and y coordinates.
-    pub points: Vec<(i32, f64, f64)>,
+    /// Each point is defined by a boundary marker and its x, y, and z coordinates.
+    pub points: Vec<(i32, f64, f64, f64)>,
 
-    /// List of segments
+    /// List of facets
     ///
-    /// Each segment is defined by a boundary marker and the IDs of its two endpoints.
-    pub segments: Vec<(i32, usize, usize)>,
+    /// Each facet is defined by a boundary marker and a list of point indices that form the facet.
+    pub facets: Vec<(i32, Vec<usize>)>,
 
     /// List of holes
     ///
     /// Each hole is defined by a coordinate located inside the hole.
-    pub holes: Vec<(f64, f64)>,
+    pub holes: Vec<(f64, f64, f64)>,
 
     /// List of regions
     ///
-    /// Each region is defined by an attribute (region marker), the x and y coordinates located inside the region,
-    /// and an optional maximum area constraint for the triangles in that region.
-    pub regions: Vec<(i32, f64, f64, Option<f64>)>,
+    /// Each region is defined by an attribute (region marker), the x, y, and z coordinates located inside the region,
+    /// and an optional maximum volume constraint for the tetrahedra in that region.
+    pub regions: Vec<(i32, f64, f64, f64, Option<f64>)>,
 }
 
-impl InputDataTriMesh {
+impl InputDataTetMesh {
     /// Reads a JSON file containing the data
     ///
     /// # Input
@@ -73,21 +72,21 @@ impl InputDataTriMesh {
 
 #[cfg(test)]
 mod tests {
-    use super::InputDataTriMesh;
+    use super::InputDataTetMesh;
 
     #[test]
-    fn read_and_write_tri_capture_errors() {
+    fn read_and_write_tet_capture_errors() {
         assert_eq!(
-            InputDataTriMesh::read_json("/tmp/not_found").err(),
+            InputDataTetMesh::read_json("/tmp/not_found").err(),
             Some("cannot open file")
         );
         assert_eq!(
-            InputDataTriMesh::read_json("./data/input/wrong_input_trigen.json").err(),
+            InputDataTetMesh::read_json("./data/input/wrong_input_tetgen.json").err(),
             Some("cannot parse JSON file")
         );
-        let data = InputDataTriMesh {
+        let data = InputDataTetMesh {
             points: vec![],
-            segments: vec![],
+            facets: vec![],
             holes: vec![],
             regions: vec![],
         };
@@ -95,41 +94,28 @@ mod tests {
     }
 
     #[test]
-    fn read_and_write_tri_json_work() {
-        let data = InputDataTriMesh {
+    fn read_and_write_tet_json_work() {
+        let data = InputDataTetMesh {
             points: vec![
-                (0, 0.0, 0.0),
-                (0, 1.0, 0.0),
-                (0, 1.0, 1.0),
-                (0, 0.0, 1.0),
-                (0, 0.2, 0.2),
-                (0, 0.8, 0.2),
-                (0, 0.8, 0.8),
-                (0, 0.2, 0.8),
-                (0, 0.0, 0.5),
-                (0, 0.2, 0.5),
-                (0, 0.8, 0.5),
-                (0, 1.0, 0.5),
+                (0, 0.0, 1.0, 0.0),
+                (0, 0.0, 0.0, 0.0),
+                (0, 1.0, 1.0, 0.0),
+                (0, 0.0, 1.0, 1.0),
             ],
-            segments: vec![
-                (-1, 0, 1),
-                (-1, 1, 2),
-                (-1, 2, 3),
-                (-1, 3, 0),
-                (-1, 4, 5),
-                (-1, 5, 6),
-                (-1, 6, 7),
-                (-1, 7, 4),
-                (-1, 8, 9),
-                (-1, 10, 11),
+            facets: vec![
+                (0, vec![0, 2, 1]),
+                (0, vec![0, 1, 3]),
+                (0, vec![0, 3, 2]),
+                (0, vec![1, 2, 3]),
             ],
-            holes: vec![(0.5, 0.5)],
-            regions: vec![(1, 0.1, 0.1, None), (2, 0.1, 0.9, None)],
+            holes: vec![],
+            regions: vec![(1, 0.1, 0.9, 0.1, None)],
         };
-        data.write_json("/tmp/tritet/test_read_and_write_work.json").unwrap();
-        let data_read = InputDataTriMesh::read_json("/tmp/tritet/test_read_and_write_work.json").unwrap();
+        data.write_json("/tmp/tritet/test_read_and_write_tet_work.json")
+            .unwrap();
+        let data_read = InputDataTetMesh::read_json("/tmp/tritet/test_read_and_write_tet_work.json").unwrap();
         assert_eq!(data.points, data_read.points);
-        assert_eq!(data.segments, data_read.segments);
+        assert_eq!(data.facets, data_read.facets);
         assert_eq!(data.holes, data_read.holes);
         assert_eq!(data.regions, data_read.regions);
     }

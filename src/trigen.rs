@@ -1531,7 +1531,7 @@ mod tests {
     }
 
     #[test]
-    fn from_input_data_works() -> Result<(), StrError> {
+    fn tri_from_input_data_works() -> Result<(), StrError> {
         let data = InputDataTriMesh {
             points: vec![
                 (0, 0.0, 0.0),
@@ -1573,7 +1573,7 @@ mod tests {
             trigen.draw_triangles(&mut plot, false, false, false, false, None, None, None);
             plot.set_equal_axes(true)
                 .set_figure_size_points(600.0, 600.0)
-                .save("/tmp/tritet/test_from_input_data_works.svg")?;
+                .save("/tmp/tritet/test_tri_from_input_data_works.svg")?;
         }
 
         Ok(())
