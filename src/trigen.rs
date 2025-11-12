@@ -4,6 +4,11 @@ use crate::InputDataTriMesh;
 use crate::StrError;
 use plotpy::{Canvas, Curve, Plot, PolyCode, Text};
 use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::fmt::Write;
+use std::fs::{self, File};
+use std::io::Write as IoWrite;
+use std::path::Path;
 
 #[repr(C)]
 pub(crate) struct ExtTrigen {
@@ -1032,6 +1037,93 @@ impl Trigen {
         plot.set_range(min[0], max[0], min[1], max[1]);
         plot.add(&canvas).add(&markers);
     }
+
+    /// Writes gemlab "msh" file
+    ///
+    /// # File format
+    ///
+    /// The text file format includes three sections:
+    ///
+    /// 1. The header with the space dimension (`ndim`), number of points (`npoint`), and number of cells (`ncell`);
+    /// 2. The points list where each line contains the `id` of the point, which must be **equal to the position** in the list,
+    ///    followed by the `x` and `y` (and `z`) coordinates;
+    /// 3. The cells list where each line contains the `id` of the cell, which must be **equal to the position** in the list,
+    ///    the attribute (`att`) of the cell, the `kind` of the cell, followed by the IDs of the points that define the cell (connectivity).
+    ///
+    /// The text file looks like this (the hash tag indicates a comment/the mesh below is just an example which won't work):
+    ///
+    /// ```text
+    /// # header
+    /// # ndim npoint ncell
+    ///      2      8     5
+    ///
+    /// # points
+    /// # id marker x y
+    ///    0 0 0.0 0.0
+    ///    1 0 0.5 0.0
+    ///    2 0 1.0 0.0
+    /// # ... more points should follow
+    ///
+    /// # cells
+    /// # id attribute kind point_ids...
+    ///    0 1 tri3 0 1 3
+    ///    1 1 tri3 1 4 6
+    /// ```
+    ///
+    /// # Input
+    ///
+    /// * `full_path` -- may be a String, &str, or Path
+    pub fn write_msh_file<P>(&self, full_path: &P) -> Result<(), StrError>
+    where
+        P: AsRef<OsStr> + ?Sized,
+    {
+        // check
+        let npoint = self.out_npoint();
+        let ncell = self.out_ncell();
+        if npoint < 1 || ncell < 1 {
+            return Err("mesh is empty: cannot write msh file");
+        }
+
+        // write to buffer
+        let mut f = String::new();
+        write!(f, "# header\n").unwrap();
+        write!(f, "# ndim npoint ncell\n").unwrap();
+        write!(f, "2 {} {}\n", npoint, ncell).unwrap();
+        write!(f, "\n# points\n").unwrap();
+        write!(f, "# id marker x y\n").unwrap();
+        for i in 0..npoint {
+            let a = self.out_point_marker(i);
+            let x = self.out_point(i, 0);
+            let y = self.out_point(i, 1);
+            write!(f, "{} {} {:?} {:?}\n", i, a, x, y).unwrap();
+        }
+        write!(f, "\n# cells\n").unwrap();
+        write!(f, "# id attribute kind points\n").unwrap();
+        let mut b = String::new();
+        for i in 0..ncell {
+            let a = self.out_cell_attribute(i);
+            let k = if self.out_cell_npoint() == 6 { "tri6" } else { "tri3" };
+            b.clear();
+            for m in 0..self.out_cell_npoint() {
+                write!(b, " {}", self.out_cell_point(i, m)).unwrap();
+            }
+            write!(f, "{} {} {}{}\n", i, a, k, b).unwrap();
+        }
+
+        // create directory
+        let path = Path::new(full_path);
+        if let Some(p) = path.parent() {
+            fs::create_dir_all(p).map_err(|_| "cannot create directory")?;
+        }
+
+        // write file
+        let mut file = File::create(path).map_err(|_| "cannot create file")?;
+        file.write_all(f.as_bytes()).map_err(|_| "cannot write file")?;
+
+        // force sync
+        file.sync_all().map_err(|_| "cannot sync file")?;
+        Ok(())
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1042,6 +1134,7 @@ mod tests {
     use crate::InputDataTriMesh;
     use crate::{StrError, VoronoiEdgePoint};
     use plotpy::Plot;
+    use std::fs;
 
     const SAVE_FIGURE: bool = false;
 
@@ -1640,6 +1733,55 @@ mod tests {
                 .set_figure_size_points(600.0, 600.0)
                 .save("/tmp/tritet/test_tri_from_input_data_works.svg")?;
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn tri_write_msh_file_works() -> Result<(), StrError> {
+        let data = InputDataTriMesh {
+            points: vec![(0, 0.0, 0.0), (0, 1.0, 0.0), (0, 1.0, 1.0), (0, 0.0, 1.0)],
+            segments: vec![(-1, 0, 1), (-1, 1, 2), (-1, 2, 3), (-1, 3, 0)],
+            holes: vec![],
+            regions: vec![(1, 0.1, 0.1, None)],
+        };
+        let trigen = Trigen::from_input_data(&data)?;
+        trigen.generate_mesh(false, false, true, Some(0.45), None)?;
+
+        if true {
+            let mut plot = Plot::new();
+            trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/test_tri_write_msh_file_works.svg")?;
+        }
+
+        let file_path = "/tmp/tritet/test_tri_write_msh_file_works.msh";
+        trigen.write_msh_file(file_path)?;
+
+        let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;
+        assert_eq!(
+            contents,
+            "# header\n\
+             # ndim npoint ncell\n\
+             2 5 4\n\
+             \n\
+             # points\n\
+             # id marker x y\n\
+             0 -1 0.0 0.0\n\
+             1 -1 1.0 0.0\n\
+             2 -1 1.0 1.0\n\
+             3 -1 0.0 1.0\n\
+             4 0 0.5 0.5\n\
+             \n\
+             # cells\n\
+             # id attribute kind points\n\
+             0 1 tri3 1 2 4\n\
+             1 1 tri3 3 0 4\n\
+             2 1 tri3 4 2 3\n\
+             3 1 tri3 0 1 4\n\
+             "
+        );
 
         Ok(())
     }
