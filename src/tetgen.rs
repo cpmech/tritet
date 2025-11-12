@@ -867,7 +867,7 @@ impl Tetgen {
     /// # Input
     ///
     /// * `full_path` -- may be a String, &str, or Path
-    pub fn write_msh_file<P>(&self, full_path: &P) -> Result<(), StrError>
+    pub fn write_msh<P>(&self, full_path: &P) -> Result<(), StrError>
     where
         P: AsRef<OsStr> + ?Sized,
     {
@@ -1627,7 +1627,7 @@ mod tests {
         }
 
         let file_path = "/tmp/tritet/test_tet_write_msh_file_works.msh";
-        tetgen.write_msh_file(file_path)?;
+        tetgen.write_msh(file_path)?;
         let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;
         let correct = "# header\n\
                        # ndim npoint ncell\n\

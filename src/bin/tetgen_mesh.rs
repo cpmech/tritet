@@ -8,7 +8,7 @@ use tritet::{InputDataTetMesh, StrError, Tetgen};
 #[derive(Debug, StructOpt)]
 #[structopt(
     name = "tetgen_mesh",
-    about = "Generate tetrahedral mesh using TetGen and export to VTU format"
+    about = "Generate tetrahedral mesh using TetGen and export as MSH and VTU"
 )]
 struct Options {
     /// Input JSON file
@@ -60,6 +60,16 @@ fn main() -> Result<(), StrError> {
     let o2 = options.o2;
     tetgen.generate_mesh(verbose, o2, options.max_volume, options.min_angle)?;
 
+    // write MSH file
+    let path_msh = format!("{}/{}.msh", options.out_dir, fn_stem);
+    tetgen.write_msh(&path_msh)?;
+    println!("\nGenerated MSH file: {}/{}.msh", options.out_dir, fn_stem);
+
+    // write VTU file
+    let path_vtu = format!("{}/{}.vtu", options.out_dir, fn_stem);
+    tetgen.write_vtu(&path_vtu)?;
+    println!("Generated VTU file: {}/{}.vtu", options.out_dir, fn_stem);
+
     // write SVG file with wireframe
     if options.svg_figure {
         let mut plot = Plot::new();
@@ -67,12 +77,8 @@ fn main() -> Result<(), StrError> {
         plot.set_equal_axes(true)
             .set_figure_size_points(800.0, 800.0)
             .save(&format!("{}/{}.svg", options.out_dir, fn_stem))?;
-        println!("\nGenerated SVG file: {}/{}.svg", options.out_dir, fn_stem);
+        println!("Generated SVG file: {}/{}.svg", options.out_dir, fn_stem);
     }
-
-    // write VTU file
-    let path_vtu = format!("{}/{}.vtu", options.out_dir, fn_stem);
-    tetgen.write_vtu(&path_vtu)?;
-    println!("\nGenerated VTU file: {}/{}.vtu", options.out_dir, fn_stem);
+    println!();
     Ok(())
 }
