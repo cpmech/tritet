@@ -1084,11 +1084,22 @@ impl Trigen {
             return Err("mesh is empty: cannot write msh file");
         }
 
-        // write to buffer
+        // calculate the number of marked edges
+        let mut nmarked_edge: usize = 0;
+        for i in 0..self.out_nsegment() {
+            let marker = self.out_segment_marker(i);
+            if marker != 0 {
+                nmarked_edge += 1;
+            }
+        }
+
+        // write header
         let mut f = String::new();
         write!(f, "# header\n").unwrap();
-        write!(f, "# ndim npoint ncell\n").unwrap();
-        write!(f, "2 {} {}\n", npoint, ncell).unwrap();
+        write!(f, "# ndim npoint ncell nmarked_edge nmarked_face\n").unwrap();
+        write!(f, "2 {} {} {} 0\n", npoint, ncell, nmarked_edge).unwrap();
+
+        // write points
         write!(f, "\n# points\n").unwrap();
         write!(f, "# id marker x y\n").unwrap();
         for i in 0..npoint {
@@ -1097,6 +1108,8 @@ impl Trigen {
             let y = self.out_point(i, 1);
             write!(f, "{} {} {:?} {:?}\n", i, a, x, y).unwrap();
         }
+
+        // write cells
         write!(f, "\n# cells\n").unwrap();
         write!(f, "# id attribute kind points\n").unwrap();
         let mut b = String::new();
@@ -1108,6 +1121,20 @@ impl Trigen {
                 write!(b, " {}", self.out_cell_point(i, m)).unwrap();
             }
             write!(f, "{} {} {}{}\n", i, a, k, b).unwrap();
+        }
+
+        // write edge markers
+        if nmarked_edge > 0 {
+            write!(f, "\n# marked edges\n").unwrap();
+            write!(f, "# marker p1 p2\n").unwrap();
+            for i in 0..self.out_nsegment() {
+                let marker = self.out_segment_marker(i);
+                if marker != 0 {
+                    let a = self.out_segment_point(i, 0);
+                    let b = self.out_segment_point(i, 1);
+                    write!(f, "{} {} {}\n", marker, a, b).unwrap();
+                }
+            }
         }
 
         // create directory
@@ -1740,15 +1767,15 @@ mod tests {
     #[test]
     fn tri_write_msh_file_works() -> Result<(), StrError> {
         let data = InputDataTriMesh {
-            points: vec![(0, 0.0, 0.0), (0, 1.0, 0.0), (0, 1.0, 1.0), (0, 0.0, 1.0)],
-            segments: vec![(-1, 0, 1), (-1, 1, 2), (-1, 2, 3), (-1, 3, 0)],
+            points: vec![(-1, 0.0, 0.0), (-2, 1.0, 0.0), (-3, 1.0, 1.0), (-4, 0.0, 1.0)],
+            segments: vec![(-10, 0, 1), (-20, 1, 2), (-30, 2, 3), (-40, 3, 0)],
             holes: vec![],
             regions: vec![(1, 0.1, 0.1, None)],
         };
         let trigen = Trigen::from_input_data(&data)?;
         trigen.generate_mesh(false, false, true, Some(0.45), None)?;
 
-        if SAVE_FIGURE {
+        if true {
             let mut plot = Plot::new();
             trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
             plot.set_equal_axes(true)
@@ -1760,16 +1787,17 @@ mod tests {
         trigen.write_msh(file_path)?;
 
         let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;
+        // println!("contents:\n{}", contents);
         let correct = "# header\n\
-                       # ndim npoint ncell\n\
-                       2 5 4\n\
+                       # ndim npoint ncell nmarked_edge nmarked_face\n\
+                       2 5 4 4 0\n\
                        \n\
                        # points\n\
                        # id marker x y\n\
                        0 -1 0.0 0.0\n\
-                       1 -1 1.0 0.0\n\
-                       2 -1 1.0 1.0\n\
-                       3 -1 0.0 1.0\n\
+                       1 -2 1.0 0.0\n\
+                       2 -3 1.0 1.0\n\
+                       3 -4 0.0 1.0\n\
                        4 0 0.5 0.5\n\
                        \n\
                        # cells\n\
@@ -1778,6 +1806,13 @@ mod tests {
                        1 1 tri3 3 0 4\n\
                        2 1 tri3 4 2 3\n\
                        3 1 tri3 0 1 4\n\
+                       \n\
+                       # marked edges\n\
+                       # marker p1 p2\n\
+                       -10 1 0\n\
+                       -20 2 1\n\
+                       -30 3 2\n\
+                       -40 0 3\n\
                        ";
         assert_eq!(contents, correct);
 

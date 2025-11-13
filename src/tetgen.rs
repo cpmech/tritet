@@ -878,11 +878,14 @@ impl Tetgen {
             return Err("mesh is empty: cannot write msh file");
         }
 
-        // write to buffer
+        // write header
         let mut f = String::new();
+        let nmarked_face = self.out_n_marked_face();
         write!(f, "# header\n").unwrap();
-        write!(f, "# ndim npoint ncell\n").unwrap();
-        write!(f, "3 {} {}\n", npoint, ncell).unwrap();
+        write!(f, "# ndim npoint ncell nmarked_edge nmarked_face\n").unwrap();
+        write!(f, "3 {} {} 0 {}\n", npoint, ncell, nmarked_face).unwrap();
+
+        // write points
         write!(f, "\n# points\n").unwrap();
         write!(f, "# id marker x y z\n").unwrap();
         for i in 0..npoint {
@@ -892,6 +895,8 @@ impl Tetgen {
             let z = self.out_point(i, 2);
             write!(f, "{} {} {:?} {:?} {:?}\n", i, a, x, y, z).unwrap();
         }
+
+        // write cells
         write!(f, "\n# cells\n").unwrap();
         write!(f, "# id attribute kind points\n").unwrap();
         let mut b = String::new();
@@ -903,6 +908,24 @@ impl Tetgen {
                 write!(b, " {}", self.out_cell_point(i, m)).unwrap();
             }
             write!(f, "{} {} {}{}\n", i, a, k, b).unwrap();
+        }
+
+        // write edge and face markers
+        if nmarked_face > 0 {
+            // write edge markers (section is empty for tetrahedral meshes)
+            write!(f, "\n# marked edges\n").unwrap();
+            write!(f, "# marker p1 p2\n").unwrap();
+
+            // write face markers
+            write!(f, "\n# marked faces\n").unwrap();
+            write!(f, "# marker p1 p2 p3\n").unwrap();
+            if nmarked_face > 0 {
+                let mut ids = [0; 6];
+                for i in 0..nmarked_face {
+                    let (marker, _) = self.out_marked_face(i, &mut ids);
+                    writeln!(f, "{} {} {} {}", marker, ids[0], ids[1], ids[2]).unwrap();
+                }
+            }
         }
 
         // create directory
@@ -1629,9 +1652,10 @@ mod tests {
         let file_path = "/tmp/tritet/test_tet_write_msh_file_works.msh";
         tetgen.write_msh(file_path)?;
         let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;
+        // println!("contents=\n{}", contents);
         let correct = "# header\n\
-                       # ndim npoint ncell\n\
-                       3 8 6\n\
+                       # ndim npoint ncell nmarked_edge nmarked_face\n\
+                       3 8 6 0 12\n\
                        \n\
                        # points\n\
                        # id marker x y z\n\
@@ -1652,6 +1676,24 @@ mod tests {
                        3 1 tet4 0 7 6 2\n\
                        4 1 tet4 5 0 6 1\n\
                        5 1 tet4 6 0 2 1\n\
+                       \n\
+                       # marked edges\n\
+                       # marker p1 p2\n\
+                       \n\
+                       # marked faces\n\
+                       # marker p1 p2 p3\n\
+                       20 2 7 3\n\
+                       -30 3 0 2\n\
+                       -10 3 7 0\n\
+                       30 6 4 7\n\
+                       -10 7 4 0\n\
+                       30 6 5 4\n\
+                       -20 0 4 5\n\
+                       20 2 6 7\n\
+                       10 1 5 6\n\
+                       -20 0 5 1\n\
+                       -30 1 2 0\n\
+                       10 1 6 2\n\
                        ";
         assert_eq!(contents, correct);
 
