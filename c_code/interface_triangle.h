@@ -19,7 +19,7 @@ int32_t tri_set_point(struct ExtTrigen *trigen, int32_t index, int32_t marker, d
 
 int32_t tri_set_segment(struct ExtTrigen *trigen, int32_t index, int32_t marker, int32_t a, int32_t b);
 
-int32_t tri_set_region(struct ExtTrigen *trigen, int32_t index, int32_t attribute, double x, double y, double max_area);
+int32_t tri_set_region(struct ExtTrigen *trigen, int32_t index, int32_t marker, double x, double y, double max_area);
 
 int32_t tri_set_hole(struct ExtTrigen *trigen, int32_t index, double x, double y);
 
@@ -47,7 +47,7 @@ int32_t tri_out_segment_marker(struct ExtTrigen *trigen, int32_t index);
 
 int32_t tri_out_cell_point(struct ExtTrigen *trigen, int32_t index, int32_t corner);
 
-int32_t tri_out_cell_attribute(struct ExtTrigen *trigen, int32_t index);
+int32_t tri_out_cell_marker(struct ExtTrigen *trigen, int32_t index);
 
 int32_t tri_out_voronoi_npoint(struct ExtTrigen *trigen);
 

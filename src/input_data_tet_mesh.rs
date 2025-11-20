@@ -49,7 +49,7 @@ pub struct InputDataTetMesh {
 
     /// List of regions
     ///
-    /// Each region is defined by an attribute (region marker), the x, y, and z coordinates located inside the region,
+    /// Each region is defined by a region marker, the x, y, and z coordinates located inside the region,
     /// and an optional maximum volume constraint for the tetrahedra in that region.
     pub regions: Vec<(i32, f64, f64, f64, Option<f64>)>,
 }

@@ -22,15 +22,7 @@ extern "C" {
     fn tet_set_point(tetgen: *mut ExtTetgen, index: i32, marker: i32, x: f64, y: f64, z: f64) -> i32;
     fn tet_set_facet_point(tetgen: *mut ExtTetgen, index: i32, m: i32, p: i32) -> i32;
     fn tet_set_facet_marker(tetgen: *mut ExtTetgen, index: i32, marker: i32) -> i32;
-    fn tet_set_region(
-        tetgen: *mut ExtTetgen,
-        index: i32,
-        attribute: i32,
-        x: f64,
-        y: f64,
-        z: f64,
-        max_volume: f64,
-    ) -> i32;
+    fn tet_set_region(tetgen: *mut ExtTetgen, index: i32, marker: i32, x: f64, y: f64, z: f64, max_volume: f64) -> i32;
     fn tet_set_hole(tetgen: *mut ExtTetgen, index: i32, x: f64, y: f64, z: f64) -> i32;
     fn tet_run_delaunay(tetgen: *mut ExtTetgen, verbose: i32) -> i32;
     fn tet_run_tetrahedralize(
@@ -46,7 +38,7 @@ extern "C" {
     fn tet_out_point(tetgen: *mut ExtTetgen, index: i32, dim: i32) -> f64;
     fn tet_out_point_marker(tetgen: *mut ExtTetgen, index: i32) -> i32;
     fn tet_out_cell_point(tetgen: *mut ExtTetgen, index: i32, corner: i32) -> i32;
-    fn tet_out_cell_attribute(tetgen: *mut ExtTetgen, index: i32) -> i32;
+    fn tet_out_cell_marker(tetgen: *mut ExtTetgen, index: i32) -> i32;
     fn tet_out_n_marked_face(tetgen: *mut ExtTetgen) -> i32;
     fn tet_out_marked_face(
         tetgen: *mut ExtTetgen,
@@ -389,7 +381,7 @@ impl Tetgen {
     /// # Input
     ///
     /// * `index` -- is the index of the region and goes from 0 to `nregion` (passed down to `new`)
-    /// * `attribute` -- is the attribute ID to group the tetrahedra belonging to this region
+    /// * `marker` -- is the marker to identify a group of tetrahedra belonging to this region
     /// * `x` -- is the x-coordinate of the region
     /// * `y` -- is the y-coordinate of the region
     /// * `z` -- is the z-coordinate of the region
@@ -397,7 +389,7 @@ impl Tetgen {
     pub fn set_region(
         &mut self,
         index: usize,
-        attribute: i32,
+        marker: i32,
         x: f64,
         y: f64,
         z: f64,
@@ -412,7 +404,7 @@ impl Tetgen {
             None => -1.0,
         };
         unsafe {
-            let status = tet_set_region(self.ext_tetgen, to_i32(index), attribute, x, y, z, volume_constraint);
+            let status = tet_set_region(self.ext_tetgen, to_i32(index), marker, x, y, z, volume_constraint);
             handle_status(status)?;
         }
         if index == nregion - 1 {
@@ -597,7 +589,7 @@ impl Tetgen {
         }
     }
 
-    /// Returns the attribute ID of an output cell (aka tetrahedron)
+    /// Returns the marker of an output cell (aka tetrahedron)
     ///
     /// # Input
     ///
@@ -606,8 +598,8 @@ impl Tetgen {
     /// # Warning
     ///
     /// This function will return 0 if `index` is out of range.
-    pub fn out_cell_attribute(&self, index: usize) -> i32 {
-        unsafe { tet_out_cell_attribute(self.ext_tetgen, to_i32(index)) }
+    pub fn out_cell_marker(&self, index: usize) -> i32 {
+        unsafe { tet_out_cell_marker(self.ext_tetgen, to_i32(index)) }
     }
 
     /// Returns the number of marked faces
@@ -701,10 +693,10 @@ impl Tetgen {
         set_range: bool,
         with_point_ids: bool,
         with_triangle_ids: bool,
-        with_attribute_ids: bool,
+        with_markers: bool,
         fontsize_point_ids: Option<f64>,
         fontsize_triangle_ids: Option<f64>,
-        fontsize_attribute_ids: Option<f64>,
+        fontsize_markers: Option<f64>,
     ) {
         let ntet = self.out_ncell();
         if ntet < 1 {
@@ -713,7 +705,7 @@ impl Tetgen {
         let mut canvas = Canvas::new();
         let mut point_ids = Text::new();
         let mut tetrahedron_ids = Text::new();
-        let mut attribute_ids = Text::new();
+        let mut markers = Text::new();
         if with_point_ids {
             point_ids
                 .set_color("red")
@@ -736,13 +728,13 @@ impl Tetgen {
                 tetrahedron_ids.set_fontsize(fsz);
             }
         }
-        if with_attribute_ids {
-            attribute_ids
+        if with_markers {
+            markers
                 .set_color("black")
                 .set_align_horizontal("center")
                 .set_align_vertical("center");
-            if let Some(fsz) = fontsize_attribute_ids {
-                attribute_ids.set_fontsize(fsz);
+            if let Some(fsz) = fontsize_markers {
+                markers.set_fontsize(fsz);
             }
         }
         const EDGES: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
@@ -757,12 +749,12 @@ impl Tetgen {
         let mut index_color = 0;
         let clr = DARK_COLORS;
         for tet in 0..ntet {
-            let attribute = self.out_cell_attribute(tet);
-            let color = match colors.get(&attribute) {
+            let marker = self.out_cell_marker(tet);
+            let color = match colors.get(&marker) {
                 Some(c) => c,
                 None => {
                     let c = clr[index_color % clr.len()];
-                    colors.insert(attribute, c);
+                    colors.insert(marker, c);
                     index_color += 1;
                     c
                 }
@@ -795,12 +787,12 @@ impl Tetgen {
             if with_triangle_ids {
                 tetrahedron_ids.draw_3d(xcen[0], xcen[1], xcen[2], format!("{}", tet).as_str());
             }
-            if with_attribute_ids {
+            if with_markers {
                 for dim in 0..3 {
                     x[dim] = self.out_point(self.out_cell_point(tet, 0), dim);
                     xatt[dim] = (x[dim] + xcen[dim]) / 2.0;
                 }
-                attribute_ids.draw_3d(xatt[0], xatt[1], xatt[2], format!("[{}]", attribute).as_str());
+                markers.draw_3d(xatt[0], xatt[1], xatt[2], format!("[{}]", marker).as_str());
             }
         }
         if with_point_ids {
@@ -824,8 +816,8 @@ impl Tetgen {
         if with_point_ids {
             plot.add(&point_ids);
         }
-        if with_attribute_ids {
-            plot.add(&attribute_ids);
+        if with_markers {
+            plot.add(&markers);
         }
         if set_range {
             plot.set_range_3d(min[0], max[0], min[1], max[1], min[2], max[2]);
@@ -842,27 +834,7 @@ impl Tetgen {
     /// 2. The points list where each line contains the `id` of the point, which must be **equal to the position** in the list,
     ///    followed by the `x` and `y` (and `z`) coordinates;
     /// 3. The cells list where each line contains the `id` of the cell, which must be **equal to the position** in the list,
-    ///    the attribute (`att`) of the cell, the `kind` of the cell, followed by the IDs of the points that define the cell (connectivity).
-    ///
-    /// The text file looks like this (the hash tag indicates a comment/the mesh below is just an example which won't work):
-    ///
-    /// ```text
-    /// # header
-    /// # ndim npoint ncell
-    ///      3      8     5
-    ///
-    /// # points
-    /// # id marker x y z
-    ///    0 0 0.0 0.0 0.0
-    ///    1 0 0.5 0.0 1.0
-    ///    2 0 1.0 0.0 2.0
-    /// # ... more points should follow
-    ///
-    /// # cells
-    /// # id attribute kind point_ids...
-    ///    0 1 tet4 0 1 3 2
-    ///    1 1 tet4 1 4 6 5
-    /// ```
+    ///    the marker of the cell, the `kind` of the cell, followed by the IDs of the points that define the cell (connectivity).
     ///
     /// # Input
     ///
@@ -898,10 +870,10 @@ impl Tetgen {
 
         // write cells
         write!(f, "\n# cells\n").unwrap();
-        write!(f, "# id attribute kind points\n").unwrap();
+        write!(f, "# id marker kind points\n").unwrap();
         let mut b = String::new();
         for i in 0..ncell {
-            let a = self.out_cell_attribute(i);
+            let a = self.out_cell_marker(i);
             let k = if self.out_cell_npoint() == 10 { "tet10" } else { "tet4" };
             b.clear();
             for m in 0..self.out_cell_npoint() {
@@ -1669,7 +1641,7 @@ mod tests {
                        7 -8 0.0 1.0 1.0\n\
                        \n\
                        # cells\n\
-                       # id attribute kind points\n\
+                       # id marker kind points\n\
                        0 1 tet4 0 3 7 2\n\
                        1 1 tet4 0 7 4 6\n\
                        2 1 tet4 5 0 4 6\n\

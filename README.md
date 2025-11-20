@@ -276,7 +276,7 @@ fn main() -> Result<(), StrError> {
             (0.5, 0.5), // x, y
         ],
         regions: vec![
-            (1, 0.1, 0.1, None), // attribute, x, y, max area
+            (1, 0.1, 0.1, None), // marker, x, y, max area
             (2, 0.1, 0.9, None),
         ],
     };
