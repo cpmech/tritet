@@ -1755,7 +1755,7 @@ mod tests {
         let trigen = Trigen::from_input_data(&data)?;
         trigen.generate_mesh(false, false, true, Some(0.45), None)?;
 
-        if true {
+        if SAVE_FIGURE {
             let mut plot = Plot::new();
             trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
             plot.set_equal_axes(true)
