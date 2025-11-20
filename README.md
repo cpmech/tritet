@@ -63,10 +63,10 @@ Note: set `SAVE_FIGURE` to true to generate the figures.
 
 Tritet contains two executables to generate meshes:
 
-1. `trigen_mesh` to generate quality triangle meshes with boundary markers and volume and angle constraints
-2. `tetgen_mesh` to generate quality tetrahedral meshes with boundary markers and volume and angle constraints
+1. `trigen2msh` to generate quality triangle meshes with boundary markers and volume and angle constraints
+2. `tetgen2msh` to generate quality tetrahedral meshes with boundary markers and volume and angle constraints
 
-Below is a JSON input for `trigen_mesh`:
+Below is a JSON input for `trigen2msh`:
 
 ```json
 {
@@ -109,7 +109,7 @@ Below is a JSON input for `trigen_mesh`:
 Which can be used as follows:
 
 ```bash
-cargo run --bin trigen_mesh -- data/input/example_tri_input.json /tmp/tritet -s -v0.01
+cargo run --bin trigen2msh -- data/input/example_tri_input.json /tmp/tritet -s -v0.01
 ```
 
 Where `-s` indicates SVG file generation (if Python/Matplotlib is available; otherwise an error arises),
@@ -117,7 +117,7 @@ and `v0.01` indicates an area (volume) constraint of 0.01. The output is shown b
 
 ![example_tri_input.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tri_input.svg)
 
-Below is a JSON input for `tetgen_mesh`:
+Below is a JSON input for `tetgen2msh`:
 
 ```json
 {
@@ -143,7 +143,7 @@ Below is a JSON input for `tetgen_mesh`:
 Which can be used as follows:
 
 ```bash
-cargo run --bin tetgen_mesh -- data/input/example_tet_input.json /tmp/tritet -s -v0.1
+cargo run --bin tetgen2msh -- data/input/example_tet_input.json /tmp/tritet -s -v0.1
 ```
 
 Where `-s` indicates SVG file generation (if Python/Matplotlib is available; otherwise an error arises),
