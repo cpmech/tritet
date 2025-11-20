@@ -124,7 +124,7 @@ fn main() -> Result<(), StrError> {
     }
     println!();
     for index in 0..tetgen.out_ncell() {
-        print!("Cell {} ({}): (", index, tetgen.out_cell_attribute(index));
+        print!("Cell {} ({}): (", index, tetgen.out_cell_marker(index));
         for m in 0..tetgen.out_cell_npoint() {
             if m > 0 {
                 print!(", ");

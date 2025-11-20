@@ -227,8 +227,8 @@ int32_t tri_set_segment(struct ExtTrigen *trigen, int32_t index, int32_t marker,
     return TRITET_SUCCESS;
 }
 
-int32_t tri_set_region(struct ExtTrigen *trigen, int32_t index, int32_t attribute, double x, double y, double max_area) {
-    // Shewchuk: If you are using the -A and -a switches simultaneously and wish to assign an attribute
+int32_t tri_set_region(struct ExtTrigen *trigen, int32_t index, int32_t marker, double x, double y, double max_area) {
+    // Shewchuk: If you are using the -A and -a switches simultaneously and wish to assign an marker
     // to some region without imposing an area constraint, use a negative maximum area.
     if (trigen == NULL) {
         return TRITET_ERROR_NULL_DATA;
@@ -241,7 +241,7 @@ int32_t tri_set_region(struct ExtTrigen *trigen, int32_t index, int32_t attribut
     }
     trigen->input.regionlist[index * 4] = x;
     trigen->input.regionlist[index * 4 + 1] = y;
-    trigen->input.regionlist[index * 4 + 2] = attribute;
+    trigen->input.regionlist[index * 4 + 2] = marker;
     trigen->input.regionlist[index * 4 + 3] = max_area;
     return TRITET_SUCCESS;
 }
@@ -268,6 +268,9 @@ int32_t tri_run_delaunay(struct ExtTrigen *trigen, int32_t verbose) {
     if (trigen->input.pointlist == NULL) {
         return TRITET_ERROR_NULL_POINT_LIST;
     }
+
+    // clear previous data
+    free_triangle_data(&trigen->output);
 
     // Triangulate the points
     // Switches:
@@ -298,6 +301,9 @@ int32_t tri_run_voronoi(struct ExtTrigen *trigen, int32_t verbose) {
     if (trigen->input.pointlist == NULL) {
         return TRITET_ERROR_NULL_POINT_LIST;
     }
+
+    // clear previous data
+    free_triangle_data(&trigen->output);
 
     // Triangulate the points
     // Switches:
@@ -333,6 +339,9 @@ int32_t tri_run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t q
         return TRITET_ERROR_NULL_SEGMENT_LIST;
     }
 
+    // clear previous data
+    free_triangle_data(&trigen->output);
+
     // Generate mesh
     // Switches:
     // * `p` -- write a PSLG (p)
@@ -359,6 +368,8 @@ int32_t tri_run_triangulate(struct ExtTrigen *trigen, int32_t verbose, int32_t q
             return TRITET_ERROR_STRING_CONCAT;
         }
         strcat(command, buf);
+    } else {
+        strcat(command, "a");
     }
     if (global_min_angle > 0.0) {
         char buf[32];
@@ -467,7 +478,7 @@ int32_t tri_out_cell_point(struct ExtTrigen *trigen, int32_t index, int32_t corn
     }
 }
 
-int32_t tri_out_cell_attribute(struct ExtTrigen *trigen, int32_t index) {
+int32_t tri_out_cell_marker(struct ExtTrigen *trigen, int32_t index) {
     if (trigen == NULL) {
         return 0;
     }

@@ -1,8 +1,14 @@
-use crate::constants::{handle_status, TRITET_TO_TRIANGLE,LIGHT_COLORS};
+use crate::constants::{handle_status, LIGHT_COLORS, TRITET_TO_TRIANGLE};
 use crate::conversion::to_i32;
+use crate::InputDataTriMesh;
 use crate::StrError;
 use plotpy::{Canvas, Curve, Plot, PolyCode, Text};
 use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::fmt::Write;
+use std::fs::{self, File};
+use std::io::Write as IoWrite;
+use std::path::Path;
 
 #[repr(C)]
 pub(crate) struct ExtTrigen {
@@ -15,7 +21,7 @@ extern "C" {
     fn tri_drop_trigen(trigen: *mut ExtTrigen);
     fn tri_set_point(trigen: *mut ExtTrigen, index: i32, marker: i32, x: f64, y: f64) -> i32;
     fn tri_set_segment(trigen: *mut ExtTrigen, index: i32, marker: i32, a: i32, b: i32) -> i32;
-    fn tri_set_region(trigen: *mut ExtTrigen, index: i32, attribute: i32, x: f64, y: f64, max_area: f64) -> i32;
+    fn tri_set_region(trigen: *mut ExtTrigen, index: i32, marker: i32, x: f64, y: f64, max_area: f64) -> i32;
     fn tri_set_hole(trigen: *mut ExtTrigen, index: i32, x: f64, y: f64) -> i32;
     fn tri_run_delaunay(trigen: *mut ExtTrigen, verbose: i32) -> i32;
     fn tri_run_voronoi(trigen: *mut ExtTrigen, verbose: i32) -> i32;
@@ -36,7 +42,7 @@ extern "C" {
     fn tri_out_segment_point(trigen: *mut ExtTrigen, index: i32, side: i32) -> i32;
     fn tri_out_segment_marker(trigen: *mut ExtTrigen, index: i32) -> i32;
     fn tri_out_cell_point(trigen: *mut ExtTrigen, index: i32, corner: i32) -> i32;
-    fn tri_out_cell_attribute(trigen: *mut ExtTrigen, index: i32) -> i32;
+    fn tri_out_cell_marker(trigen: *mut ExtTrigen, index: i32) -> i32;
     fn tri_out_voronoi_npoint(trigen: *mut ExtTrigen) -> i32;
     fn tri_out_voronoi_point(trigen: *mut ExtTrigen, index: i32, dim: i32) -> f64;
     fn tri_out_voronoi_nedge(trigen: *mut ExtTrigen) -> i32;
@@ -55,6 +61,16 @@ pub enum VoronoiEdgePoint {
 }
 
 /// Implements high-level functions to call Shewchuk's Triangle C-Code
+///
+/// The input of Trigen is either a cloud of points or a Planar Straight Line Graph (PSLG)
+/// (see definitions below and also in the README file). The cloud of points is used for Voronoi
+/// tesselation whereas the PSLG is used for mesh generation. The setting up of the input data is
+/// done via the following member functions:
+///
+/// * [Trigen::set_point] -- sets the point coordinates
+/// * [Trigen::set_segment] -- sets the segment endpoint IDs
+/// * [Trigen::set_region] -- marks a region within the PSLG
+/// * [Trigen::set_hole] -- marks a hole within the PSLG
 ///
 /// **Note:** All indices are are zero-based.
 ///
@@ -208,6 +224,71 @@ pub enum VoronoiEdgePoint {
 /// }
 /// ```
 ///
+/// The above example can also be implemented using [InputDataTriMesh] as follows:
+///
+/// ```
+/// use plotpy::Plot;
+/// use tritet::{InputDataTriMesh, StrError, Trigen};
+///
+/// const SAVE_FIGURE: bool = false;
+///
+/// fn main() -> Result<(), StrError> {
+///     // set input data
+///     let input_data = InputDataTriMesh {
+///         points: vec![
+///             (0, 0.0, 0.0), // boundary marker, x, y
+///             (0, 1.0, 0.0),
+///             (0, 1.0, 1.0),
+///             (0, 0.0, 1.0),
+///             (0, 0.2, 0.2),
+///             (0, 0.8, 0.2),
+///             (0, 0.8, 0.8),
+///             (0, 0.2, 0.8),
+///             (0, 0.0, 0.5),
+///             (0, 0.2, 0.5),
+///             (0, 0.8, 0.5),
+///             (0, 1.0, 0.5),
+///         ],
+///         segments: vec![
+///             (-1, 0, 1), // boundary marker, point indices
+///             (-1, 1, 2),
+///             (-1, 2, 3),
+///             (-1, 3, 0),
+///             (-1, 4, 5),
+///             (-1, 5, 6),
+///             (-1, 6, 7),
+///             (-1, 7, 4),
+///             (-1, 8, 9),
+///             (-1, 10, 11),
+///         ],
+///         holes: vec![
+///             (0.5, 0.5), // x, y
+///         ],
+///         regions: vec![
+///             (1, 0.1, 0.1, None), // marker, x, y, max area
+///             (2, 0.1, 0.9, None),
+///         ],
+///     };
+///
+///     // allocate generator from input data
+///     let trigen = Trigen::from_input_data(&input_data)?;
+///
+///     // generate o2 mesh without constraints
+///     trigen.generate_mesh(false, true, false, None, None)?;
+///     assert_eq!(trigen.out_ncell(), 12);
+///
+///     // draw mesh
+///     if SAVE_FIGURE {
+///         let mut plot = Plot::new();
+///         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+///         plot.set_equal_axes(true)
+///             .set_figure_size_points(600.0, 600.0)
+///             .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
+///     }
+///     Ok(())
+/// }
+/// ```
+///
 /// ![doc_triangle_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_mesh_1.svg)
 ///
 /// # Definition of geometric terms -- by J.R.Shewchuk
@@ -273,6 +354,28 @@ impl Drop for Trigen {
 }
 
 impl Trigen {
+    /// Allocates a new instance from input data
+    pub fn from_input_data(data: &InputDataTriMesh) -> Result<Self, StrError> {
+        let npoint = data.points.len();
+        let nsegment = data.segments.len();
+        let nregion = data.regions.len();
+        let nhole = data.holes.len();
+        let mut trigen = Trigen::new(npoint, Some(nsegment), Some(nregion), Some(nhole))?;
+        for (i, p) in data.points.iter().enumerate() {
+            trigen.set_point(i, p.0, p.1, p.2)?;
+        }
+        for (i, s) in data.segments.iter().enumerate() {
+            trigen.set_segment(i, s.0, s.1, s.2)?;
+        }
+        for (i, r) in data.regions.iter().enumerate() {
+            trigen.set_region(i, r.0, r.1, r.2, r.3)?;
+        }
+        for (i, h) in data.holes.iter().enumerate() {
+            trigen.set_hole(i, h.0, h.1)?;
+        }
+        Ok(trigen)
+    }
+
     /// Allocates a new instance
     ///
     /// # Input
@@ -395,14 +498,14 @@ impl Trigen {
     /// # Input
     ///
     /// * `index` -- is the index of the region and goes from 0 to `nregion` (passed down to `new`)
-    /// * `attribute` -- is the attribute ID to group the triangles belonging to this region
+    /// * `marker` -- is the marker to identify a group of triangles belonging to this region
     /// * `x` -- is the x-coordinate of the region
     /// * `y` -- is the y-coordinate of the region
     /// * `max_area` -- is the maximum area constraint for the triangles belonging to this region
     pub fn set_region(
         &mut self,
         index: usize,
-        attribute: usize,
+        marker: i32,
         x: f64,
         y: f64,
         max_area: Option<f64>,
@@ -416,7 +519,7 @@ impl Trigen {
             None => -1.0,
         };
         unsafe {
-            let status = tri_set_region(self.ext_trigen, to_i32(index), to_i32(attribute), x, y, area_constraint);
+            let status = tri_set_region(self.ext_trigen, to_i32(index), marker, x, y, area_constraint);
             handle_status(status)?;
         }
         if index == nregion - 1 {
@@ -490,7 +593,8 @@ impl Trigen {
     /// * `verbose` -- Prints Triangle's messages to the console
     /// * `quadratic` -- Generates the middle nodes; e.g., nnode = 6
     /// * `allow_new_points_on_bry:bool` -- Allow the insertion of new (Steiner) points on the boundary
-    /// * `global_max_area` -- The maximum area constraint for all generated triangles
+    /// * `global_max_area` -- The maximum area constraint for all generated triangles. Note, this option
+    ///   will override any region-specific area constraints set via [Trigen::set_region].
     /// * `global_min_angle` -- The minimum angle constraint is given in degrees (the default minimum angle is twenty degrees)
     pub fn generate_mesh(
         &self,
@@ -653,13 +757,13 @@ impl Trigen {
         }
     }
 
-    /// Returns the attribute ID of a triangle (aka cell)
+    /// Returns the marker of a triangle (aka cell)
     ///
     /// # Warning
     ///
     /// This function will return 0 if the `index` is out of range.
-    pub fn out_cell_attribute(&self, index: usize) -> usize {
-        unsafe { tri_out_cell_attribute(self.ext_trigen, to_i32(index)) as usize }
+    pub fn out_cell_marker(&self, index: usize) -> i32 {
+        unsafe { tri_out_cell_marker(self.ext_trigen, to_i32(index)) }
     }
 
     /// Returns the number of points of the Voronoi tessellation
@@ -729,10 +833,10 @@ impl Trigen {
         set_range: bool,
         with_point_ids: bool,
         with_triangle_ids: bool,
-        with_attribute_ids: bool,
+        with_markers: bool,
         fontsize_point_ids: Option<f64>,
         fontsize_triangle_ids: Option<f64>,
-        fontsize_attribute_ids: Option<f64>,
+        fontsize_markers: Option<f64>,
     ) {
         let n_triangle = self.out_ncell();
         if n_triangle < 1 {
@@ -741,7 +845,7 @@ impl Trigen {
         let mut canvas = Canvas::new();
         let mut point_ids = Text::new();
         let mut triangle_ids = Text::new();
-        let mut attribute_ids = Text::new();
+        let mut markers = Text::new();
         if with_point_ids {
             point_ids
                 .set_color("red")
@@ -764,13 +868,13 @@ impl Trigen {
                 triangle_ids.set_fontsize(fsz);
             }
         }
-        if with_attribute_ids {
-            attribute_ids
+        if with_markers {
+            markers
                 .set_color("black")
                 .set_align_horizontal("center")
                 .set_align_vertical("center");
-            if let Some(fsz) = fontsize_attribute_ids {
-                attribute_ids.set_fontsize(fsz);
+            if let Some(fsz) = fontsize_markers {
+                markers.set_fontsize(fsz);
             }
         }
         canvas.set_edge_color("black");
@@ -779,16 +883,16 @@ impl Trigen {
         let mut xatt = vec![0.0; 2];
         let mut min = vec![f64::MAX; 2];
         let mut max = vec![f64::MIN; 2];
-        let mut colors: HashMap<usize, &'static str> = HashMap::new();
+        let mut colors: HashMap<i32, &'static str> = HashMap::new();
         let mut index_color = 0;
         let clr = LIGHT_COLORS;
         for tri in 0..n_triangle {
-            let attribute = self.out_cell_attribute(tri);
-            let color = match colors.get(&attribute) {
+            let marker = self.out_cell_marker(tri);
+            let color = match colors.get(&marker) {
                 Some(c) => c,
                 None => {
                     let c = clr[index_color % clr.len()];
-                    colors.insert(attribute, c);
+                    colors.insert(marker, c);
                     index_color += 1;
                     c
                 }
@@ -816,13 +920,13 @@ impl Trigen {
             if with_triangle_ids {
                 triangle_ids.draw(xmid[0], xmid[1], format!("{}", tri).as_str());
             }
-            if with_attribute_ids {
+            if with_markers {
                 let p = self.out_cell_point(tri, 0);
                 for dim in 0..2 {
                     x[dim] = self.out_point(p, dim);
                     xatt[dim] = (x[dim] + xmid[dim]) / 2.0;
                 }
-                attribute_ids.draw(xatt[0], xatt[1], format!("[{}]", attribute).as_str());
+                markers.draw(xatt[0], xatt[1], format!("[{}]", marker).as_str());
             }
         }
         if with_point_ids {
@@ -839,8 +943,8 @@ impl Trigen {
         if with_point_ids {
             plot.add(&point_ids);
         }
-        if with_attribute_ids {
-            plot.add(&attribute_ids);
+        if with_markers {
+            plot.add(&markers);
         }
         if set_range {
             plot.set_range(min[0], max[0], min[1], max[1]);
@@ -933,6 +1037,100 @@ impl Trigen {
         plot.set_range(min[0], max[0], min[1], max[1]);
         plot.add(&canvas).add(&markers);
     }
+
+    /// Writes gemlab "msh" file
+    ///
+    /// # File format
+    ///
+    /// The text file format includes three sections:
+    ///
+    /// 1. The header with the space dimension (`ndim`), number of points (`npoint`), and number of cells (`ncell`);
+    /// 2. The points list where each line contains the `id` of the point, which must be **equal to the position** in the list,
+    ///    followed by the `x` and `y` (and `z`) coordinates;
+    /// 3. The cells list where each line contains the `id` of the cell, which must be **equal to the position** in the list,
+    ///    the marker of the cell, the `kind` of the cell, followed by the IDs of the points that define the cell (connectivity).
+    ///
+    /// # Input
+    ///
+    /// * `full_path` -- may be a String, &str, or Path
+    pub fn write_msh<P>(&self, full_path: &P) -> Result<(), StrError>
+    where
+        P: AsRef<OsStr> + ?Sized,
+    {
+        // check
+        let npoint = self.out_npoint();
+        let ncell = self.out_ncell();
+        if npoint < 1 || ncell < 1 {
+            return Err("mesh is empty: cannot write msh file");
+        }
+
+        // calculate the number of marked edges
+        let mut nmarked_edge: usize = 0;
+        for i in 0..self.out_nsegment() {
+            let marker = self.out_segment_marker(i);
+            if marker != 0 {
+                nmarked_edge += 1;
+            }
+        }
+
+        // write header
+        let mut f = String::new();
+        write!(f, "# header\n").unwrap();
+        write!(f, "# ndim npoint ncell nmarked_edge nmarked_face\n").unwrap();
+        write!(f, "2 {} {} {} 0\n", npoint, ncell, nmarked_edge).unwrap();
+
+        // write points
+        write!(f, "\n# points\n").unwrap();
+        write!(f, "# id marker x y\n").unwrap();
+        for i in 0..npoint {
+            let a = self.out_point_marker(i);
+            let x = self.out_point(i, 0);
+            let y = self.out_point(i, 1);
+            write!(f, "{} {} {:?} {:?}\n", i, a, x, y).unwrap();
+        }
+
+        // write cells
+        write!(f, "\n# cells\n").unwrap();
+        write!(f, "# id marker kind points\n").unwrap();
+        let mut b = String::new();
+        for i in 0..ncell {
+            let a = self.out_cell_marker(i);
+            let k = if self.out_cell_npoint() == 6 { "tri6" } else { "tri3" };
+            b.clear();
+            for m in 0..self.out_cell_npoint() {
+                write!(b, " {}", self.out_cell_point(i, m)).unwrap();
+            }
+            write!(f, "{} {} {}{}\n", i, a, k, b).unwrap();
+        }
+
+        // write edge markers
+        if nmarked_edge > 0 {
+            write!(f, "\n# marked edges\n").unwrap();
+            write!(f, "# marker p1 p2\n").unwrap();
+            for i in 0..self.out_nsegment() {
+                let marker = self.out_segment_marker(i);
+                if marker != 0 {
+                    let a = self.out_segment_point(i, 0);
+                    let b = self.out_segment_point(i, 1);
+                    write!(f, "{} {} {}\n", marker, a, b).unwrap();
+                }
+            }
+        }
+
+        // create directory
+        let path = Path::new(full_path);
+        if let Some(p) = path.parent() {
+            fs::create_dir_all(p).map_err(|_| "cannot create directory")?;
+        }
+
+        // write file
+        let mut file = File::create(path).map_err(|_| "cannot create file")?;
+        file.write_all(f.as_bytes()).map_err(|_| "cannot write file")?;
+
+        // force sync
+        file.sync_all().map_err(|_| "cannot sync file")?;
+        Ok(())
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -940,8 +1138,10 @@ impl Trigen {
 #[cfg(test)]
 mod tests {
     use super::Trigen;
+    use crate::InputDataTriMesh;
     use crate::{StrError, VoronoiEdgePoint};
     use plotpy::Plot;
+    use std::fs;
 
     const SAVE_FIGURE: bool = false;
 
@@ -1202,9 +1402,9 @@ mod tests {
         assert_eq!(trigen.out_cell_point(0, 0), 0);
         assert_eq!(trigen.out_cell_point(0, 1), 1);
         assert_eq!(trigen.out_cell_point(0, 2), 2);
-        assert_eq!(trigen.out_cell_attribute(0), 0);
-        assert_eq!(trigen.out_cell_attribute(1), 0);
-        assert_eq!(trigen.out_cell_attribute(2), 0);
+        assert_eq!(trigen.out_cell_marker(0), 0);
+        assert_eq!(trigen.out_cell_marker(1), 0);
+        assert_eq!(trigen.out_cell_marker(2), 0);
         assert_eq!(trigen.out_voronoi_npoint(), 0);
         assert_eq!(trigen.out_voronoi_nedge(), 0);
         Ok(())
@@ -1371,7 +1571,7 @@ mod tests {
         let trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(trigen.out_point(100, 0), 0.0);
         assert_eq!(trigen.out_point(0, 100), 0.0);
-        assert_eq!(trigen.out_cell_attribute(100), 0);
+        assert_eq!(trigen.out_cell_marker(100), 0);
         assert_eq!(trigen.out_voronoi_point(100, 0), 0.0);
         assert_eq!(trigen.out_voronoi_point(0, 100), 0.0);
         assert_eq!(trigen.out_voronoi_edge_point_a(100), 0,);
@@ -1437,8 +1637,8 @@ mod tests {
             .set_segment(2, -30, 2, 0)?;
         trigen.generate_mesh(false, true, false, Some(0.25), None)?;
         assert_eq!(trigen.out_ncell(), 2);
-        assert_eq!(trigen.out_cell_attribute(0), 1);
-        assert_eq!(trigen.out_cell_attribute(1), 1);
+        assert_eq!(trigen.out_cell_marker(0), 1);
+        assert_eq!(trigen.out_cell_marker(1), 1);
         let mut plot = Plot::new();
         trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
         if SAVE_FIGURE {
@@ -1490,8 +1690,112 @@ mod tests {
         }
 
         assert_eq!(trigen.out_ncell(), 14);
-        assert_eq!(trigen.out_cell_attribute(0), 111);
-        assert_eq!(trigen.out_cell_attribute(12), 222);
+        assert_eq!(trigen.out_cell_marker(0), 111);
+        assert_eq!(trigen.out_cell_marker(12), 222);
+        Ok(())
+    }
+
+    #[test]
+    fn tri_from_input_data_works() -> Result<(), StrError> {
+        let data = InputDataTriMesh {
+            points: vec![
+                (0, 0.0, 0.0),
+                (0, 1.0, 0.0),
+                (0, 1.0, 1.0),
+                (0, 0.0, 1.0),
+                (0, 0.2, 0.2),
+                (0, 0.8, 0.2),
+                (0, 0.8, 0.8),
+                (0, 0.2, 0.8),
+                (0, 0.0, 0.5),
+                (0, 0.2, 0.5),
+                (0, 0.8, 0.5),
+                (0, 1.0, 0.5),
+            ],
+            segments: vec![
+                (-1, 0, 1),
+                (-1, 1, 2),
+                (-1, 2, 3),
+                (-1, 3, 0),
+                (-1, 4, 5),
+                (-1, 5, 6),
+                (-1, 6, 7),
+                (-1, 7, 4),
+                (-1, 8, 9),
+                (-1, 10, 11),
+            ],
+            holes: vec![(0.5, 0.5)],
+            regions: vec![(1, 0.1, 0.1, None), (2, 0.1, 0.9, Some(0.001))],
+        };
+        let trigen = Trigen::from_input_data(&data)?;
+
+        trigen.generate_mesh(false, false, true, None, None)?;
+        assert_eq!(trigen.out_npoint(), 305);
+        assert_eq!(trigen.out_ncell(), 525);
+
+        if SAVE_FIGURE {
+            let mut plot = Plot::new();
+            trigen.draw_triangles(&mut plot, false, false, false, false, None, None, None);
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/test_tri_from_input_data_works.svg")?;
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn tri_write_msh_file_works() -> Result<(), StrError> {
+        let data = InputDataTriMesh {
+            points: vec![(-1, 0.0, 0.0), (-2, 1.0, 0.0), (-3, 1.0, 1.0), (-4, 0.0, 1.0)],
+            segments: vec![(-10, 0, 1), (-20, 1, 2), (-30, 2, 3), (-40, 3, 0)],
+            holes: vec![],
+            regions: vec![(1, 0.1, 0.1, None)],
+        };
+        let trigen = Trigen::from_input_data(&data)?;
+        trigen.generate_mesh(false, false, true, Some(0.45), None)?;
+
+        if SAVE_FIGURE {
+            let mut plot = Plot::new();
+            trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+            plot.set_equal_axes(true)
+                .set_figure_size_points(600.0, 600.0)
+                .save("/tmp/tritet/test_tri_write_msh_file_works.svg")?;
+        }
+
+        let file_path = "/tmp/tritet/test_tri_write_msh_file_works.msh";
+        trigen.write_msh(file_path)?;
+
+        let contents = fs::read_to_string(file_path).map_err(|_| "cannot open file")?;
+        // println!("contents:\n{}", contents);
+        let correct = "# header\n\
+                       # ndim npoint ncell nmarked_edge nmarked_face\n\
+                       2 5 4 4 0\n\
+                       \n\
+                       # points\n\
+                       # id marker x y\n\
+                       0 -1 0.0 0.0\n\
+                       1 -2 1.0 0.0\n\
+                       2 -3 1.0 1.0\n\
+                       3 -4 0.0 1.0\n\
+                       4 0 0.5 0.5\n\
+                       \n\
+                       # cells\n\
+                       # id marker kind points\n\
+                       0 1 tri3 1 2 4\n\
+                       1 1 tri3 3 0 4\n\
+                       2 1 tri3 4 2 3\n\
+                       3 1 tri3 0 1 4\n\
+                       \n\
+                       # marked edges\n\
+                       # marker p1 p2\n\
+                       -10 1 0\n\
+                       -20 2 1\n\
+                       -30 3 2\n\
+                       -40 0 3\n\
+                       ";
+        assert_eq!(contents, correct);
+
         Ok(())
     }
 }

@@ -1,18 +1,26 @@
-# Triangle and tetrahedron mesh generators
+# Triangle and tetrahedron mesh generators <!-- omit from toc --> 
 
 [![Test](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml)
 [![Windows & macOS](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml)
 [![Test on Arch Linux](https://github.com/cpmech/tritet/actions/workflows/test_on_arch_linux.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_on_arch_linux.yml)
 
-## Contents
+## Contents <!-- omit from toc --> 
 
-* [Introduction](#introduction)
-* [Installation](#installation)
-* [Setting Cargo.toml](#cargo)
-* [Examples](#examples)
-* [For developers](#developers)
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Setting Cargo.toml](#setting-cargotoml)
+- [Examples](#examples)
+  - [Mesh generation using JSON input files](#mesh-generation-using-json-input-files)
+  - [2D Delaunay triangulation](#2d-delaunay-triangulation)
+  - [2D Voronoi tessellation](#2d-voronoi-tessellation)
+  - [2D mesh generation using input data structure](#2d-mesh-generation-using-input-data-structure)
+  - [2D mesh generation using setup functions](#2d-mesh-generation-using-setup-functions)
+  - [3D Delaunay triangulation](#3d-delaunay-triangulation)
+  - [3D mesh generation using the input data structure](#3d-mesh-generation-using-the-input-data-structure)
+- [Definitions for Triangle (By J. R. Shewchuk)](#definitions-for-triangle-by-j-r-shewchuk)
+- [For developers](#for-developers)
 
-## <a name="introduction"></a> Introduction
+## Introduction
 
 This crate implements Triangle and Tetrahedron mesh generators by wrapping the best tools around, namely, [Triangle](https://www.cs.cmu.edu/~quake/triangle.html) and [Tetgen](http://tetgen.org/).
 
@@ -28,7 +36,7 @@ See the documentation for further information:
 
 - [Tritet documentation](https://docs.rs/tritet) - Contains the API reference and examples
 
-## <a name="installation"></a> Installation
+## Installation
 
 Install some libraries:
 
@@ -36,7 +44,7 @@ Install some libraries:
 sudo apt install build-essential
 ```
 
-## <a name="cargo"></a> Setting Cargo.toml
+## Setting Cargo.toml
 
 [![Crates.io](https://img.shields.io/crates/v/tritet.svg)](https://crates.io/crates/tritet)
 
@@ -47,9 +55,101 @@ sudo apt install build-essential
 tritet = "*"
 ```
 
-## <a name="examples"></a> Examples
+## Examples
 
 Note: set `SAVE_FIGURE` to true to generate the figures.
+
+### Mesh generation using JSON input files
+
+Tritet contains two executables to generate meshes:
+
+1. `trigen_mesh` to generate quality triangle meshes with boundary markers and volume and angle constraints
+2. `tetgen_mesh` to generate quality tetrahedral meshes with boundary markers and volume and angle constraints
+
+Below is a JSON input for `trigen_mesh`:
+
+```json
+{
+  "points": [
+    [0, 0.0, 0.0],
+    [0, 1.0, 0.0],
+    [0, 1.0, 1.0],
+    [0, 0.0, 1.0],
+    [0, 0.2, 0.2],
+    [0, 0.8, 0.2],
+    [0, 0.8, 0.8],
+    [0, 0.2, 0.8],
+    [0, 0.0, 0.5],
+    [0, 0.2, 0.5],
+    [0, 0.8, 0.5],
+    [0, 1.0, 0.5]
+  ],
+  "segments": [
+    [-1,  0,  1],
+    [-1,  1,  2],
+    [-1,  2,  3],
+    [-1,  3,  0],
+    [-1,  4,  5],
+    [-1,  5,  6],
+    [-1,  6,  7],
+    [-1,  7,  4],
+    [-1,  8,  9],
+    [-1, 10, 11]
+  ],
+  "holes": [
+    [0.5, 0.5]
+  ],
+  "regions": [
+    [1, 0.1, 0.1, null],
+    [2, 0.1, 0.9, null]
+  ]
+}
+```
+
+Which can be used as follows:
+
+```bash
+cargo run --bin trigen_mesh -- data/input/example_tri_input.json /tmp/tritet -s -v0.01
+```
+
+Where `-s` indicates SVG file generation (if Python/Matplotlib is available; otherwise an error arises),
+and `v0.01` indicates an area (volume) constraint of 0.01. The output is shown below:
+
+![example_tri_input.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tri_input.svg)
+
+Below is a JSON input for `tetgen_mesh`:
+
+```json
+{
+  "points": [
+    [0, 0.0, 1.0, 0.0],
+    [0, 0.0, 0.0, 0.0],
+    [0, 1.0, 1.0, 0.0],
+    [0, 0.0, 1.0, 1.0]
+  ],
+  "facets": [
+    [0, [0, 2, 1]],
+    [0, [0, 1, 3]],
+    [0, [0, 3, 2]],
+    [0, [1, 2, 3]]
+  ],
+  "holes": [],
+  "regions": [
+    [1, 0.1, 0.9, 0.1, null]
+  ]
+}
+```
+
+Which can be used as follows:
+
+```bash
+cargo run --bin tetgen_mesh -- data/input/example_tet_input.json /tmp/tritet -s -v0.1
+```
+
+Where `-s` indicates SVG file generation (if Python/Matplotlib is available; otherwise an error arises),
+and `v0.1` indicates an volume constraint of 0.1. The output is shown below:
+
+![example_tet_input.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tet_input.svg)
 
 ### 2D Delaunay triangulation
 
@@ -135,7 +235,72 @@ fn main() -> Result<(), StrError> {
 
 ![doc_triangle_voronoi_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_voronoi_1.svg)
 
-### 2D mesh generation
+### 2D mesh generation using input data structure
+
+```rust
+use plotpy::Plot;
+use tritet::{InputDataTriMesh, StrError, Trigen};
+
+const SAVE_FIGURE: bool = false;
+
+fn main() -> Result<(), StrError> {
+    // set input data
+    let input_data = InputDataTriMesh {
+        points: vec![
+            (0, 0.0, 0.0), // boundary marker, x, y
+            (0, 1.0, 0.0),
+            (0, 1.0, 1.0),
+            (0, 0.0, 1.0),
+            (0, 0.2, 0.2),
+            (0, 0.8, 0.2),
+            (0, 0.8, 0.8),
+            (0, 0.2, 0.8),
+            (0, 0.0, 0.5),
+            (0, 0.2, 0.5),
+            (0, 0.8, 0.5),
+            (0, 1.0, 0.5),
+        ],
+        segments: vec![
+            (-1, 0, 1), // boundary marker, point indices
+            (-1, 1, 2),
+            (-1, 2, 3),
+            (-1, 3, 0),
+            (-1, 4, 5),
+            (-1, 5, 6),
+            (-1, 6, 7),
+            (-1, 7, 4),
+            (-1, 8, 9),
+            (-1, 10, 11),
+        ],
+        holes: vec![
+            (0.5, 0.5), // x, y
+        ],
+        regions: vec![
+            (1, 0.1, 0.1, None), // marker, x, y, max area
+            (2, 0.1, 0.9, None),
+        ],
+    };
+
+    // allocate generator from input data
+    let trigen = Trigen::from_input_data(&input_data)?;
+
+    // generate o2 mesh without constraints
+    trigen.generate_mesh(false, true, false, None, None)?;
+    assert_eq!(trigen.out_ncell(), 12);
+
+    // draw mesh
+    if SAVE_FIGURE {
+        let mut plot = Plot::new();
+        trigen.draw_triangles(&mut plot, true, true, true, true, None, None, None);
+        plot.set_equal_axes(true)
+            .set_figure_size_points(600.0, 600.0)
+            .save("/tmp/tritet/doc_triangle_mesh_1.svg")?;
+    }
+    Ok(())
+}
+```
+
+### 2D mesh generation using setup functions
 
 ```rust
 use plotpy::Plot;
@@ -200,7 +365,7 @@ fn main() -> Result<(), StrError> {
 
 ![doc_triangle_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_triangle_mesh_1.svg)
 
-## 3D Delaunay triangulation
+### 3D Delaunay triangulation
 
 ```rust
 use plotpy::Plot;
@@ -240,7 +405,56 @@ fn main() -> Result<(), StrError> {
 
 ![example_tetgen_delaunay_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_delaunay_1.svg)
 
-## 3D mesh generation
+### 3D mesh generation using the input data structure
+
+```rust
+use plotpy::Plot;
+use tritet::{InputDataTetMesh, StrError, Tetgen};
+
+const SAVE_FIGURE: bool = false;
+
+fn main() -> Result<(), StrError> {
+    // set input data
+    let input_data = InputDataTetMesh {
+        points: vec![
+            (0, 0.0, 1.0, 0.0), // marker, x, y, z
+            (0, 0.0, 0.0, 0.0),
+            (0, 1.0, 1.0, 0.0),
+            (0, 0.0, 1.0, 1.0),
+        ],
+        facets: vec![
+            (0, vec![0, 2, 1]), // marker, point indices
+            (0, vec![0, 1, 3]),
+            (0, vec![0, 3, 2]),
+            (0, vec![1, 2, 3]),
+        ],
+        holes: vec![],                           // no holes
+        regions: vec![(1, 0.1, 0.9, 0.1, None)], // region marker, x, y, z, max volume
+    };
+
+    // allocate generator from input data
+    let tetgen = Tetgen::from_input_data(&input_data)?;
+
+    // generate mesh
+    let global_max_volume = Some(0.5);
+    tetgen.generate_mesh(false, false, global_max_volume, None)?;
+
+    // draw edges of tetrahedra
+    if SAVE_FIGURE {
+        let mut plot = Plot::new();
+        tetgen.draw_wireframe(&mut plot, true, true, true, true, None, None, None);
+        plot.set_equal_axes(true)
+            .set_figure_size_points(600.0, 600.0)
+            .save("/tmp/tritet/doc_tetgen_mesh_2.svg")?;
+    }
+
+    assert_eq!(tetgen.out_ncell(), 7);
+    assert_eq!(tetgen.out_npoint(), 10);
+    Ok(())
+}
+```
+
+#g## 3D mesh generation using setup functions
 
 Note: set `SAVE_VTU_FILE` to true to generate Paraview file.
 
@@ -376,7 +590,51 @@ fn main() -> Result<(), StrError> {
 
 ![example_tetgen_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/example_tetgen_mesh_1.svg)
 
-## <a name="developers"></a> For developers
+## Definitions for Triangle (By J. R. Shewchuk)
+
+This section is part of the text written by J. R. Shewchuk in [Triangle](https://www.cs.cmu.edu/~quake/triangle.html). The figures in this section are also Copyright by J. R. Shewchuk.
+
+A Delaunay triangulation (Figure 1) of a vertex set (Figure 2) is a triangulation of the vertex set with the property that no vertex in the vertex set falls in the interior of the circumcircle (circle that passes through all three vertices) of any triangle in the triangulation.
+
+**Figure 1**. Delaunay triangulation:
+
+![Delaunay triangulation](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/dots.1.ele.gif)
+
+**Figure 2**. Vertex set (cloud of points):
+
+![Vertex set (cloud of points).](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/dots.node.gif)
+
+A Voronoi diagram (Figure 3) of a vertex set is a subdivision of the plane into polygonal regions (some of which may be infinite), where each region is the set of points in the plane that are closer to some input vertex than to any other input vertex. (The Voronoi diagram is the geometric dual of the Delaunay triangulation.)
+
+**Figure 3**. Voronoi diagram:
+
+![Voronoi diagram.](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/dots.1.v.edge.gif)
+
+A Planar Straight Line Graph (**PSLG**, Figure 4) is a collection of vertices and segments. Segments are edges whose endpoints are vertices in the PSLG, and whose presence in any mesh generated from the PSLG is enforced.
+
+**Figure 4**. Planar Straight Line Graph (PSLG):
+
+![Planar Straight Line Graph (PSLG).](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/A.poly.gif)
+
+A constrained Delaunay triangulation of a PSLG (Figure 5) is similar to a Delaunay triangulation, but each PSLG segment is present as a single edge in the triangulation. A constrained Delaunay triangulation is not truly a Delaunay triangulation. Some of its triangles might not be Delaunay, but they are all constrained Delaunay.
+
+**Figure 5**. Constrained Delaunay triangulation of a PSLG:
+
+![Constrained Delaunay triangulation of a PSLG.](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/A.constrain.gif)
+
+A conforming Delaunay triangulation (CDT, Figure 6) of a PSLG is a true Delaunay triangulation in which each PSLG segment may have been subdivided into several edges by the insertion of additional vertices, called Steiner points. Steiner points are necessary to allow the segments to exist in the mesh while maintaining the Delaunay property. Steiner points are also inserted to meet constraints on the minimum angle and maximum triangle area.
+
+**Figure 6**. Conforming Delaunay triangulation (CDT):
+
+![Conforming Delaunay triangulation (CDT)](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/A.conform.gif)
+
+A constrained conforming Delaunay triangulation (CCDT, Figure 7) of a PSLG is a constrained Delaunay triangulation that includes Steiner points. It usually takes fewer vertices to make a good-quality CCDT than a good-quality CDT, because the triangles do not need to be Delaunay (although they still must be constrained Delaunay).
+
+**Figure 7**. Constrained conforming Delaunay triangulation (CCDT):
+
+![Constrained conforming Delaunay triangulation (CCDT)](https://raw.githubusercontent.com/cpmech/tritet/main/data/shewchuk/A.ccdt.gif)
+
+## For developers
 
 Install cargo-valgrind:
 

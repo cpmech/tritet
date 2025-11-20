@@ -129,12 +129,12 @@ impl Trigen {
         write!(&mut buffer, "<CellData Scalars=\"TheScalars\">\n").unwrap();
         write!(
             &mut buffer,
-            "<DataArray type=\"Int32\" Name=\"attribute\" NumberOfComponents=\"1\" format=\"ascii\">\n"
+            "<DataArray type=\"Int32\" Name=\"marker\" NumberOfComponents=\"1\" format=\"ascii\">\n"
         )
         .unwrap();
         for index in 0..ntriangle {
-            let attribute = self.out_cell_attribute(index);
-            write!(&mut buffer, "{} ", attribute).unwrap();
+            let marker = self.out_cell_marker(index);
+            write!(&mut buffer, "{} ", marker).unwrap();
         }
         write!(&mut buffer, "\n</DataArray>\n").unwrap();
         write!(&mut buffer, "</CellData>\n").unwrap();
@@ -211,7 +211,7 @@ mod tests {
 </DataArray>
 </PointData>
 <CellData Scalars="TheScalars">
-<DataArray type="Int32" Name="attribute" NumberOfComponents="1" format="ascii">
+<DataArray type="Int32" Name="marker" NumberOfComponents="1" format="ascii">
 0 
 </DataArray>
 </CellData>
@@ -266,7 +266,7 @@ mod tests {
 </DataArray>
 </PointData>
 <CellData Scalars="TheScalars">
-<DataArray type="Int32" Name="attribute" NumberOfComponents="1" format="ascii">
+<DataArray type="Int32" Name="marker" NumberOfComponents="1" format="ascii">
 0 
 </DataArray>
 </CellData>

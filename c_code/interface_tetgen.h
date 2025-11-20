@@ -20,7 +20,7 @@ int32_t tet_set_facet_point(struct ExtTetgen *tetgen, int32_t index, int32_t m, 
 
 int32_t tet_set_facet_marker(struct ExtTetgen *tetgen, int32_t index, int32_t marker);
 
-int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, int32_t attribute, double x, double y, double z, double max_volume);
+int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, int32_t marker, double x, double y, double z, double max_volume);
 
 int32_t tet_set_hole(struct ExtTetgen *tetgen, int32_t index, double x, double y, double z);
 
@@ -40,7 +40,7 @@ int32_t tet_out_point_marker(struct ExtTetgen *tetgen, int32_t index);
 
 int32_t tet_out_cell_point(struct ExtTetgen *tetgen, int32_t index, int32_t corner);
 
-int32_t tet_out_cell_attribute(struct ExtTetgen *tetgen, int32_t index);
+int32_t tet_out_cell_marker(struct ExtTetgen *tetgen, int32_t index);
 
 int32_t tet_out_n_marked_face(struct ExtTetgen *tetgen);
 

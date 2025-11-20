@@ -175,7 +175,7 @@ int32_t tet_set_facet_marker(struct ExtTetgen *tetgen, int32_t index, int32_t ma
     return TRITET_SUCCESS;
 }
 
-int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, int32_t attribute, double x, double y, double z, double max_volume) {
+int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, int32_t marker, double x, double y, double z, double max_volume) {
     if (tetgen == NULL) {
         return TRITET_ERROR_NULL_DATA;
     }
@@ -188,7 +188,7 @@ int32_t tet_set_region(struct ExtTetgen *tetgen, int32_t index, int32_t attribut
     tetgen->input.regionlist[index * 5] = x;
     tetgen->input.regionlist[index * 5 + 1] = y;
     tetgen->input.regionlist[index * 5 + 2] = z;
-    tetgen->input.regionlist[index * 5 + 3] = attribute;
+    tetgen->input.regionlist[index * 5 + 3] = marker;
     tetgen->input.regionlist[index * 5 + 4] = max_volume;
 
     return TRITET_SUCCESS;
@@ -309,6 +309,8 @@ int32_t tet_run_tetrahedralize(struct ExtTetgen *tetgen, int32_t verbose, int32_
             return TRITET_ERROR_STRING_CONCAT;
         }
         strcat(command, buf);
+    } else {
+        strcat(command, "a");
     }
     if (global_min_angle > 0.0) {
         char buf[32];
@@ -388,7 +390,7 @@ int32_t tet_out_cell_point(struct ExtTetgen *tetgen, int32_t index, int32_t corn
     }
 }
 
-int32_t tet_out_cell_attribute(struct ExtTetgen *tetgen, int32_t index) {
+int32_t tet_out_cell_marker(struct ExtTetgen *tetgen, int32_t index) {
     if (tetgen == NULL) {
         return 0;
     }
