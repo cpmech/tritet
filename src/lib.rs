@@ -11,10 +11,12 @@ mod tetgen;
 mod tetgen_paraview;
 mod trigen;
 mod trigen_paraview;
-pub use crate::input_data_tet_mesh::*;
-pub use crate::input_data_tri_mesh::*;
-pub use crate::tetgen::*;
-pub use crate::trigen::*;
+mod util;
+pub use input_data_tet_mesh::*;
+pub use input_data_tri_mesh::*;
+pub use tetgen::*;
+pub use trigen::*;
+pub use util::*;
 
 // run code from README file
 #[cfg(doctest)]

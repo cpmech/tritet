@@ -31,4 +31,4 @@ COPY --chown=user:user . tritet
 WORKDIR tritet
 
 # run tests
-RUN cargo test
+RUN cargo test --features with_tetgen

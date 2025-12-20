@@ -7,8 +7,10 @@
 ## Contents <!-- omit from toc --> 
 
 - [Introduction](#introduction)
+  - [License](#license)
 - [Installation](#installation)
 - [Setting Cargo.toml](#setting-cargotoml)
+  - [Features (for Tetgen)](#features-for-tetgen)
 - [Examples](#examples)
   - [Mesh generation using JSON input files](#mesh-generation-using-json-input-files)
   - [2D Delaunay triangulation](#2d-delaunay-triangulation)
@@ -17,24 +19,27 @@
   - [2D mesh generation using setup functions](#2d-mesh-generation-using-setup-functions)
   - [3D Delaunay triangulation](#3d-delaunay-triangulation)
   - [3D mesh generation using the input data structure](#3d-mesh-generation-using-the-input-data-structure)
+  - [3D mesh generation using setup functions](#3d-mesh-generation-using-setup-functions)
 - [Definitions for Triangle (By J. R. Shewchuk)](#definitions-for-triangle-by-j-r-shewchuk)
 - [For developers](#for-developers)
 
 ## Introduction
 
-This crate implements Triangle and Tetrahedron mesh generators by wrapping the best tools around, namely, [Triangle](https://www.cs.cmu.edu/~quake/triangle.html) and [Tetgen](http://tetgen.org/).
+This crate implements Triangle mesh generators by wrapping [Triangle](https://www.cs.cmu.edu/~quake/triangle.html)
 
-Here, all the data structures accessed by the C/C++ codes are allocated on the "C-side" by (carefully) using "malloc/new." 😅 We then make use of [Valgrind](https://valgrind.org/) and tests to make sure that there are no leaks. In this way, there is no performance loss of the C-code while enabling the convenience of Rust.
+Here, all the data structures accessed by the C/C++ codes are allocated on the "C-side" by (carefully) using "malloc/new." [Valgrind](https://valgrind.org/) is employed to make sure that there are no leaks (hopefully). It should be no performance loss of the C-code.
 
-The resulting Rust interface to Triangle and Tetgen is somewhat low-level. However, other projects could use this interface to make higher-level functions.
+The code works in multithreaded applications---not exhaustively verified but tested. See, for example, the tests in [mem_check_triangle_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_triangle_build.rs) and [mem_check_tetgen_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_tetgen_build.rs)
 
-The code works in multithreaded applications---not exhaustively verified but tested. See, for example, the comprehensive tests in [mem_check_triangle_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_triangle_build.rs) and [mem_check_tetgen_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_tetgen_build.rs)
-
-A higher-level crate is available for mesh generation (and more): [Gemlab: Geometry, meshes, and numerical integration for finite element analyses](https://github.com/cpmech/gemlab).
+**Optional** tetrahedron mesh generation is provided by wrapping [Tetgen](http://tetgen.org/). Tetgen must be enabled via the feature `with_tetgen` to use the corresponding functionality. In this case, the license of the project becomes AGPL (https://www.gnu.org/licenses/agpl-3.0.html).
 
 See the documentation for further information:
 
 - [Tritet documentation](https://docs.rs/tritet) - Contains the API reference and examples
+
+### License
+
+This project is dual licensed. Without Tetgen, it is licensed under the MIT License. With Tetgen enabled, it is licensed under the AGPL License.
 
 ## Installation
 
@@ -53,6 +58,14 @@ sudo apt install build-essential
 ```toml
 [dependencies]
 tritet = "*"
+```
+
+### Features (for Tetgen)
+
+Use the feature `with_tetgen` to enable Tetgen functionality. For running tests:
+
+```bash
+cargo test --features with_tetgen
 ```
 
 ## Examples
@@ -143,7 +156,7 @@ Below is a JSON input for `tetgen2msh`:
 Which can be used as follows:
 
 ```bash
-cargo run --bin tetgen2msh -- data/input/example_tet_input.json /tmp/tritet -s -v0.1
+cargo run --bin tetgen2msh --features with_tetgen -- data/input/example_tet_input.json /tmp/tritet -s -v0.1
 ```
 
 Where `-s` indicates SVG file generation (if Python/Matplotlib is available; otherwise an error arises),
@@ -367,7 +380,9 @@ fn main() -> Result<(), StrError> {
 
 ### 3D Delaunay triangulation
 
-```rust
+**Note:** Tetgen must be enabled via the feature `with_tetgen` to run this example.
+
+```text
 use plotpy::Plot;
 use tritet::{StrError, Tetgen};
 
@@ -407,7 +422,9 @@ fn main() -> Result<(), StrError> {
 
 ### 3D mesh generation using the input data structure
 
-```rust
+**Note:** Tetgen must be enabled via the feature `with_tetgen` to run this example.
+
+```text
 use plotpy::Plot;
 use tritet::{InputDataTetMesh, StrError, Tetgen};
 
@@ -454,11 +471,13 @@ fn main() -> Result<(), StrError> {
 }
 ```
 
-#g## 3D mesh generation using setup functions
+### 3D mesh generation using setup functions
+
+**Note:** Tetgen must be enabled via the feature `with_tetgen` to run this example.
 
 Note: set `SAVE_VTU_FILE` to true to generate Paraview file.
 
-```rust
+```text
 use plotpy::Plot;
 use tritet::{StrError, Tetgen};
 

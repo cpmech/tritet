@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cargo run --release --example triangle_mesh_1
+cargo run --features with_tetgen --release --example triangle_mesh_1
