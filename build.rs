@@ -1,6 +1,5 @@
 use std::env;
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
 fn main() {
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
 
