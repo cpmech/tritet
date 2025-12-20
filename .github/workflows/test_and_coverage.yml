@@ -10,4 +10,4 @@ jobs:
           sudo apt-get update -y && sudo apt-get install -y build-essential
       - name: Run tests
         run: |
-          RUST_BACKTRACE=1 cargo test -- --nocapture
+          RUST_BACKTRACE=1 cargo test --features with_tetgen -- --nocapture

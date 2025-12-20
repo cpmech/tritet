@@ -1,7 +1,7 @@
 use crate::constants::{handle_status, DARK_COLORS, TRITET_TO_TETGEN};
 use crate::conversion::to_i32;
-use crate::InputDataTetMesh;
 use crate::StrError;
+use crate::{InputDataTetMesh, TETGEN_IS_AVAILABLE};
 use plotpy::{Canvas, Plot, Text};
 use std::collections::HashMap;
 use std::ffi::OsStr;
@@ -57,7 +57,7 @@ extern "C" {
 ///
 /// ## Delaunay triangulation
 ///
-/// ```
+/// ```text
 /// use plotpy::Plot;
 /// use tritet::{StrError, Tetgen};
 ///
@@ -97,7 +97,7 @@ extern "C" {
 ///
 /// ## Mesh generation
 ///
-/// ```
+/// ```text
 /// use plotpy::Plot;
 /// use tritet::{StrError, Tetgen};
 ///
@@ -156,7 +156,7 @@ extern "C" {
 ///
 /// The above example can also be implemented using [InputDataTetMesh] as follows:
 ///
-/// ```
+/// ```text
 /// use plotpy::Plot;
 /// use tritet::{InputDataTetMesh, StrError, Tetgen};
 ///
@@ -204,6 +204,10 @@ extern "C" {
 /// ```
 ///
 /// ![doc_tetgen_mesh_1.svg](https://raw.githubusercontent.com/cpmech/tritet/main/data/figures/doc_tetgen_mesh_1.svg)
+///
+/// # Feature
+///
+/// The methods of this struct require the `with_tetgen` feature to be enabled.
 pub struct Tetgen {
     ext_tetgen: *mut ExtTetgen,       // data allocate by the c-code
     npoint: usize,                    // number of points
@@ -221,6 +225,9 @@ pub struct Tetgen {
 impl Drop for Tetgen {
     /// Tells the c-code to release memory
     fn drop(&mut self) {
+        if !TETGEN_IS_AVAILABLE {
+            return;
+        }
         unsafe {
             tet_drop_tetgen(self.ext_tetgen);
         }
@@ -230,6 +237,9 @@ impl Drop for Tetgen {
 impl Tetgen {
     /// Allocates a new instance from input data
     pub fn from_input_data(data: &InputDataTetMesh) -> Result<Self, StrError> {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         let npoint = data.points.len();
         let nregion = data.regions.len();
         let nhole = data.holes.len();
@@ -260,6 +270,9 @@ impl Tetgen {
         nregion: Option<usize>,
         nhole: Option<usize>,
     ) -> Result<Self, StrError> {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         if npoint < 4 {
             return Err("npoint must be ≥ 4");
         }
@@ -320,6 +333,9 @@ impl Tetgen {
     /// **Note:** TetGen automatically assigns the marker 1 for points on the boundary.
     /// Thus, we cannot use marker = 1.
     pub fn set_point(&mut self, index: usize, marker: i32, x: f64, y: f64, z: f64) -> Result<&mut Self, StrError> {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         unsafe {
             let status = tet_set_point(self.ext_tetgen, to_i32(index), marker, x, y, z);
             handle_status(status)?;
@@ -340,6 +356,9 @@ impl Tetgen {
     /// * `m` -- is the local index of the point on the facet and goes from 0 to `facet_npoint`
     /// * `p` -- is the ID (index) of the point on the facet
     pub fn set_facet_point(&mut self, index: usize, m: usize, p: usize) -> Result<&mut Self, StrError> {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         match &self.facet_npoint {
             Some(n) => n,
             None => return Err("cannot set facet point because facet_npoint is None"),
@@ -365,6 +384,9 @@ impl Tetgen {
     /// * `index` -- is the index of the facet and goes from 0 to `nfacet` (passed down to `new`)
     /// * `marker` -- is the marker
     pub fn set_facet_marker(&mut self, index: usize, marker: i32) -> Result<&mut Self, StrError> {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         match &self.facet_npoint {
             Some(n) => n,
             None => return Err("cannot set facet marker because facet_npoint is None"),
@@ -395,6 +417,9 @@ impl Tetgen {
         z: f64,
         max_volume: Option<f64>,
     ) -> Result<&mut Self, StrError> {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         let nregion = match self.nregion {
             Some(n) => n,
             None => return Err("cannot set region because the number of regions is None"),
@@ -424,6 +449,9 @@ impl Tetgen {
     /// * `y` -- is the y-coordinate of the hole
     /// * `z` -- is the z-coordinate of the hole
     pub fn set_hole(&mut self, index: usize, x: f64, y: f64, z: f64) -> Result<&mut Self, StrError> {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         let nhole = match self.nhole {
             Some(n) => n,
             None => return Err("cannot set hole because the number of holes is None"),
@@ -446,6 +474,9 @@ impl Tetgen {
     ///
     /// * `verbose` -- Prints Tetgen's messages to the console
     pub fn generate_delaunay(&self, verbose: bool) -> Result<(), StrError> {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         if !self.all_points_set {
             return Err("cannot generate Delaunay tetrahedralization because not all points are set");
         }
@@ -473,6 +504,9 @@ impl Tetgen {
         global_max_volume: Option<f64>,
         global_min_angle: Option<f64>,
     ) -> Result<(), StrError> {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         if !self.all_points_set {
             return Err("cannot generate mesh of tetrahedra because not all points are set");
         }
@@ -502,16 +536,25 @@ impl Tetgen {
 
     /// Returns the number of (output) points of the Delaunay triangulation (constrained or not)
     pub fn out_npoint(&self) -> usize {
+        if !TETGEN_IS_AVAILABLE {
+            return 0;
+        }
         unsafe { tet_out_npoint(self.ext_tetgen) as usize }
     }
 
     /// Returns the number of (output) tetrahedra (aka cell) on the Delaunay triangulation (constrained or not)
     pub fn out_ncell(&self) -> usize {
+        if !TETGEN_IS_AVAILABLE {
+            return 0;
+        }
         unsafe { tet_out_ncell(self.ext_tetgen) as usize }
     }
 
     /// Returns the number of points on a (output) tetrahedron (e.g., 4 or 10)
     pub fn out_cell_npoint(&self) -> usize {
+        if !TETGEN_IS_AVAILABLE {
+            return 0;
+        }
         unsafe { tet_out_cell_npoint(self.ext_tetgen) as usize }
     }
 
@@ -526,6 +569,9 @@ impl Tetgen {
     ///
     /// This function will return 0.0 if `index` or `dim` is out of range.
     pub fn out_point(&self, index: usize, dim: usize) -> f64 {
+        if !TETGEN_IS_AVAILABLE {
+            return 0.0;
+        }
         unsafe { tet_out_point(self.ext_tetgen, to_i32(index), to_i32(dim)) }
     }
 
@@ -539,6 +585,9 @@ impl Tetgen {
     ///
     /// This function will return zero values if either `index` is out of range.
     pub fn out_point_marker(&self, index: usize) -> i32 {
+        if !TETGEN_IS_AVAILABLE {
+            return 0;
+        }
         unsafe { tet_out_point_marker(self.ext_tetgen, to_i32(index)) }
     }
 
@@ -583,6 +632,9 @@ impl Tetgen {
     ///
     /// This function will return 0 if `index` or `m` is out of range.
     pub fn out_cell_point(&self, index: usize, m: usize) -> usize {
+        if !TETGEN_IS_AVAILABLE {
+            return 0;
+        }
         unsafe {
             let corner = TRITET_TO_TETGEN[m];
             tet_out_cell_point(self.ext_tetgen, to_i32(index), to_i32(corner)) as usize
@@ -599,11 +651,17 @@ impl Tetgen {
     ///
     /// This function will return 0 if `index` is out of range.
     pub fn out_cell_marker(&self, index: usize) -> i32 {
+        if !TETGEN_IS_AVAILABLE {
+            return 0;
+        }
         unsafe { tet_out_cell_marker(self.ext_tetgen, to_i32(index)) }
     }
 
     /// Returns the number of marked faces
     pub fn out_n_marked_face(&self) -> usize {
+        if !TETGEN_IS_AVAILABLE {
+            return 0;
+        }
         unsafe { tet_out_n_marked_face(self.ext_tetgen) as usize }
     }
 
@@ -672,6 +730,9 @@ impl Tetgen {
     /// marked_faces.sort_by(|a, b| a.key.partial_cmp(&b.key).unwrap());
     /// ```
     pub fn out_marked_face(&self, index: usize, points: &mut [i32; 6]) -> (i32, usize) {
+        if !TETGEN_IS_AVAILABLE {
+            return (0, 0);
+        }
         let mut marker: i32 = 0;
         let mut cell: i32 = 0;
         unsafe {
@@ -698,6 +759,9 @@ impl Tetgen {
         fontsize_triangle_ids: Option<f64>,
         fontsize_markers: Option<f64>,
     ) {
+        if !TETGEN_IS_AVAILABLE {
+            return;
+        }
         let ntet = self.out_ncell();
         if ntet < 1 {
             return;
@@ -843,6 +907,9 @@ impl Tetgen {
     where
         P: AsRef<OsStr> + ?Sized,
     {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
         // check
         let npoint = self.out_npoint();
         let ncell = self.out_ncell();
@@ -919,6 +986,7 @@ impl Tetgen {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #[cfg(test)]
+#[cfg(feature = "with_tetgen")]
 mod tests {
     use super::Tetgen;
     use crate::{InputDataTetMesh, StrError};

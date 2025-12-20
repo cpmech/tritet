@@ -1,7 +1,7 @@
 use crate::constants;
 use crate::constants::VTK_TRIANGLE;
 use crate::StrError;
-use crate::Tetgen;
+use crate::{Tetgen, TETGEN_IS_AVAILABLE};
 use std::ffi::OsStr;
 use std::fmt::Write;
 use std::fs::{self, File};
@@ -18,6 +18,10 @@ impl Tetgen {
     where
         P: AsRef<OsStr> + ?Sized,
     {
+        if !TETGEN_IS_AVAILABLE {
+            return Err("Tetgen is not available; enable it via '--features with_tetgen'");
+        }
+
         let ntet = self.out_ncell();
         if ntet < 1 {
             return Err("there are no tetrahedra to write");
@@ -192,6 +196,7 @@ impl Tetgen {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #[cfg(test)]
+#[cfg(feature = "with_tetgen")]
 mod tests {
     use crate::StrError;
     use crate::Tetgen;

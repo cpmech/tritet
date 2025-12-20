@@ -3,7 +3,6 @@
 set -e
 
 # the first argument is the distro: "arch" or "rocky"
-# the second argument is "1" to enable MUMPS
 DISTRO=${1:-""}
 
 # image name
