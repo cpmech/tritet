@@ -1,39 +1,41 @@
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn main() {
-    cc::Build::new()
-        .file("c_code/triangle.c")
-        .file("c_code/tricall_report.c")
-        .file("c_code/interface_triangle.c")
-        .flag("-Wno-sign-compare")
-        .flag("-Wno-unused-parameter")
-        .flag("-Wno-unused-but-set-variable")
-        .flag("-Wno-maybe-uninitialized")
-        .flag("-Wno-old-style-definition")
-        .compile("c_code_interface_triangle");
-    cc::Build::new()
-        .cpp(true)
-        .file("c_code/predicates.cxx")
-        .file("c_code/tetgen.cxx")
-        .file("c_code/interface_tetgen.cpp")
-        .flag("-Wno-int-to-pointer-cast")
-        .flag("-Wno-unused-parameter")
-        .flag("-Wno-unused-but-set-variable")
-        .flag("-Wno-maybe-uninitialized")
-        .compile("c_code_interface_tetgen");
-}
+use std::env;
 
-#[cfg(target_os = "windows")]
 fn main() {
-    cc::Build::new()
-        .file("c_code/triangle.c")
-        .file("c_code/tricall_report.c")
-        .file("c_code/interface_triangle.c")
-        .define("NO_TIMER", None)
-        .compile("c_code_interface_triangle");
-    cc::Build::new()
-        .cpp(true)
-        .file("c_code/predicates.cxx")
-        .file("c_code/tetgen.cxx")
-        .file("c_code/interface_tetgen.cpp")
-        .compile("c_code_interface_tetgen");
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+
+    if (target_os == "linux") | (target_os == "macos") {
+        cc::Build::new()
+            .file("c_code/triangle.c")
+            .file("c_code/tricall_report.c")
+            .file("c_code/interface_triangle.c")
+            .flag("-Wno-sign-compare")
+            .flag("-Wno-unused-parameter")
+            .flag("-Wno-unused-but-set-variable")
+            .flag("-Wno-maybe-uninitialized")
+            .flag("-Wno-old-style-definition")
+            .compile("c_code_interface_triangle");
+        cc::Build::new()
+            .cpp(true)
+            .file("c_code/predicates.cxx")
+            .file("c_code/tetgen.cxx")
+            .file("c_code/interface_tetgen.cpp")
+            .flag("-Wno-int-to-pointer-cast")
+            .flag("-Wno-unused-parameter")
+            .flag("-Wno-unused-but-set-variable")
+            .flag("-Wno-maybe-uninitialized")
+            .compile("c_code_interface_tetgen");
+    } else if target_os == "windows" {
+        cc::Build::new()
+            .file("c_code/triangle.c")
+            .file("c_code/tricall_report.c")
+            .file("c_code/interface_triangle.c")
+            .define("NO_TIMER", None)
+            .compile("c_code_interface_triangle");
+        cc::Build::new()
+            .cpp(true)
+            .file("c_code/predicates.cxx")
+            .file("c_code/tetgen.cxx")
+            .file("c_code/interface_tetgen.cpp")
+            .compile("c_code_interface_tetgen");
+    }
 }
