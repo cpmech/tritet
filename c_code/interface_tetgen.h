@@ -6,8 +6,8 @@
 #include "tetgen.h"
 
 struct ExtTetgen {
-    struct tetgenio input;
-    struct tetgenio output;
+    class tetgenio input;
+    class tetgenio output;
 };
 
 struct ExtTetgen *tet_new_tetgen(int32_t npoint, int32_t nfacet, int32_t const *facet_npoint, int32_t nregion, int32_t nhole);
