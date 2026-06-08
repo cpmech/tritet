@@ -1,8 +1,9 @@
 # Triangle and tetrahedron mesh generators <!-- omit from toc --> 
 
-[![Test](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_and_coverage.yml)
-[![Windows & macOS](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/windows_and_macos.yml)
-[![Test on Arch Linux](https://github.com/cpmech/tritet/actions/workflows/test_on_arch_linux.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/test_on_arch_linux.yml)
+[![Arch](https://github.com/cpmech/tritet/actions/workflows/arch.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/arch.yml)
+[![Ubuntu](https://github.com/cpmech/tritet/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/ubuntu.yml)
+[![macOS](https://github.com/cpmech/tritet/actions/workflows/macos.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/macos.yml)
+[![Windows](https://github.com/cpmech/tritet/actions/workflows/windows.yml/badge.svg)](https://github.com/cpmech/tritet/actions/workflows/windows.yml)
 
 ## Contents <!-- omit from toc --> 
 

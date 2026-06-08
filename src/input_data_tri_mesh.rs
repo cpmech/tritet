@@ -8,7 +8,7 @@ use std::path::Path;
 /// Holds the input data for triangle mesh generation using Trigen.
 ///
 /// The input of Trigen (Triangle) is a Planar Straight Line Graph (PSLG).
-/// See the definitions #[derive(Clone, Debug, Deserialize, Serialize)]in the README file.
+/// See the definitions in the README file.
 ///
 /// # Examples
 ///

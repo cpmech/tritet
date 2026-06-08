@@ -64,7 +64,7 @@ pub enum VoronoiEdgePoint {
 ///
 /// The input of Trigen is either a cloud of points or a Planar Straight Line Graph (PSLG)
 /// (see definitions below and also in the README file). The cloud of points is used for Voronoi
-/// tesselation whereas the PSLG is used for mesh generation. The setting up of the input data is
+/// tessellation whereas the PSLG is used for mesh generation. The setting up of the input data is
 /// done via the following member functions:
 ///
 /// * [Trigen::set_point] -- sets the point coordinates
@@ -72,7 +72,7 @@ pub enum VoronoiEdgePoint {
 /// * [Trigen::set_region] -- marks a region within the PSLG
 /// * [Trigen::set_hole] -- marks a hole within the PSLG
 ///
-/// **Note:** All indices are are zero-based.
+/// **Note:** All indices are zero-based.
 ///
 /// # Examples
 ///
@@ -355,6 +355,10 @@ impl Drop for Trigen {
 
 impl Trigen {
     /// Allocates a new instance from input data
+    ///
+    /// # Input
+    ///
+    /// * `data` -- the [InputDataTriMesh] containing points, segments, holes, and regions
     pub fn from_input_data(data: &InputDataTriMesh) -> Result<Self, StrError> {
         let npoint = data.points.len();
         let nsegment = data.segments.len();
@@ -663,11 +667,11 @@ impl Trigen {
     ///
     /// # Output
     ///
-    /// Returns `x` or `z`
+    /// Returns `x` or `y`
     ///
     /// # Warning
     ///
-    /// This function will return zero values if either `index` is out of range.
+    /// This function will return zero values if `index` or `dim` is out of range.
     pub fn out_point(&self, index: usize, dim: usize) -> f64 {
         unsafe { tri_out_point(self.ext_trigen, to_i32(index), to_i32(dim)) }
     }
@@ -680,7 +684,7 @@ impl Trigen {
     ///
     /// # Warning
     ///
-    /// This function will return zero values if either `index` is out of range.
+    /// This function will return zero if `index` is out of range.
     ///
     /// # Note about boundary markers -- by J.R.Shewchuk
     ///
@@ -827,6 +831,17 @@ impl Trigen {
     }
 
     /// Draw triangles
+    ///
+    /// # Input
+    ///
+    /// * `plot` -- Plot where triangles will be drawn
+    /// * `set_range` -- Automatically set the plot range from the mesh bounding box
+    /// * `with_point_ids` -- Draw point IDs on the nodes
+    /// * `with_triangle_ids` -- Draw triangle IDs at the centroid of each triangle
+    /// * `with_markers` -- Draw cell markers near the first vertex of each triangle
+    /// * `fontsize_point_ids` -- Font size for point ID labels
+    /// * `fontsize_triangle_ids` -- Font size for triangle ID labels
+    /// * `fontsize_markers` -- Font size for marker labels
     pub fn draw_triangles(
         &self,
         plot: &mut Plot,
@@ -952,6 +967,10 @@ impl Trigen {
     }
 
     /// Draws Voronoi diagram
+    ///
+    /// # Input
+    ///
+    /// * `plot` -- Plot where the Voronoi diagram will be drawn
     pub fn draw_voronoi(&self, plot: &mut Plot) {
         if self.out_voronoi_npoint() < 1 || self.out_voronoi_nedge() < 1 {
             return;

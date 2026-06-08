@@ -1,0 +1,12 @@
+name: Windows
+on: [pull_request]
+jobs:
+  test:
+    runs-on: windows-latest
+    env:
+      RUST_BACKTRACE: 1
+    steps:
+    - uses: actions/checkout@v4
+    - uses: Swatinem/rust-cache@v2
+    - name: Run tests
+      run: cargo test --features with_tetgen -- --nocapture

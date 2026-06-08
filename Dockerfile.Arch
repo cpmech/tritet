@@ -1,29 +1,23 @@
 FROM archlinux:base-devel
 
-# initialize
-RUN pacman -Sy go git --noconfirm
+# Update keyring first to avoid GPG errors on a fresh Arch image,
+# then upgrade the system and install Rust and core dependencies.
+RUN pacman -Sy --noconfirm archlinux-keyring && \
+    pacman -Syu --noconfirm rust
 
-# set user
-RUN useradd -G wheel -m user
-RUN echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-RUN chown -R user:wheel /usr/local/src/
+# Create a non-root user for building and testing
+RUN useradd -m user
+
+# Copy project files; --chown ensures the destination directory and all
+# files are owned by user, so cargo can write target/ during the build
+COPY --chown=user:user . /usr/local/src/tritet/
+WORKDIR /usr/local/src/tritet
+
+# Set the user
 USER user
-WORKDIR /usr/local/src/
 
-# install yay
-RUN git clone https://aur.archlinux.org/yay.git
-RUN cd yay && makepkg -si --noconfirm
-
-# install libraries
-RUN yay -Y --gendb --noconfirm && yay -Y --devel --save
-
-# install rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
-ENV PATH="/home/user/.cargo/bin:${PATH}"
-
-# copy files
-COPY --chown=user:user . tritet
-WORKDIR tritet
+# Test the code
+ENV RUST_BACKTRACE=1
 
 # run tests
 RUN cargo test --features with_tetgen
