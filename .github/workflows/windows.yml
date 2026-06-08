@@ -8,9 +8,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: Swatinem/rust-cache@v2
-    - name: Configure environment
-      run: |
-        echo TMPDIR=/tmp | tee -a $GITHUB_ENV
-        env
     - name: Run tests
       run: cargo test --features with_tetgen -- --nocapture
