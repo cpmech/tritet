@@ -51,7 +51,7 @@ extern "C" {
 
 /// Implements high-level functions to call Si's Tetgen Cpp-Code
 ///
-/// **Note:** All indices are are zero-based.
+/// **Note:** All indices are zero-based.
 ///
 /// # Examples
 ///
@@ -236,6 +236,10 @@ impl Drop for Tetgen {
 
 impl Tetgen {
     /// Allocates a new instance from input data
+    ///
+    /// # Input
+    ///
+    /// * `data` -- the [InputDataTetMesh] containing points, facets, holes, and regions
     pub fn from_input_data(data: &InputDataTetMesh) -> Result<Self, StrError> {
         if !TETGEN_IS_AVAILABLE {
             return Err("Tetgen is not available; enable it via '--features with_tetgen'");
@@ -264,6 +268,14 @@ impl Tetgen {
     }
 
     /// Allocates a new instance
+    ///
+    /// # Input
+    ///
+    /// * `npoint` -- is the number of points in the input PLC
+    /// * `facet_npoint` -- (only for [Tetgen::generate_mesh]) is a list containing the number of points
+    ///   on each facet. For example, `Some(vec![3, 3, 3, 3])` for four triangular facets.
+    /// * `nregion` -- (only for [Tetgen::generate_mesh]) is the number of regions in the input PLC
+    /// * `nhole` -- (only for [Tetgen::generate_mesh]) is the number of holes in the input PLC
     pub fn new(
         npoint: usize,
         facet_npoint: Option<Vec<usize>>,
@@ -494,7 +506,8 @@ impl Tetgen {
     /// * `verbose` -- Prints Tetgen's messages to the console
     /// * `o2` -- Generates the middle nodes; e.g., nnode = 10
     /// * `global_max_volume` -- The maximum volume constraint for all generated tetrahedra
-    /// * `global_min_angle` -- The minimum angle constraint is given in degrees (the default minimum angle is TODO degrees)
+    /// * `global_min_angle` -- The minimum dihedral angle constraint in degrees. If `None`, no quality
+    ///   constraint is enforced.
     ///
     /// **Note:** TetGen automatically assigns the marker 1 for points on the boundary.
     pub fn generate_mesh(
@@ -748,6 +761,17 @@ impl Tetgen {
     }
 
     /// Draws wireframe representing the edges of tetrahedra
+    ///
+    /// # Input
+    ///
+    /// * `plot` -- Plot where the wireframe will be drawn
+    /// * `set_range` -- Automatically set the 3D plot range from the mesh bounding box
+    /// * `with_point_ids` -- Draw point IDs on the nodes
+    /// * `with_triangle_ids` -- Draw cell IDs at the centroid of each tetrahedron
+    /// * `with_markers` -- Draw cell markers near the first vertex of each tetrahedron
+    /// * `fontsize_point_ids` -- Font size for point ID labels
+    /// * `fontsize_triangle_ids` -- Font size for cell ID labels
+    /// * `fontsize_markers` -- Font size for marker labels
     pub fn draw_wireframe(
         &self,
         plot: &mut Plot,

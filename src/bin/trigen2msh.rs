@@ -22,7 +22,7 @@ struct Options {
     #[structopt(short = "V", long)]
     verbose: bool,
 
-    /// Generate second order tetrahedra
+    /// Generate second order triangles
     #[structopt(short, long)]
     o2: bool,
 

@@ -1,13 +1,16 @@
-name: Test & Coverage
-on: [pull_request, push]
+name: Ubuntu
+on: [pull_request]
 jobs:
-  test_and_coverage:
+  test:
     runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: 1
     steps:
       - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
       - name: Install Libraries
         run: |
           sudo apt-get update -y && sudo apt-get install -y build-essential
       - name: Run tests
         run: |
-          RUST_BACKTRACE=1 cargo test --features with_tetgen -- --nocapture
+          cargo test --features with_tetgen -- --nocapture

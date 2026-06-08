@@ -1,0 +1,10 @@
+name: Arch
+on: [pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build docker image
+        run: |
+          bash zscripts/docker-build-arch.bash
