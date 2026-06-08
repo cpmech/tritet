@@ -1,6 +1,6 @@
 [package]
 name = "tritet"
-version = "3.1.0"
+version = "3.2.0"
 edition = "2021"
 license = "MIT OR AGPL-3.0"
 description = "Triangle and tetrahedron mesh generators"
