@@ -170,9 +170,11 @@ impl Trigen {
 mod tests {
     use crate::StrError;
     use crate::Trigen;
+    use serial_test::serial; // because the Triangle C library is not thread-safe
     use std::fs;
 
     #[test]
+    #[serial]
     fn trigen_write_vtu() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         trigen
@@ -224,6 +226,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn trigen_write_vtu_o2() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, Some(3), None, None)?;
         trigen

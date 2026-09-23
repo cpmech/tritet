@@ -30,7 +30,7 @@ This crate implements Triangle mesh generators by wrapping [Triangle](https://ww
 
 Here, all the data structures accessed by the C/C++ codes are allocated on the "C-side" by (carefully) using "malloc/new." [Valgrind](https://valgrind.org/) is employed to make sure that there are no leaks (hopefully). It should be no performance loss of the C-code.
 
-The code works in multithreaded applications---not exhaustively verified but tested. See, for example, the tests in [mem_check_triangle_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_triangle_build.rs) and [mem_check_tetgen_build.rs](https://github.com/cpmech/tritet/blob/main/src/bin/mem_check_tetgen_build.rs)
+**Warning:** mesh generation is **not thread-safe**. Both Triangle and TetGen keep process-wide (static) state in their robust geometric predicates (`exactinit`), which is re-initialized on every call. Calling the `generate_*` methods concurrently from multiple threads may produce incorrect meshes or crash. Serialize such calls with a process-wide mutex, or run each generation in a separate process.
 
 **Optional** tetrahedron mesh generation is provided by wrapping [Tetgen](http://tetgen.org/). Tetgen must be enabled via the feature `with_tetgen` to use the corresponding functionality. In this case, the license of the project becomes AGPL (https://www.gnu.org/licenses/agpl-3.0.html).
 
