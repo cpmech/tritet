@@ -53,6 +53,14 @@ extern "C" {
 ///
 /// **Note:** All indices are zero-based.
 ///
+/// # Warning
+///
+/// **Not thread-safe:** the underlying TetGen C++ library keeps process-wide (static) state
+/// for its robust geometric predicates, which is (re)initialized on every call to
+/// [Tetgen::generate_delaunay] and [Tetgen::generate_mesh]. Calling those methods concurrently
+/// from multiple threads may produce incorrect results or crash. Serialize calls with a
+/// process-wide mutex (or run the generators in separate processes).
+///
 /// # Examples
 ///
 /// ## Delaunay triangulation
@@ -482,6 +490,10 @@ impl Tetgen {
 
     /// Generates a Delaunay triangulation
     ///
+    /// # Warning
+    ///
+    /// **Not thread-safe:** see the note in [Tetgen]. Serialize calls with a process-wide mutex.
+    ///
     /// # Input
     ///
     /// * `verbose` -- Prints Tetgen's messages to the console
@@ -500,6 +512,10 @@ impl Tetgen {
     }
 
     /// Generates a conforming constrained Delaunay triangulation with some quality constraints
+    ///
+    /// # Warning
+    ///
+    /// **Not thread-safe:** see the note in [Tetgen]. Serialize calls with a process-wide mutex.
     ///
     /// # Input
     ///
@@ -1015,11 +1031,13 @@ mod tests {
     use super::Tetgen;
     use crate::{InputDataTetMesh, StrError};
     use plotpy::Plot;
+    use serial_test::serial; // because the TetGen C++ library is not thread-safe
     use std::fs;
 
     const SAVE_FIGURE: bool = false;
 
     #[test]
+    #[serial]
     fn new_captures_some_errors() {
         assert_eq!(Tetgen::new(3, None, None, None).err(), Some("npoint must be ≥ 4"));
         assert_eq!(
@@ -1033,6 +1051,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn new_works() -> Result<(), StrError> {
         let tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), None, None)?;
         assert_eq!(tetgen.ext_tetgen.is_null(), false);
@@ -1048,6 +1067,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn set_point_captures_some_errors() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         assert_eq!(
@@ -1058,6 +1078,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn set_facet_point_captures_some_errors() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         assert_eq!(
@@ -1081,6 +1102,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn set_region_captures_some_errors() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         assert_eq!(
@@ -1096,6 +1118,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn set_hole_captures_some_errors() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         assert_eq!(
@@ -1111,6 +1134,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn generate_methods_capture_some_errors() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, Some(vec![3, 3, 3, 3]), None, None)?;
         assert_eq!(
@@ -1134,6 +1158,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn generate_delaunay_works() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         tetgen
@@ -1148,6 +1173,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn draw_wireframe_works() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         tetgen
@@ -1169,6 +1195,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn generate_delaunay_works_1() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(8, None, None, None)?;
         tetgen
@@ -1194,6 +1221,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn generate_mesh_works_1() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(8, Some(vec![4, 4, 4, 4, 4, 4]), Some(1), None)?;
         tetgen
@@ -1329,6 +1357,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn generate_mesh_works_2() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(
             16,
@@ -1443,6 +1472,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn marked_faces_o2_works() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(8, Some(vec![4, 4, 4, 4, 4, 4]), Some(1), None)?;
         tetgen
@@ -1553,6 +1583,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn handle_coplanar_points() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         tetgen.set_point(0, 0, -1.0, 0.0, 0.0)?; // z=0
@@ -1567,6 +1598,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn tet_from_input_data_works() -> Result<(), StrError> {
         let data = InputDataTetMesh {
             points: vec![
@@ -1678,6 +1710,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn tet_write_msh_file_works() -> Result<(), StrError> {
         let data = InputDataTetMesh {
             points: vec![

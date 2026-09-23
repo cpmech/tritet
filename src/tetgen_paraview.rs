@@ -200,9 +200,11 @@ impl Tetgen {
 mod tests {
     use crate::StrError;
     use crate::Tetgen;
+    use serial_test::serial; // because the TetGen C++ library is not thread-safe
     use std::fs;
 
     #[test]
+    #[serial]
     fn tetgen_write_vtu_1() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(4, None, None, None)?;
         tetgen
@@ -255,6 +257,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn tetgen_write_vtu_2() -> Result<(), StrError> {
         let mut tetgen = Tetgen::new(8, Some(vec![4, 4, 4, 4, 4, 4]), Some(1), None)?;
         tetgen

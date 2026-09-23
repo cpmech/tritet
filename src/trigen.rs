@@ -74,6 +74,14 @@ pub enum VoronoiEdgePoint {
 ///
 /// **Note:** All indices are zero-based.
 ///
+/// # Warning
+///
+/// **Not thread-safe:** the underlying Triangle C library keeps process-wide (static) state
+/// for its robust geometric predicates, which is (re)initialized on every call to
+/// [Trigen::generate_delaunay], [Trigen::generate_voronoi], and [Trigen::generate_mesh].
+/// Calling those methods concurrently from multiple threads may produce incorrect results or
+/// crash. Serialize calls with a process-wide mutex (or run the generators in separate processes).
+///
 /// # Examples
 ///
 /// ## Delaunay triangulation
@@ -560,6 +568,10 @@ impl Trigen {
 
     /// Generates a Delaunay triangulation
     ///
+    /// # Warning
+    ///
+    /// **Not thread-safe:** see the note in [Trigen]. Serialize calls with a process-wide mutex.
+    ///
     /// # Input
     ///
     /// * `verbose` -- Prints Triangle's messages to the console
@@ -576,6 +588,10 @@ impl Trigen {
 
     /// Generates a Voronoi tessellation and Delaunay triangulation
     ///
+    /// # Warning
+    ///
+    /// **Not thread-safe:** see the note in [Trigen]. Serialize calls with a process-wide mutex.
+    ///
     /// # Input
     ///
     /// * `verbose` -- Prints Triangle's messages to the console
@@ -591,6 +607,10 @@ impl Trigen {
     }
 
     /// Generates a conforming constrained Delaunay triangulation with some quality constraints
+    ///
+    /// # Warning
+    ///
+    /// **Not thread-safe:** see the note in [Trigen]. Serialize calls with a process-wide mutex.
     ///
     /// # Input
     ///
@@ -1160,11 +1180,13 @@ mod tests {
     use crate::InputDataTriMesh;
     use crate::{StrError, VoronoiEdgePoint};
     use plotpy::Plot;
+    use serial_test::serial; // because the Triangle C library is not thread-safe
     use std::fs;
 
     const SAVE_FIGURE: bool = false;
 
     #[test]
+    #[serial]
     fn derive_works() {
         let option = VoronoiEdgePoint::Index(0);
         let cloned = option.clone();
@@ -1173,12 +1195,14 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn new_captures_some_errors() {
         assert_eq!(Trigen::new(2, None, None, None).err(), Some("npoint must be ≥ 3"));
         assert_eq!(Trigen::new(3, Some(2), None, None).err(), Some("nsegment must be ≥ 3"));
     }
 
     #[test]
+    #[serial]
     fn new_works() -> Result<(), StrError> {
         let trigen = Trigen::new(3, Some(3), None, None)?;
         assert_eq!(trigen.ext_trigen.is_null(), false);
@@ -1194,6 +1218,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn set_point_captures_some_errors() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
@@ -1204,6 +1229,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn set_segment_captures_some_errors() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
@@ -1223,6 +1249,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn set_region_captures_some_errors() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
@@ -1238,6 +1265,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn set_hole_captures_some_errors() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(
@@ -1253,6 +1281,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn generate_methods_capture_some_errors() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, Some(3), None, None)?;
         assert_eq!(
@@ -1279,6 +1308,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn delaunay_1_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, None, None, None)?;
         trigen
@@ -1304,6 +1334,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn voronoi_1_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(5, None, None, None)?;
         trigen
@@ -1391,6 +1422,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn mesh_1_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, Some(3), None, None)?;
         trigen
@@ -1430,6 +1462,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn mesh_2_no_steiner_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(4, Some(4), None, None)?;
         trigen
@@ -1496,6 +1529,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn mesh_2_ok_steiner_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(4, Some(4), None, None)?;
         trigen
@@ -1586,6 +1620,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn get_methods_work_with_wrong_indices() -> Result<(), StrError> {
         let trigen = Trigen::new(3, None, None, None)?;
         assert_eq!(trigen.out_point(100, 0), 0.0);
@@ -1599,6 +1634,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn draw_triangles_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(3, Some(3), None, None)?;
         trigen
@@ -1621,6 +1657,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn draw_voronoi_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(5, None, None, None)?;
         trigen
@@ -1642,6 +1679,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn mesh_3_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(4, Some(3), Some(1), None)?;
         trigen
@@ -1669,6 +1707,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn mesh_4_works() -> Result<(), StrError> {
         let mut trigen = Trigen::new(12, Some(10), Some(2), Some(1))?;
         trigen
@@ -1715,6 +1754,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn tri_from_input_data_works() -> Result<(), StrError> {
         let data = InputDataTriMesh {
             points: vec![
@@ -1764,6 +1804,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn tri_write_msh_file_works() -> Result<(), StrError> {
         let data = InputDataTriMesh {
             points: vec![(-1, 0.0, 0.0), (-2, 1.0, 0.0), (-3, 1.0, 1.0), (-4, 0.0, 1.0)],

@@ -1,7 +1,9 @@
 use plotpy::Plot;
+use serial_test::serial; // because the Triangle C library is not thread-safe
 use tritet::{StrError, Trigen};
 
 #[test]
+#[serial]
 fn test_triangle_mesh_1() -> Result<(), StrError> {
     let mut triangle = Trigen::new(12, Some(20), Some(7), Some(2))?;
     triangle
