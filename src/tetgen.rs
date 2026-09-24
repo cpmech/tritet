@@ -65,7 +65,7 @@ extern "C" {
 ///
 /// ## Delaunay triangulation
 ///
-/// ```text
+/// ```
 /// use plotpy::Plot;
 /// use tritet::{StrError, Tetgen};
 ///
@@ -105,7 +105,7 @@ extern "C" {
 ///
 /// ## Mesh generation
 ///
-/// ```text
+/// ```
 /// use plotpy::Plot;
 /// use tritet::{StrError, Tetgen};
 ///
@@ -164,7 +164,7 @@ extern "C" {
 ///
 /// The above example can also be implemented using [InputDataTetMesh] as follows:
 ///
-/// ```text
+/// ```
 /// use plotpy::Plot;
 /// use tritet::{InputDataTetMesh, StrError, Tetgen};
 ///
